@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Energy Conversions Reference</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--ink-mid);
+      text-decoration: none;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3rem 3rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      font-weight: 400;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      max-width: 520px;
+      line-height: 1.7;
+    }
+
+    /* Controls */
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 10px; top: 50%;
+      transform: translateY(-50%);
+      width: 14px; height: 14px;
+      stroke: var(--ink-faint); fill: none;
+      stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 9px 12px 9px 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--parchment-dark);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-wrap input:focus { border-color: var(--border-strong); }
+    .search-wrap input::placeholder { color: var(--ink-faint); }
+
+    .unit-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--parchment-dark);
+    }
+    .unit-toggle button {
+      padding: 9px 14px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--ink-mid);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .unit-toggle button.active {
+      background: var(--ink);
+      color: var(--parchment);
+    }
+
+    /* Context note */
+    .context-note {
+      background: var(--gold-pale);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--ink-mid);
+      margin-bottom: 1.5rem;
+      font-style: italic;
+    }
+    .context-note strong { font-style: normal; color: var(--gold); font-weight: 500; }
+
+    /* Table */
+    .table-wrap {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead th {
+      background: var(--parchment-deeper);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      text-align: left;
+      padding: 11px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    thead th:hover { color: var(--gold); }
+    thead th .sort-arrow { margin-left: 4px; opacity: 0.5; }
+    thead th.sorted .sort-arrow { opacity: 1; color: var(--gold); }
+
+    tbody td {
+      padding: 11px 16px;
+      border-bottom: 0.5px solid var(--border);
+      color: var(--ink);
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--gold-pale); }
+
+    .td-name { font-weight: 400; color: var(--ink); }
+    .td-value {
+      font-weight: 500;
+      color: var(--ink);
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .td-bar-cell { width: 160px; }
+    .td-bar-wrap {
+      height: 6px;
+      background: var(--parchment-deeper);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .td-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--gold-light), var(--gold));
+      transition: width 0.3s ease;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      font-style: italic;
+      color: var(--ink-faint);
+    }
+
+    .count-label {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 10px;
+      text-align: right;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .footer-name { color: var(--ink-mid); letter-spacing: 0.05em; }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+      .td-bar-cell { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Reference Table</p>
+    <h1 class="page-title">Energy Conversions</h1>
+    <p class="page-subtitle">A comparative reference of energy quantities — from a kg of battery to world energy use — expressed in kilowatt-hours.</p>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search" placeholder="Search entries…" />
+    </div>
+    <div class="unit-toggle">
+      <button class="active" data-unit="kwh">kWh</button>
+      <button data-unit="mj">MJ</button>
+      <button data-unit="btu">BTU</button>
+    </div>
+  </div>
+
+  <div class="context-note" id="context-note">
+    <strong>Context:</strong> Heating a 1,500 sq ft house in CT for one year ≈ 24,000 kWh, which equals about 4 cords of wood.
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th id="th-name" onclick="sortBy('name')">Description <span class="sort-arrow">↕</span></th>
+          <th id="th-value" onclick="sortBy('value')" class="sorted">Energy <span class="sort-arrow">↑</span></th>
+          <th class="td-bar-cell">Relative scale</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <p class="count-label" id="count-label"></p>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+const raw = [
+  { name: "kg of Battery, Lead",              kwh: 0.04 },
+  { name: "kg of Battery, NiMH",              kwh: 0.08 },
+  { name: "kg of Battery, Lithium - LFP",     kwh: 0.12 },
+  { name: "kg of Battery, Lithium - NMC",     kwh: 0.2 },
+  { name: "Boil 1 gallon of ice",             kwh: 0.4 },
+  { name: "1 solar panel on a winter day",    kwh: 1 },
+  { name: "kg of TNT",                        kwh: 1.1 },
+  { name: "15 minute shower",                 kwh: 2 },
+  { name: "kg of cow manure",                 kwh: 3 },
+  { name: "Refining 1 gallon of gas",         kwh: 5 },
+  { name: "kg of wood",                       kwh: 5 },
+  { name: "kg of coal",                       kwh: 8 },
+  { name: "kg of Ethanol",                    kwh: 8.3 },
+  { name: "kg of body fat",                   kwh: 10.5 },
+  { name: "kg of kerosene",                   kwh: 11.9 },
+  { name: "kg of diesel",                     kwh: 12.6 },
+  { name: "kg of gasoline",                   kwh: 12.9 },
+  { name: "kg of Methane",                    kwh: 15 },
+  { name: "Gallon of gas",                    kwh: 33.7 },
+  { name: "kg of Hydrogen",                   kwh: 40 },
+  { name: "Gallon of diesel",                 kwh: 41 },
+  { name: "Chevy Bolt battery",               kwh: 65 },
+  { name: "Prius gas tank",                   kwh: 337 },
+  { name: "Drive Model 3 — 10,000 miles",     kwh: 2500 },
+  { name: "Cord of wood",                     kwh: 6000 },
+  { name: "Drive Prius — 10,000 miles",       kwh: 7500 },
+  { name: "Drive 10,000 miles @ 25 mpg",      kwh: 13500 },
+  { name: "Whale, Humpback & Gray",           kwh: 15000 },
+  { name: "18-wheeler NYC → LA",              kwh: 19000 },
+  { name: "Heating 1,500 sqft house in CT",   kwh: 24000 },
+  { name: "Average wind turbine in 24 hrs",   kwh: 31000 },
+  { name: "Whale, Sperm — Average",           kwh: 45000 },
+  { name: "Whale, Bowhead",                   kwh: 170000 },
+  { name: "Fly 737 from NYC to LA",           kwh: 200000 },
+  { name: "sq km of solar (6 sun hrs)",       kwh: 1200000 },
+  { name: "Fly A380 from NYC to Tokyo",       kwh: 2000000 },
+  { name: "Saturn V rocket",                  kwh: 12000000 },
+  { name: "Little Boy (atomic bomb)",         kwh: 17500000 },
+  { name: "kg of Uranium (fission)",          kwh: 22000000 },
+  { name: "kg of Plutonium-239",              kwh: 22000000 },
+  { name: "kg of hydrogen (fusion)",          kwh: 177716755 },
+  { name: "kg of Antimatter",                 kwh: 24965421631 },
+  { name: "Mount St. Helens eruption",        kwh: 28000000000 },
+  { name: "Dig/blast Panama Canal",           kwh: 35000000000 },
+  { name: "Tsar Bomba",                       kwh: 58333333333 },
+  { name: "Pompeii eruption",                 kwh: 4000000000000 },
+  { name: "World energy use in 2013",         kwh: 157500000000000 },
+];
+
+let currentUnit = 'kwh';
+let sortKey = 'value';
+let sortDir = 1; // 1 = asc, -1 = desc
+let query = '';
+
+const conversions = { kwh: 1, mj: 3.6, btu: 3412.14 };
+const unitLabel = { kwh: 'kWh', mj: 'MJ', btu: 'BTU' };
+
+function convertVal(kwh) { return kwh * conversions[currentUnit]; }
+
+function fmtVal(v) {
+  if (v >= 1e12) return (v / 1e12).toPrecision(3) + ' T';
+  if (v >= 1e9)  return (v / 1e9).toPrecision(3)  + ' B';
+  if (v >= 1e6)  return (v / 1e6).toPrecision(3)  + ' M';
+  if (v >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (v >= 1)    return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return v.toPrecision(2);
+}
+
+function render() {
+  let data = raw.filter(d => d.name.toLowerCase().includes(query.toLowerCase()));
+
+  data = data.slice().sort((a, b) => {
+    if (sortKey === 'name') return sortDir * a.name.localeCompare(b.name);
+    return sortDir * (a.kwh - b.kwh);
+  });
+
+  const maxKwh = Math.max(...data.map(d => d.kwh));
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="no-results">No entries match your search.</td></tr>';
+  } else {
+    data.forEach(d => {
+      const val = convertVal(d.kwh);
+      const pct = Math.pow(d.kwh / maxKwh, 0.18) * 100;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="td-name">${d.name}</td>
+        <td class="td-value">${fmtVal(val)} <span style="font-size:11px;color:var(--ink-faint);font-weight:400">${unitLabel[currentUnit]}</span></td>
+        <td class="td-bar-cell"><div class="td-bar-wrap"><div class="td-bar" style="width:${pct.toFixed(1)}%"></div></div></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById('count-label').textContent =
+    data.length === raw.length ? `${raw.length} entries` : `${data.length} of ${raw.length} entries`;
+
+  // Update sort arrows
+  ['name','value'].forEach(k => {
+    const th = document.getElementById('th-' + k);
+    th.classList.toggle('sorted', sortKey === k);
+    th.querySelector('.sort-arrow').textContent = (sortKey === k) ? (sortDir === 1 ? '↑' : '↓') : '↕';
+  });
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = key === 'value' ? 1 : 1; }
+  render();
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  query = e.target.value;
+  render();
+});
+
+document.querySelectorAll('.unit-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.unit-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentUnit = btn.dataset.unit;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thermal Expansion Calculator</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f3ef;
+      color: #1a1a18;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .page {
+      max-width: 780px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      padding: 2rem 2.5rem;
+    }
+
+    .te-header { margin-bottom: 1.75rem; }
+    .te-header h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
+    .te-header p { font-size: 13px; color: #6b6b67; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: #888780;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .te-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .te-field { display: flex; flex-direction: column; gap: 6px; }
+    .te-field label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #6b6b67;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .te-field select,
+    .te-field input {
+      border: 0.5px solid rgba(0,0,0,0.2);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff;
+      color: #1a1a18;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .te-field select:focus,
+    .te-field input:focus {
+      border-color: rgba(0,0,0,0.4);
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+    }
+
+    .te-results {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .te-result-card {
+      background: #f4f3ef;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .te-result-card .label {
+      font-size: 12px;
+      color: #6b6b67;
+      margin-bottom: 6px;
+    }
+    .te-result-card .value {
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1.1;
+    }
+    .te-result-card .unit {
+      font-size: 12px;
+      color: #6b6b67;
+      margin-top: 4px;
+    }
+
+    .te-force-card {
+      background: #f4f3ef;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.75rem;
+    }
+    .te-force-card .label { font-size: 12px; color: #6b6b67; margin-bottom: 4px; }
+    .te-force-card .value { font-size: 28px; font-weight: 500; }
+    .te-force-card .unit { font-size: 13px; color: #6b6b67; }
+
+    hr.te-divider {
+      border: none;
+      border-top: 0.5px solid rgba(0,0,0,0.12);
+      margin: 1.75rem 0;
+    }
+
+    .te-table-wrap {
+      border-radius: 12px;
+      border: 0.5px solid rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .te-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      table-layout: fixed;
+    }
+    .te-table thead th {
+      background: #f4f3ef;
+      font-weight: 500;
+      font-size: 11px;
+      color: #888780;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 0.5px solid rgba(0,0,0,0.12);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .te-table tbody td {
+      padding: 10px 14px;
+      border-bottom: 0.5px solid rgba(0,0,0,0.08);
+      color: #1a1a18;
+    }
+    .te-table tbody tr:last-child td { border-bottom: none; }
+    .te-table tbody tr.active-row td {
+      background: #e6f1fb;
+      color: #185fa5;
+      font-weight: 500;
+    }
+
+    .footer {
+      margin-top: 2rem;
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+    }
+
+    @media (max-width: 560px) {
+      .page { padding: 1.25rem; }
+      .te-grid { grid-template-columns: 1fr; }
+      .te-results { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="te-header">
+      <h1>Thermal expansion calculator</h1>
+      <p>Computes thermal elongation, strain, and induced stress for constrained members</p>
+    </div>
+
+    <p class="section-label">Inputs</p>
+    <div class="te-grid">
+      <div class="te-field">
+        <label>Material</label>
+        <select id="mat-select">
+          <option value="steel_a36">Steel (A36)</option>
+          <option value="ss_304">SS (304)</option>
+          <option value="ss_316">SS (316)</option>
+          <option value="ss_410">SS (410)</option>
+          <option value="aluminum">Aluminum</option>
+          <option value="brass">Brass</option>
+          <option value="bronze">Bronze</option>
+          <option value="teflon">Teflon</option>
+        </select>
+      </div>
+      <div class="te-field">
+        <label>Length (in)</label>
+        <input type="number" id="length-in" value="4.875" step="0.001" min="0.001" />
+      </div>
+      <div class="te-field">
+        <label>Temperature change ΔT (°F)</label>
+        <input type="number" id="delta-t" value="300" step="1" />
+      </div>
+      <div class="te-field">
+        <label>Cross-section area (in²)</label>
+        <input type="number" id="area-in" value="1" step="0.01" min="0.001" />
+      </div>
+    </div>
+
+    <p class="section-label">Results</p>
+    <div class="te-results">
+      <div class="te-result-card">
+        <p class="label">Thermal elongation (ΔL)</p>
+        <p class="value" id="res-dl">—</p>
+        <p class="unit">inches</p>
+      </div>
+      <div class="te-result-card">
+        <p class="label">Thermal strain (ε)</p>
+        <p class="value" id="res-eps">—</p>
+        <p class="unit">in/in</p>
+      </div>
+      <div class="te-result-card">
+        <p class="label">Thermal stress (σ)</p>
+        <p class="value" id="res-sigma">—</p>
+        <p class="unit">psi</p>
+      </div>
+    </div>
+
+    <div class="te-force-card">
+      <div>
+        <p class="label">Induced force (F = σ × A)</p>
+        <p class="value" id="res-force">—</p>
+      </div>
+      <p class="unit">pounds</p>
+    </div>
+
+    <hr class="te-divider" />
+
+    <p class="section-label">Material reference table</p>
+    <div class="te-table-wrap">
+      <table class="te-table">
+        <thead>
+          <tr>
+            <th style="width:28%">Material</th>
+            <th style="width:26%">α (in/in·°F)</th>
+            <th style="width:26%">E (psi)</th>
+            <th style="width:20%">σ/ΔT (psi/°F)</th>
+          </tr>
+        </thead>
+        <tbody id="mat-table-body"></tbody>
+      </table>
+    </div>
+
+    <p class="footer">Based on AISC / engineering material standards</p>
+  </div>
+
+  <script>
+    const materials = {
+      steel_a36: { name: "Steel (A36)", alpha: 0.000007, E: 29000000 },
+      ss_304:    { name: "SS (304)",    alpha: 0.000010, E: 29000000 },
+      ss_316:    { name: "SS (316)",    alpha: 0.000009, E: 29000000 },
+      ss_410:    { name: "SS (410)",    alpha: 0.000005, E: 29000000 },
+      aluminum:  { name: "Aluminum",   alpha: 0.000012, E: 10000000 },
+      brass:     { name: "Brass",      alpha: 0.000010, E: 14500000 },
+      bronze:    { name: "Bronze",     alpha: 0.000010, E: 14500000 },
+      teflon:    { name: "Teflon",     alpha: 0.000061, E:    76000 },
+    };
+
+    function fmt(n, digits) {
+      if (Math.abs(n) < 1e-9) return "0";
+      if (Math.abs(n) >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
+      return n.toPrecision(digits || 4);
+    }
+
+    function buildTable(activeKey) {
+      const tbody = document.getElementById("mat-table-body");
+      tbody.innerHTML = "";
+      Object.entries(materials).forEach(([key, m]) => {
+        const ratio = Math.round(m.alpha * m.E);
+        const tr = document.createElement("tr");
+        if (key === activeKey) tr.classList.add("active-row");
+        tr.innerHTML = `
+          <td>${m.name}</td>
+          <td>${m.alpha.toExponential(2)}</td>
+          <td>${m.E.toLocaleString()}</td>
+          <td>${ratio.toLocaleString()}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function calc() {
+      const key = document.getElementById("mat-select").value;
+      const L   = parseFloat(document.getElementById("length-in").value) || 0;
+      const dT  = parseFloat(document.getElementById("delta-t").value)   || 0;
+      const A   = parseFloat(document.getElementById("area-in").value)   || 1;
+      const m   = materials[key];
+
+      const dL    = m.alpha * L * dT;
+      const eps   = m.alpha * dT;
+      const sigma = eps * m.E;
+      const force = sigma * A;
+
+      document.getElementById("res-dl").textContent    = fmt(dL, 4);
+      document.getElementById("res-eps").textContent   = eps.toExponential(3);
+      document.getElementById("res-sigma").textContent = Math.round(sigma).toLocaleString();
+      document.getElementById("res-force").textContent = Math.round(force).toLocaleString();
+
+      buildTable(key);
+    }
+
+    ["mat-select", "length-in", "delta-t", "area-in"].forEach(id =>
+      document.getElementById(id).addEventListener("input", calc)
+    );
+
+    calc();
+  </script>
+</body>
+</html>

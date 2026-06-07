@@ -55,7 +55,6 @@
       background: var(--parchment);
       border-bottom: 1px solid var(--border);
     }
-
     .nav-ornament { display: flex; align-items: center; gap: 12px; }
     .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
     .nav-name {
@@ -82,7 +81,7 @@
     .page {
       position: relative;
       z-index: 1;
-      max-width: 860px;
+      max-width: 900px;
       margin: 0 auto;
       padding: 3rem 3rem 5rem;
     }
@@ -111,11 +110,93 @@
       line-height: 1.7;
     }
 
-    /* Controls */
+    /* ── CONVERTER ── */
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .converter-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .converter-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 1.25rem;
+    }
+
+    .conv-field { display: flex; flex-direction: column; gap: 6px; }
+    .conv-field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .conv-field select,
+    .conv-field input {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+    .conv-field select:focus,
+    .conv-field input:focus { border-color: var(--border-strong); }
+
+    .conv-equals {
+      font-family: 'DM Serif Display', serif;
+      font-size: 28px;
+      color: var(--gold-light);
+      padding-bottom: 8px;
+      text-align: center;
+      line-height: 1;
+      align-self: end;
+    }
+
+    .conv-result-box {
+      background: var(--gold-pale);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .conv-result-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 36px;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .conv-result-label {
+      font-size: 15px;
+      color: var(--ink-mid);
+      font-style: italic;
+    }
+
+    /* ── REFERENCE TABLE ── */
     .controls {
       display: flex;
       gap: 12px;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
       flex-wrap: wrap;
       align-items: center;
     }
@@ -173,32 +254,16 @@
       color: var(--parchment);
     }
 
-    /* Context note */
-    .context-note {
-      background: var(--gold-pale);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 13px;
-      color: var(--ink-mid);
-      margin-bottom: 1.5rem;
-      font-style: italic;
-    }
-    .context-note strong { font-style: normal; color: var(--gold); font-weight: 500; }
-
-    /* Table */
     .table-wrap {
       border-radius: 12px;
       border: 1px solid var(--border);
       overflow: hidden;
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 14px;
     }
-
     thead th {
       background: var(--parchment-deeper);
       font-size: 11px;
@@ -214,8 +279,7 @@
       white-space: nowrap;
     }
     thead th:hover { color: var(--gold); }
-    thead th .sort-arrow { margin-left: 4px; opacity: 0.5; }
-    thead th.sorted .sort-arrow { opacity: 1; color: var(--gold); }
+    thead th.sorted .sort-arrow { color: var(--gold); }
 
     tbody td {
       padding: 11px 16px;
@@ -225,26 +289,11 @@
     }
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover td { background: var(--gold-pale); }
+    tbody tr.highlighted td { background: var(--gold-pale); font-weight: 500; }
 
-    .td-name { font-weight: 400; color: var(--ink); }
     .td-value {
-      font-weight: 500;
-      color: var(--ink);
-      white-space: nowrap;
       font-variant-numeric: tabular-nums;
-    }
-    .td-bar-cell { width: 160px; }
-    .td-bar-wrap {
-      height: 6px;
-      background: var(--parchment-deeper);
-      border-radius: 3px;
-      overflow: hidden;
-    }
-    .td-bar {
-      height: 100%;
-      border-radius: 3px;
-      background: linear-gradient(90deg, var(--gold-light), var(--gold));
-      transition: width 0.3s ease;
+      white-space: nowrap;
     }
 
     .no-results {
@@ -253,7 +302,6 @@
       font-style: italic;
       color: var(--ink-faint);
     }
-
     .count-label {
       font-size: 12px;
       color: var(--ink-faint);
@@ -272,14 +320,15 @@
       justify-content: space-between;
       font-size: 12px;
     }
-    .footer-name { color: var(--ink-mid); letter-spacing: 0.05em; }
+    .footer-name { color: var(--ink-mid); }
     .footer-year { color: var(--ink-faint); font-style: italic; }
 
-    @media (max-width: 600px) {
+    @media (max-width: 640px) {
       nav { padding: 0 1.25rem; }
       .page { padding: 2rem 1.25rem 4rem; }
       footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
-      .td-bar-cell { display: none; }
+      .converter-row { grid-template-columns: 1fr; }
+      .conv-equals { padding-bottom: 0; font-size: 20px; text-align: left; }
     }
   </style>
 </head>
@@ -299,11 +348,36 @@
 
 <div class="page">
   <div class="page-header">
-    <p class="page-eyebrow">Reference Table</p>
+    <p class="page-eyebrow">Reference Tool</p>
     <h1 class="page-title">Energy Conversions</h1>
-    <p class="page-subtitle">A comparative reference of energy quantities — from a kg of battery to world energy use — expressed in kilowatt-hours.</p>
+    <p class="page-subtitle">Compare and convert energy quantities — from a kg of battery to world energy use.</p>
   </div>
 
+  <!-- CONVERTER -->
+  <p class="section-label">Converter</p>
+  <div class="converter-card">
+    <div class="converter-row">
+      <div class="conv-field">
+        <label>Quantity</label>
+        <input type="number" id="conv-qty" value="1" min="0" step="any" />
+      </div>
+      <div class="conv-field">
+        <label>&nbsp;</label>
+        <select id="conv-from"></select>
+      </div>
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label class="section-label" style="display:block;margin-bottom:6px;">Equals how many…</label>
+      <select id="conv-to" style="border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;width:100%;max-width:400px;"></select>
+    </div>
+    <div class="conv-result-box">
+      <span class="conv-result-num" id="conv-result-num">—</span>
+      <span class="conv-result-label" id="conv-result-label"></span>
+    </div>
+  </div>
+
+  <!-- REFERENCE TABLE -->
+  <p class="section-label">Reference Table</p>
   <div class="controls">
     <div class="search-wrap">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -316,17 +390,12 @@
     </div>
   </div>
 
-  <div class="context-note" id="context-note">
-    <strong>Context:</strong> Heating a 1,500 sq ft house in CT for one year ≈ 24,000 kWh, which equals about 4 cords of wood.
-  </div>
-
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
           <th id="th-name" onclick="sortBy('name')">Description <span class="sort-arrow">↕</span></th>
           <th id="th-value" onclick="sortBy('value')" class="sorted">Energy <span class="sort-arrow">↑</span></th>
-          <th class="td-bar-cell">Relative scale</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -341,7 +410,7 @@
 </footer>
 
 <script>
-const raw = [
+const data = [
   { name: "kg of Battery, Lead",              kwh: 0.04 },
   { name: "kg of Battery, NiMH",              kwh: 0.08 },
   { name: "kg of Battery, Lithium - LFP",     kwh: 0.12 },
@@ -391,57 +460,102 @@ const raw = [
   { name: "World energy use in 2013",         kwh: 157500000000000 },
 ];
 
+const conversions = { kwh: 1, mj: 3.6, btu: 3412.14 };
+const unitLabel   = { kwh: 'kWh', mj: 'MJ', btu: 'BTU' };
 let currentUnit = 'kwh';
 let sortKey = 'value';
-let sortDir = 1; // 1 = asc, -1 = desc
+let sortDir = 1;
 let query = '';
 
-const conversions = { kwh: 1, mj: 3.6, btu: 3412.14 };
-const unitLabel = { kwh: 'kWh', mj: 'MJ', btu: 'BTU' };
+// ── Populate converter dropdowns ──
+function populateDropdowns() {
+  const sorted = [...data].sort((a,b) => a.kwh - b.kwh);
+  ['conv-from','conv-to'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '';
+    sorted.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d.kwh;
+      opt.textContent = d.name;
+      sel.appendChild(opt);
+    });
+  });
+  // Default: "Heating 1500 sqft" → "Cord of wood" (matches Excel example)
+  setSelectByKwh('conv-from', 24000);
+  setSelectByKwh('conv-to', 6000);
+}
 
-function convertVal(kwh) { return kwh * conversions[currentUnit]; }
+function setSelectByKwh(id, kwh) {
+  const sel = document.getElementById(id);
+  for (let opt of sel.options) {
+    if (parseFloat(opt.value) === kwh) { sel.value = opt.value; return; }
+  }
+}
 
+function calcConversion() {
+  const qty   = parseFloat(document.getElementById('conv-qty').value) || 0;
+  const from  = parseFloat(document.getElementById('conv-from').value);
+  const to    = parseFloat(document.getElementById('conv-to').value);
+  const toName = document.getElementById('conv-to').options[document.getElementById('conv-to').selectedIndex].text;
+
+  if (!to || !from) return;
+  const result = (qty * from) / to;
+
+  // Format nicely
+  let formatted;
+  if (result === 0) formatted = '0';
+  else if (Math.abs(result) >= 1e12) formatted = (result/1e12).toLocaleString(undefined,{maximumFractionDigits:3}) + ' trillion';
+  else if (Math.abs(result) >= 1e9)  formatted = (result/1e9).toLocaleString(undefined,{maximumFractionDigits:3}) + ' billion';
+  else if (Math.abs(result) >= 1e6)  formatted = (result/1e6).toLocaleString(undefined,{maximumFractionDigits:3}) + ' million';
+  else if (Math.abs(result) >= 100)  formatted = result.toLocaleString(undefined,{maximumFractionDigits:1});
+  else if (Math.abs(result) >= 1)    formatted = result.toLocaleString(undefined,{maximumFractionDigits:3});
+  else formatted = result.toPrecision(3);
+
+  document.getElementById('conv-result-num').textContent = formatted;
+  document.getElementById('conv-result-label').textContent = toName;
+}
+
+// ── Reference table ──
 function fmtVal(v) {
-  if (v >= 1e12) return (v / 1e12).toPrecision(3) + ' T';
-  if (v >= 1e9)  return (v / 1e9).toPrecision(3)  + ' B';
-  if (v >= 1e6)  return (v / 1e6).toPrecision(3)  + ' M';
-  if (v >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
-  if (v >= 1)    return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  if (v >= 1e12) return (v/1e12).toPrecision(3) + ' T';
+  if (v >= 1e9)  return (v/1e9).toPrecision(3)  + ' B';
+  if (v >= 1e6)  return (v/1e6).toPrecision(3)  + ' M';
+  if (v >= 1000) return v.toLocaleString(undefined,{maximumFractionDigits:0});
+  if (v >= 1)    return v.toLocaleString(undefined,{maximumFractionDigits:2});
   return v.toPrecision(2);
 }
 
 function render() {
-  let data = raw.filter(d => d.name.toLowerCase().includes(query.toLowerCase()));
+  const fromKwh = parseFloat(document.getElementById('conv-from').value);
+  const toKwh   = parseFloat(document.getElementById('conv-to').value);
 
-  data = data.slice().sort((a, b) => {
+  let rows = data.filter(d => d.name.toLowerCase().includes(query.toLowerCase()));
+  rows = rows.slice().sort((a,b) => {
     if (sortKey === 'name') return sortDir * a.name.localeCompare(b.name);
     return sortDir * (a.kwh - b.kwh);
   });
 
-  const maxKwh = Math.max(...data.map(d => d.kwh));
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
 
-  if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="no-results">No entries match your search.</td></tr>';
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2" class="no-results">No entries match your search.</td></tr>';
   } else {
-    data.forEach(d => {
-      const val = convertVal(d.kwh);
-      const pct = Math.pow(d.kwh / maxKwh, 0.18) * 100;
+    rows.forEach(d => {
+      const val = d.kwh * conversions[currentUnit];
       const tr = document.createElement('tr');
+      if (d.kwh === fromKwh || d.kwh === toKwh) tr.classList.add('highlighted');
       tr.innerHTML = `
-        <td class="td-name">${d.name}</td>
+        <td>${d.name}</td>
         <td class="td-value">${fmtVal(val)} <span style="font-size:11px;color:var(--ink-faint);font-weight:400">${unitLabel[currentUnit]}</span></td>
-        <td class="td-bar-cell"><div class="td-bar-wrap"><div class="td-bar" style="width:${pct.toFixed(1)}%"></div></div></td>
       `;
       tbody.appendChild(tr);
     });
   }
 
   document.getElementById('count-label').textContent =
-    data.length === raw.length ? `${raw.length} entries` : `${data.length} of ${raw.length} entries`;
+    rows.length === data.length ? `${data.length} entries` : `${rows.length} of ${data.length} entries`;
 
-  // Update sort arrows
   ['name','value'].forEach(k => {
     const th = document.getElementById('th-' + k);
     th.classList.toggle('sorted', sortKey === k);
@@ -451,14 +565,15 @@ function render() {
 
 function sortBy(key) {
   if (sortKey === key) sortDir *= -1;
-  else { sortKey = key; sortDir = key === 'value' ? 1 : 1; }
+  else { sortKey = key; sortDir = 1; }
   render();
 }
 
-document.getElementById('search').addEventListener('input', e => {
-  query = e.target.value;
-  render();
-});
+// ── Events ──
+document.getElementById('search').addEventListener('input', e => { query = e.target.value; render(); });
+document.getElementById('conv-qty').addEventListener('input', calcConversion);
+document.getElementById('conv-from').addEventListener('change', () => { calcConversion(); render(); });
+document.getElementById('conv-to').addEventListener('change',   () => { calcConversion(); render(); });
 
 document.querySelectorAll('.unit-toggle button').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -469,6 +584,8 @@ document.querySelectorAll('.unit-toggle button').forEach(btn => {
   });
 });
 
+populateDropdowns();
+calcConversion();
 render();
 </script>
 </body>

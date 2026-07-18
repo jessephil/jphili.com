@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flow Through Pipe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      color: var(--ink-mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3rem 3rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    /* ── INPUTS ── */
+    .inputs-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .field-row {
+      display: flex;
+      gap: 6px;
+    }
+    .field input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-mid);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+
+    .field-note {
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* fluid preset */
+    .fluid-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .fluid-row label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      white-space: nowrap;
+    }
+    .fluid-row select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    /* ── RESULTS ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .result-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .result-card .rlabel {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+    }
+    .result-card .rvalue {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .result-card .runit {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+
+    /* flow rate card with sub-units */
+    .result-card.flow-card .rvalue { font-size: 20px; }
+    .flow-sub {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 0.5px solid var(--border);
+    }
+    .flow-sub-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+    .flow-sub-row span:last-child { color: var(--ink-faint); }
+
+    /* Reynolds card */
+    .result-card.re-card { grid-column: span 1; }
+    .re-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+    }
+    .re-badge.laminar  { background: var(--green-pale); color: var(--green); }
+    .re-badge.transient { background: var(--amber-pale); color: var(--amber); }
+    .re-badge.turbulent { background: var(--red-pale);   color: var(--red);   }
+
+    /* warning banner */
+    .warning-banner {
+      background: var(--amber-pale);
+      border: 1px solid rgba(122,90,26,0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--amber);
+      margin-bottom: 12px;
+      display: none;
+    }
+    .warning-banner.visible { display: block; }
+
+    /* ── FORMULA ── */
+    .formula-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.75rem;
+      margin-top: 1.5rem;
+    }
+    .formula-title {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 10px;
+    }
+    .formula-block {
+      font-family: 'Georgia', serif;
+      font-size: 17px;
+      color: var(--ink);
+      text-align: center;
+      padding: 12px 0;
+      letter-spacing: 0.02em;
+    }
+    .formula-vars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
+    .fvar {
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Fluid Mechanics</p>
+    <h1 class="page-title">Flow Through Pipe</h1>
+    <p class="page-subtitle">Hagen-Poiseuille calculator for laminar flow — computes volumetric flow rate, velocity, and Reynolds number for a given pipe geometry and fluid.</p>
+  </div>
+
+  <!-- INPUTS -->
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="fluid-row">
+      <label>Fluid preset</label>
+      <select id="fluid-preset" onchange="applyFluidPreset()">
+        <option value="">— select a fluid —</option>
+        <option value="water_20">Water (20 °C) — 1.002 cP, 0.0361 lb/in³</option>
+        <option value="water_60">Water (60 °C) — 0.467 cP, 0.0357 lb/in³</option>
+        <option value="hydraulic_iso46">Hydraulic oil ISO 46 — 46 cP, 0.0318 lb/in³</option>
+        <option value="hydraulic_iso68">Hydraulic oil ISO 68 — 68 cP, 0.0318 lb/in³</option>
+        <option value="diesel">Diesel fuel — 3.0 cP, 0.0301 lb/in³</option>
+        <option value="gasoline">Gasoline — 0.6 cP, 0.0264 lb/in³</option>
+        <option value="sae30">Engine oil SAE 30 — 200 cP, 0.0324 lb/in³</option>
+        <option value="glycerin">Glycerin (25 °C) — 950 cP, 0.0457 lb/in³</option>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Pipe inner diameter (d)</label>
+        <div class="field-row">
+          <input type="number" id="inp-d" value="0.5" min="0.0001" step="0.01" oninput="calc()" />
+          <select id="unit-d" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Pressure drop (ΔP)</label>
+        <div class="field-row">
+          <input type="number" id="inp-P" value="20" min="0" step="0.1" oninput="calc()" />
+          <select id="unit-P" onchange="calc()">
+            <option value="psi">psi</option>
+            <option value="bar">bar</option>
+            <option value="kpa">kPa</option>
+            <option value="mpa">MPa</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Dynamic viscosity (µ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-mu" value="200" min="0.0001" step="0.1" oninput="calc()" />
+          <select id="unit-mu" onchange="calc()">
+            <option value="cp">cP</option>
+            <option value="pas">Pa·s</option>
+            <option value="lbfts">lb·ft·s</option>
+          </select>
+        </div>
+        <span class="field-note" id="mu-note"></span>
+      </div>
+
+      <div class="field">
+        <label>Pipe length (L)</label>
+        <div class="field-row">
+          <input type="number" id="inp-L" value="96" min="0.0001" step="0.1" oninput="calc()" />
+          <select id="unit-L" onchange="calc()">
+            <option value="in">in</option>
+            <option value="ft">ft</option>
+            <option value="m">m</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Fluid density (ρ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-rho" value="0.0361" min="0.0001" step="0.0001" oninput="calc()" />
+          <select id="unit-rho" onchange="calc()">
+            <option value="lbin3">lb/in³</option>
+            <option value="kgm3">kg/m³</option>
+            <option value="gcm3">g/cm³</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WARNING -->
+  <div class="warning-banner" id="warning-banner">
+    ⚠ Reynolds number exceeds 2,300 — flow is no longer laminar. The Hagen-Poiseuille equation is not valid in this regime; results are shown for reference only.
+  </div>
+
+  <!-- RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+
+    <div class="result-card flow-card">
+      <p class="rlabel">Flow rate (Q)</p>
+      <p class="rvalue" id="res-Q-in3s">—</p>
+      <p class="runit">in³/s</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span id="res-Q-gpm">—</span><span>gal/min</span></div>
+        <div class="flow-sub-row"><span id="res-Q-lmin">—</span><span>L/min</span></div>
+        <div class="flow-sub-row"><span id="res-Q-m3s">—</span><span>m³/s</span></div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <p class="rlabel">Mean velocity (V)</p>
+      <p class="rvalue" id="res-V-ins">—</p>
+      <p class="runit">in/s</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span id="res-V-fps">—</span><span>ft/s</span></div>
+        <div class="flow-sub-row"><span id="res-V-ms">—</span><span>m/s</span></div>
+      </div>
+    </div>
+
+    <div class="result-card re-card">
+      <p class="rlabel">Reynolds number (Re)</p>
+      <p class="rvalue" id="res-Re">—</p>
+      <p class="runit">dimensionless</p>
+      <span class="re-badge" id="res-Re-badge"></span>
+    </div>
+
+  </div>
+
+  <!-- FORMULA REFERENCE -->
+  <div class="formula-card">
+    <p class="formula-title">Hagen-Poiseuille equation</p>
+    <div class="formula-block">
+      Q = π d⁴ ΔP / (128 µ L)
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>Q</strong> = volumetric flow rate</span>
+      <span class="fvar"><strong>d</strong> = pipe inner diameter</span>
+      <span class="fvar"><strong>ΔP</strong> = pressure drop</span>
+      <span class="fvar"><strong>µ</strong> = dynamic viscosity</span>
+      <span class="fvar"><strong>L</strong> = pipe length</span>
+      <span class="fvar"><strong>Re</strong> = ρVd/µ &nbsp;(Re &lt; 2,300 → laminar)</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Unit conversion to SI (base: metres, Pa, Pa·s, kg/m³) ──
+const toM   = { in: 0.0254, mm: 0.001, cm: 0.01, ft: 0.3048, m: 1 };
+const toPa  = { psi: 6894.76, bar: 100000, kpa: 1000, mpa: 1e6 };
+const toPas = { cp: 0.001, pas: 1, lbfts: 1.48816 };
+const toKgm3 = { lbin3: 27679.9, kgm3: 1, gcm3: 1000 };
+
+function fmt(v, sig) {
+  if (!isFinite(v) || v === null) return '—';
+  if (v === 0) return '0';
+  if (Math.abs(v) >= 1e6)  return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(v) >= 0.01) return parseFloat(v.toPrecision(sig || 5)).toString();
+  return v.toExponential(3);
+}
+
+function calc() {
+  // Read inputs
+  const d_raw   = parseFloat(document.getElementById('inp-d').value)   || 0;
+  const P_raw   = parseFloat(document.getElementById('inp-P').value)   || 0;
+  const mu_raw  = parseFloat(document.getElementById('inp-mu').value)  || 0;
+  const L_raw   = parseFloat(document.getElementById('inp-L').value)   || 0;
+  const rho_raw = parseFloat(document.getElementById('inp-rho').value) || 0;
+
+  const d_m   = d_raw   * toM[document.getElementById('unit-d').value];
+  const P_pa  = P_raw   * toPa[document.getElementById('unit-P').value];
+  const mu_pa = mu_raw  * toPas[document.getElementById('unit-mu').value];
+  const L_m   = L_raw   * toM[document.getElementById('unit-L').value];
+  const rho   = rho_raw * toKgm3[document.getElementById('unit-rho').value];
+
+  if (!d_m || !P_pa || !mu_pa || !L_m) {
+    ['res-Q-in3s','res-Q-gpm','res-Q-lmin','res-Q-m3s',
+     'res-V-ins','res-V-fps','res-V-ms','res-Re'].forEach(id =>
+      document.getElementById(id).textContent = '—'
+    );
+    return;
+  }
+
+  // Hagen-Poiseuille: Q = π d⁴ ΔP / (128 µ L)  [m³/s]
+  const Q_m3s = (Math.PI * Math.pow(d_m, 4) * P_pa) / (128 * mu_pa * L_m);
+
+  // Cross-sectional area
+  const A_m2 = Math.PI * Math.pow(d_m / 2, 2);
+  const V_ms = Q_m3s / A_m2;
+
+  // Reynolds: Re = ρ V d / µ
+  const Re = rho > 0 ? (rho * V_ms * d_m) / mu_pa : null;
+
+  // Convert Q
+  const Q_in3s = Q_m3s * 61023.7;
+  const Q_gpm  = Q_m3s * 15850.3;
+  const Q_lmin = Q_m3s * 60000;
+
+  // Convert V
+  const V_ins = V_ms * 39.3701;
+  const V_fps = V_ms * 3.28084;
+
+  // Populate
+  document.getElementById('res-Q-in3s').textContent = fmt(Q_in3s);
+  document.getElementById('res-Q-gpm').textContent  = fmt(Q_gpm);
+  document.getElementById('res-Q-lmin').textContent = fmt(Q_lmin);
+  document.getElementById('res-Q-m3s').textContent  = fmt(Q_m3s, 4);
+
+  document.getElementById('res-V-ins').textContent  = fmt(V_ins);
+  document.getElementById('res-V-fps').textContent  = fmt(V_fps);
+  document.getElementById('res-V-ms').textContent   = fmt(V_ms);
+
+  if (Re !== null) {
+    document.getElementById('res-Re').textContent = fmt(Re, 4);
+    const badge = document.getElementById('res-Re-badge');
+    const warning = document.getElementById('warning-banner');
+    if (Re < 2300) {
+      badge.textContent = 'Laminar';
+      badge.className = 're-badge laminar';
+      warning.classList.remove('visible');
+    } else if (Re < 4000) {
+      badge.textContent = 'Transitional';
+      badge.className = 're-badge transient';
+      warning.classList.add('visible');
+    } else {
+      badge.textContent = 'Turbulent';
+      badge.className = 're-badge turbulent';
+      warning.classList.add('visible');
+    }
+  } else {
+    document.getElementById('res-Re').textContent = '—';
+    document.getElementById('res-Re-badge').textContent = '';
+  }
+}
+
+// ── Fluid presets ──
+const fluidPresets = {
+  water_20:      { cp: 1.002,  rho_lbin3: 0.03612 },
+  water_60:      { cp: 0.467,  rho_lbin3: 0.03570 },
+  hydraulic_iso46: { cp: 46,   rho_lbin3: 0.03180 },
+  hydraulic_iso68: { cp: 68,   rho_lbin3: 0.03180 },
+  diesel:        { cp: 3.0,    rho_lbin3: 0.03010 },
+  gasoline:      { cp: 0.6,    rho_lbin3: 0.02640 },
+  sae30:         { cp: 200,    rho_lbin3: 0.03240 },
+  glycerin:      { cp: 950,    rho_lbin3: 0.04570 },
+};
+
+function applyFluidPreset() {
+  const key = document.getElementById('fluid-preset').value;
+  if (!key || key === 'custom') return;
+  const p = fluidPresets[key];
+  document.getElementById('inp-mu').value = p.cp;
+  document.getElementById('unit-mu').value = 'cp';
+  document.getElementById('inp-rho').value = p.rho_lbin3;
+  document.getElementById('unit-rho').value = 'lbin3';
+  calc();
+}
+
+calc();
+</script>
+</body>
+</html>

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accumulator Sizing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      color: var(--ink-mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 3rem 3rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    /* ── INPUTS ── */
+    .inputs-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .field-row {
+      display: flex;
+      gap: 6px;
+    }
+    .field input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-mid);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+
+    .field-note {
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* method row */
+    .method-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .method-row label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      white-space: nowrap;
+    }
+    .method-row select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      flex: 1;
+      min-width: 160px;
+    }
+    .method-row input {
+      width: 80px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+    }
+
+    /* ── RESULTS ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .result-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .result-card .rlabel {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+    }
+    .result-card .rvalue {
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .result-card .runit {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+
+    .result-card.vol-card .rvalue { font-size: 20px; }
+    .vol-sub {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 0.5px solid var(--border);
+    }
+    .vol-sub-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+    .vol-sub-row span:last-child { color: var(--ink-faint); }
+
+    .method-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+
+    /* ── FORMULA ── */
+    .formula-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.75rem;
+      margin-top: 1.5rem;
+    }
+    .formula-title {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 10px;
+    }
+    .formula-block {
+      font-family: 'Georgia', serif;
+      font-size: 17px;
+      color: var(--ink);
+      text-align: center;
+      padding: 12px 0;
+      letter-spacing: 0.02em;
+    }
+    .formula-block .frac {
+      display: inline-block;
+      vertical-align: middle;
+      text-align: center;
+      margin: 0 6px;
+    }
+    .formula-block .frac > span { display: block; padding: 0 4px; }
+    .formula-block .frac .num { border-bottom: 1px solid var(--ink); }
+    .formula-vars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
+    .fvar {
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    /* ── METHOD NOTES ── */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 1.5rem;
+    }
+    .note-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      font-size: 12.5px;
+      color: var(--ink-mid);
+      line-height: 1.6;
+    }
+    .note-card strong {
+      display: block;
+      color: var(--ink);
+      font-weight: 500;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .notes-grid { grid-template-columns: 1fr; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Hydraulics</p>
+    <h1 class="page-title">Accumulator Sizing</h1>
+    <p class="page-subtitle">Sizes a gas-charged hydraulic accumulator for a screen changer cylinder — computes cylinder volume and the pre-charge/working-pressure volume multiplier under isothermal or adiabatic conditions.</p>
+  </div>
+
+  <!-- INPUTS -->
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="method-row">
+      <label>Sizing method</label>
+      <select id="method" onchange="onMethodChange()">
+        <option value="1">Isothermal — n = 1</option>
+        <option value="1.4" selected>Adiabatic — n = 1.4</option>
+        <option value="custom">Custom n</option>
+      </select>
+      <input type="number" id="inp-n-custom" value="1.4" step="0.01" style="display:none" oninput="calc()" />
+    </div>
+
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Pre-charge pressure</label>
+        <div class="field-row">
+          <input type="number" id="inp-Ppre" value="1200" min="0.0001" step="1" oninput="calc()" />
+          <select id="unit-Ppre" onchange="calc()">
+            <option value="psi">PSIA</option>
+            <option value="bar">Bar</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Min working pressure</label>
+        <div class="field-row">
+          <input type="number" id="inp-Pmin" value="1200" min="0.0001" step="1" oninput="calc()" />
+          <select id="unit-Pmin" onchange="calc()">
+            <option value="psi">PSIA</option>
+            <option value="bar">Bar</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Max working pressure</label>
+        <div class="field-row">
+          <input type="number" id="inp-Pmax" value="2500" min="0.0001" step="1" oninput="calc()" />
+          <select id="unit-Pmax" onchange="calc()">
+            <option value="psi">PSIA</option>
+            <option value="bar">Bar</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cylinder diameter (d)</label>
+        <div class="field-row">
+          <input type="number" id="inp-d" value="7" min="0.0001" step="0.1" oninput="calc()" />
+          <select id="unit-d" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Cylinder stroke (L)</label>
+        <div class="field-row">
+          <input type="number" id="inp-L" value="14.5" min="0.0001" step="0.1" oninput="calc()" />
+          <select id="unit-L" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+          </select>
+        </div>
+        <span class="field-note">Full-bore, full-stroke displacement</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+
+    <div class="result-card vol-card">
+      <p class="rlabel">Cylinder volume</p>
+      <p class="rvalue" id="res-Vcyl-in3">—</p>
+      <p class="runit">in³</p>
+      <div class="vol-sub">
+        <div class="vol-sub-row"><span id="res-Vcyl-gal">—</span><span>gal</span></div>
+        <div class="vol-sub-row"><span id="res-Vcyl-L">—</span><span>L</span></div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <p class="rlabel">Volume multiplier</p>
+      <p class="rvalue" id="res-mult">—</p>
+      <p class="runit">dimensionless</p>
+      <span class="method-badge" id="res-method-badge">Adiabatic</span>
+    </div>
+
+    <div class="result-card vol-card">
+      <p class="rlabel">Accumulator volume</p>
+      <p class="rvalue" id="res-Vacc-in3">—</p>
+      <p class="runit">in³</p>
+      <div class="vol-sub">
+        <div class="vol-sub-row"><span id="res-Vacc-gal">—</span><span>gal</span></div>
+        <div class="vol-sub-row"><span id="res-Vacc-L">—</span><span>L</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FORMULA REFERENCE -->
+  <div class="formula-card">
+    <p class="formula-title">Accumulator sizing equation</p>
+    <div class="formula-block">
+      Vol<sub>Accum</sub> = Vol<sub>cyl</sub> &times;
+      <span class="frac">
+        <span class="num">(Press<sub>min</sub> / Press<sub>Pre-charge</sub>)<sup>1/n</sup></span>
+        <span>1 &minus; (Press<sub>min</sub> / Press<sub>max</sub>)<sup>1/n</sup></span>
+      </span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>Vol<sub>cyl</sub></strong> = π (d/2)² L</span>
+      <span class="fvar"><strong>n</strong> = polytropic constant</span>
+      <span class="fvar"><strong>n = 1</strong> &nbsp;→ isothermal</span>
+      <span class="fvar"><strong>n = 1.4</strong> &nbsp;→ adiabatic</span>
+    </div>
+  </div>
+
+  <!-- METHOD NOTES -->
+  <div class="notes-grid">
+    <div class="note-card">
+      <strong>Isothermal (n = 1)</strong>
+      Gas temperature stays constant — perfect heat transfer with surroundings; the shell and oil act as a giant heat sink. Applies to very slow cycles (many minutes to hours), long-term energy storage, or whenever the accumulator has ample time to exchange heat.
+    </div>
+    <div class="note-card">
+      <strong>Adiabatic (n = 1.4)</strong>
+      No heat transfer at all — the process is so fast the gas can't exchange heat with the shell or oil. Applies to fast cycles: emergency strokes, shock absorption, pump pulsation damping, and most actuator backup functions (under 1&ndash;3 minutes, often just seconds).
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Unit conversion helpers ──
+const toIn = { in: 1, mm: 0.0393701, cm: 0.393701 };
+const toPsi = { psi: 1, bar: 14.5038 };
+
+function fmt(v, sig) {
+  if (!isFinite(v) || v === null) return '—';
+  if (v === 0) return '0';
+  if (Math.abs(v) >= 1e6)  return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(v) >= 0.01) return parseFloat(v.toPrecision(sig || 5)).toString();
+  return v.toExponential(3);
+}
+
+function onMethodChange() {
+  const method = document.getElementById('method').value;
+  const customInput = document.getElementById('inp-n-custom');
+  customInput.style.display = method === 'custom' ? 'inline-block' : 'none';
+  calc();
+}
+
+function calc() {
+  const method = document.getElementById('method').value;
+  const n = method === 'custom'
+    ? (parseFloat(document.getElementById('inp-n-custom').value) || 0)
+    : parseFloat(method);
+
+  const badge = document.getElementById('res-method-badge');
+  badge.textContent = method === '1' ? 'Isothermal' : method === '1.4' ? 'Adiabatic' : `n = ${fmt(n)}`;
+
+  const Ppre_raw = parseFloat(document.getElementById('inp-Ppre').value) || 0;
+  const Pmin_raw = parseFloat(document.getElementById('inp-Pmin').value) || 0;
+  const Pmax_raw = parseFloat(document.getElementById('inp-Pmax').value) || 0;
+  const d_raw = parseFloat(document.getElementById('inp-d').value) || 0;
+  const L_raw = parseFloat(document.getElementById('inp-L').value) || 0;
+
+  const Ppre = Ppre_raw * toPsi[document.getElementById('unit-Ppre').value];
+  const Pmin = Pmin_raw * toPsi[document.getElementById('unit-Pmin').value];
+  const Pmax = Pmax_raw * toPsi[document.getElementById('unit-Pmax').value];
+  const d_in = d_raw * toIn[document.getElementById('unit-d').value];
+  const L_in = L_raw * toIn[document.getElementById('unit-L').value];
+
+  const ids = ['res-Vcyl-in3','res-Vcyl-gal','res-Vcyl-L','res-mult','res-Vacc-in3','res-Vacc-gal','res-Vacc-L'];
+  if (!Ppre || !Pmin || !Pmax || !d_in || !L_in || !n) {
+    ids.forEach(id => document.getElementById(id).textContent = '—');
+    return;
+  }
+
+  const Vcyl_in3 = Math.PI * Math.pow(d_in / 2, 2) * L_in;
+  const Vcyl_gal = Vcyl_in3 / 231;
+  const Vcyl_L = Vcyl_in3 / 61.0237;
+
+  const mult = Math.pow(Pmin / Ppre, 1 / n) / (1 - Math.pow(Pmin / Pmax, 1 / n));
+
+  const Vacc_in3 = mult * Vcyl_in3;
+  const Vacc_gal = mult * Vcyl_gal;
+  const Vacc_L = mult * Vcyl_L;
+
+  document.getElementById('res-Vcyl-in3').textContent = fmt(Vcyl_in3);
+  document.getElementById('res-Vcyl-gal').textContent = fmt(Vcyl_gal);
+  document.getElementById('res-Vcyl-L').textContent = fmt(Vcyl_L);
+
+  document.getElementById('res-mult').textContent = fmt(mult, 5);
+
+  document.getElementById('res-Vacc-in3').textContent = fmt(Vacc_in3);
+  document.getElementById('res-Vacc-gal').textContent = fmt(Vacc_gal);
+  document.getElementById('res-Vacc-L').textContent = fmt(Vacc_L);
+}
+
+calc();
+</script>
+</body>
+</html>

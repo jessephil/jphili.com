@@ -4,72 +4,155 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Thermal Expansion Calculator</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.6.0/dist/tabler-icons.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: #f4f3ef;
-      color: #1a1a18;
-      min-height: 100vh;
-      padding: 2rem 1rem;
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
     }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      color: var(--ink-mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
 
     .page {
-      max-width: 780px;
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
       margin: 0 auto;
-      background: #ffffff;
-      border-radius: 16px;
-      border: 0.5px solid rgba(0,0,0,0.12);
-      padding: 2rem 2.5rem;
+      padding: 3rem 3rem 5rem;
     }
 
-    .te-header { margin-bottom: 1.75rem; }
-    .te-header h1 { font-size: 22px; font-weight: 500; margin-bottom: 4px; }
-    .te-header p { font-size: 13px; color: #6b6b67; }
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      line-height: 1.7;
+    }
 
     .section-label {
       font-size: 11px;
       font-weight: 500;
-      color: #888780;
-      letter-spacing: 0.07em;
+      letter-spacing: 0.14em;
       text-transform: uppercase;
+      color: var(--gold);
       margin-bottom: 10px;
+    }
+
+    .inputs-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
     }
 
     .te-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
-      margin-bottom: 1.5rem;
+      gap: 14px;
     }
 
     .te-field { display: flex; flex-direction: column; gap: 6px; }
     .te-field label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
-      color: #6b6b67;
-      letter-spacing: 0.04em;
+      color: var(--ink-mid);
+      letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
     .te-field select,
     .te-field input {
-      border: 0.5px solid rgba(0,0,0,0.2);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 8px 10px;
+      padding: 9px 11px;
       font-size: 14px;
       font-family: inherit;
-      background: #fff;
-      color: #1a1a18;
+      background: var(--parchment);
+      color: var(--ink);
       outline: none;
-      transition: border-color 0.15s;
+      transition: border-color 0.2s;
     }
     .te-field select:focus,
     .te-field input:focus {
-      border-color: rgba(0,0,0,0.4);
-      box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+      border-color: var(--border-strong);
     }
 
     .te-results {
@@ -80,48 +163,54 @@
     }
 
     .te-result-card {
-      background: #f4f3ef;
-      border-radius: 8px;
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
       padding: 1rem;
     }
     .te-result-card .label {
-      font-size: 12px;
-      color: #6b6b67;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
       margin-bottom: 6px;
     }
     .te-result-card .value {
       font-size: 22px;
       font-weight: 500;
       line-height: 1.1;
+      color: var(--ink);
     }
     .te-result-card .unit {
       font-size: 12px;
-      color: #6b6b67;
+      color: var(--ink-faint);
       margin-top: 4px;
     }
 
     .te-force-card {
-      background: #f4f3ef;
-      border-radius: 8px;
+      background: var(--gold-pale);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
       padding: 1rem 1.25rem;
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 1.75rem;
     }
-    .te-force-card .label { font-size: 12px; color: #6b6b67; margin-bottom: 4px; }
-    .te-force-card .value { font-size: 28px; font-weight: 500; }
-    .te-force-card .unit { font-size: 13px; color: #6b6b67; }
+    .te-force-card .label { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .te-force-card .value { font-size: 28px; font-weight: 500; color: var(--ink); }
+    .te-force-card .unit { font-size: 13px; color: var(--ink-mid); }
 
     hr.te-divider {
       border: none;
-      border-top: 0.5px solid rgba(0,0,0,0.12);
+      border-top: 1px solid var(--border);
       margin: 1.75rem 0;
     }
 
     .te-table-wrap {
       border-radius: 12px;
-      border: 0.5px solid rgba(0,0,0,0.12);
+      border: 1px solid var(--border);
       overflow: hidden;
     }
 
@@ -132,50 +221,75 @@
       table-layout: fixed;
     }
     .te-table thead th {
-      background: #f4f3ef;
+      background: var(--parchment-deeper);
       font-weight: 500;
       font-size: 11px;
-      color: #888780;
+      color: var(--ink-mid);
       text-align: left;
       padding: 10px 14px;
-      border-bottom: 0.5px solid rgba(0,0,0,0.12);
-      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: 0.07em;
       text-transform: uppercase;
     }
     .te-table tbody td {
       padding: 10px 14px;
-      border-bottom: 0.5px solid rgba(0,0,0,0.08);
-      color: #1a1a18;
+      border-bottom: 0.5px solid var(--border);
+      color: var(--ink);
     }
     .te-table tbody tr:last-child td { border-bottom: none; }
+    .te-table tbody tr:hover td { background: var(--gold-pale); }
     .te-table tbody tr.active-row td {
-      background: #e6f1fb;
-      color: #185fa5;
+      background: var(--gold-pale);
+      color: var(--gold);
       font-weight: 500;
     }
 
-    .footer {
-      margin-top: 2rem;
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       font-size: 12px;
-      color: #aaa;
-      text-align: center;
     }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
 
     @media (max-width: 560px) {
-      .page { padding: 1.25rem; }
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
       .te-grid { grid-template-columns: 1fr; }
       .te-results { grid-template-columns: 1fr 1fr; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
     }
   </style>
 </head>
 <body>
-  <div class="page">
-    <div class="te-header">
-      <h1>Thermal expansion calculator</h1>
-      <p>Computes thermal elongation, strain, and induced stress for constrained members</p>
-    </div>
 
-    <p class="section-label">Inputs</p>
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Structural Engineering</p>
+    <h1 class="page-title">Thermal Expansion Calculator</h1>
+    <p class="page-subtitle">Computes thermal elongation, strain, and induced stress for constrained members.</p>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
     <div class="te-grid">
       <div class="te-field">
         <label>Material</label>
@@ -203,53 +317,57 @@
         <input type="number" id="area-in" value="1" step="0.01" min="0.001" />
       </div>
     </div>
-
-    <p class="section-label">Results</p>
-    <div class="te-results">
-      <div class="te-result-card">
-        <p class="label">Thermal elongation (ΔL)</p>
-        <p class="value" id="res-dl">—</p>
-        <p class="unit">inches</p>
-      </div>
-      <div class="te-result-card">
-        <p class="label">Thermal strain (ε)</p>
-        <p class="value" id="res-eps">—</p>
-        <p class="unit">in/in</p>
-      </div>
-      <div class="te-result-card">
-        <p class="label">Thermal stress (σ)</p>
-        <p class="value" id="res-sigma">—</p>
-        <p class="unit">psi</p>
-      </div>
-    </div>
-
-    <div class="te-force-card">
-      <div>
-        <p class="label">Induced force (F = σ × A)</p>
-        <p class="value" id="res-force">—</p>
-      </div>
-      <p class="unit">pounds</p>
-    </div>
-
-    <hr class="te-divider" />
-
-    <p class="section-label">Material reference table</p>
-    <div class="te-table-wrap">
-      <table class="te-table">
-        <thead>
-          <tr>
-            <th style="width:28%">Material</th>
-            <th style="width:26%">α (in/in·°F)</th>
-            <th style="width:26%">E (psi)</th>
-            <th style="width:20%">σ/ΔT (psi/°F)</th>
-          </tr>
-        </thead>
-        <tbody id="mat-table-body"></tbody>
-      </table>
-    </div>
-
-    <p class="footer">Based on AISC / engineering material standards</p>
   </div>
+
+  <p class="section-label">Results</p>
+  <div class="te-results">
+    <div class="te-result-card">
+      <p class="label">Thermal elongation (ΔL)</p>
+      <p class="value" id="res-dl">—</p>
+      <p class="unit">inches</p>
+    </div>
+    <div class="te-result-card">
+      <p class="label">Thermal strain (ε)</p>
+      <p class="value" id="res-eps">—</p>
+      <p class="unit">in/in</p>
+    </div>
+    <div class="te-result-card">
+      <p class="label">Thermal stress (σ)</p>
+      <p class="value" id="res-sigma">—</p>
+      <p class="unit">psi</p>
+    </div>
+  </div>
+
+  <div class="te-force-card">
+    <div>
+      <p class="label">Induced force (F = σ × A)</p>
+      <p class="value" id="res-force">—</p>
+    </div>
+    <p class="unit">pounds</p>
+  </div>
+
+  <hr class="te-divider" />
+
+  <p class="section-label">Material reference table</p>
+  <div class="te-table-wrap">
+    <table class="te-table">
+      <thead>
+        <tr>
+          <th style="width:28%">Material</th>
+          <th style="width:26%">α (in/in·°F)</th>
+          <th style="width:26%">E (psi)</th>
+          <th style="width:20%">σ/ΔT (psi/°F)</th>
+        </tr>
+      </thead>
+      <tbody id="mat-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
 
   <script>
     const materials = {

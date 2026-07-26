@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hoop Stress — Thick-Walled Cylinder</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --blue: #1c4f82;
+      --blue-pale: #e6f0fb;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      color: var(--ink-mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 3rem 3rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      max-width: 580px;
+      line-height: 1.7;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    /* ── INPUTS ── */
+    .inputs-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-mid);
+      background: var(--parchment);
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* ── SUMMARY CARDS ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .s-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .s-card .slabel {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+    }
+    .s-card .svalue {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .s-card .sunit {
+      font-size: 11px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+    .s-card.highlight {
+      background: var(--gold-pale);
+      border-color: var(--border-strong);
+    }
+    .s-card.highlight .svalue { color: var(--gold); }
+
+    /* safety factor badge */
+    .sf-badge {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .sf-ok   { background: var(--green-pale); color: var(--green); }
+    .sf-warn { background: var(--red-pale);   color: var(--red); }
+
+    /* ── CHART ── */
+    .chart-wrap {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .chart-title {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 12px;
+    }
+    canvas#stress-chart {
+      width: 100% !important;
+      height: 220px !important;
+    }
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      background: var(--parchment-deeper);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      text-align: right;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    thead th:first-child { text-align: left; }
+    tbody td {
+      padding: 9px 14px;
+      border-bottom: 0.5px solid var(--border);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--ink);
+      white-space: nowrap;
+    }
+    tbody td:first-child { text-align: left; color: var(--ink-mid); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--gold-pale); }
+    tbody tr.wall-inner td { font-weight: 500; }
+    tbody tr.wall-outer td { font-weight: 500; }
+    .neg { color: var(--red); }
+    .pos { color: var(--ink); }
+
+    /* ── FORMULA ── */
+    .formula-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.75rem;
+    }
+    .formula-title {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 10px;
+    }
+    .formula-block {
+      font-family: 'Georgia', serif;
+      font-size: 15px;
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 0;
+    }
+    .formula-vars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Pressure Vessel Design</p>
+    <h1 class="page-title">Hoop Stress — Thick-Walled Cylinder</h1>
+    <p class="page-subtitle">Lamé equations for tangential, radial, and longitudinal stress distribution through a thick-walled pressure vessel, with Von Mises equivalent stress.</p>
+  </div>
+
+  <!-- INPUTS -->
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Internal pressure (P)</label>
+        <div class="field-row">
+          <input type="number" id="inp-P" value="5000" min="0" step="100" oninput="calc()" />
+          <select id="unit-P" onchange="calc()">
+            <option value="psi">psi</option>
+            <option value="bar">bar</option>
+            <option value="kpa">kPa</option>
+            <option value="mpa">MPa</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Inner radius (rᵢ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-ri" value="6" min="0.001" step="0.1" oninput="calc()" />
+          <select id="unit-r" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Outer radius (r<sub>o</sub>)</label>
+        <div class="field-row">
+          <input type="number" id="inp-ro" value="8" min="0.001" step="0.1" oninput="calc()" />
+          <select id="unit-ro" style="display:none;" onchange="calc()">
+            <option value="in">in</option>
+          </select>
+        </div>
+        <span style="font-size:11px;color:var(--ink-faint);font-style:italic;margin-top:2px;">same unit as inner radius</span>
+      </div>
+
+      <div class="field">
+        <label>Material yield strength (Sᵧ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-Sy" value="36000" min="0" step="500" oninput="calc()" />
+          <select id="unit-Sy" onchange="calc()">
+            <option value="psi">psi</option>
+            <option value="mpa">MPa</option>
+            <option value="ksi">ksi</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Steps across wall</label>
+        <div class="field-row">
+          <input type="number" id="inp-steps" value="10" min="2" max="50" step="1" oninput="calc()" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <p class="section-label">Key Results</p>
+  <div class="summary-grid" style="margin-bottom:1.5rem;">
+    <div class="s-card highlight">
+      <p class="slabel">Max tangential σ<sub>θ</sub> (inner)</p>
+      <p class="svalue" id="res-tan-inner">—</p>
+      <p class="sunit" id="res-tan-inner-unit">psi</p>
+    </div>
+    <div class="s-card">
+      <p class="slabel">Max radial σ<sub>r</sub> (inner)</p>
+      <p class="svalue" id="res-rad-inner">—</p>
+      <p class="sunit" id="res-rad-inner-unit">psi</p>
+    </div>
+    <div class="s-card">
+      <p class="slabel">Longitudinal σ<sub>L</sub></p>
+      <p class="svalue" id="res-long">—</p>
+      <p class="sunit" id="res-long-unit">psi</p>
+    </div>
+    <div class="s-card">
+      <p class="slabel">Max Von Mises σ<sub>VM</sub></p>
+      <p class="svalue" id="res-vm-max">—</p>
+      <p class="sunit" id="res-vm-max-unit">psi</p>
+      <span class="sf-badge" id="sf-badge"></span>
+    </div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-wrap">
+    <p class="chart-title">Stress distribution through wall thickness</p>
+    <canvas id="stress-chart"></canvas>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#c9a84c;"></div>Tangential (σ<sub>θ</sub>)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7a2a2a;"></div>Radial (σ<sub>r</sub>)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#1c4f82;"></div>Von Mises (σ<sub>VM</sub>)</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <p class="section-label">Stress Distribution Table</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Location</th>
+          <th>Radius</th>
+          <th>Tangential σ<sub>θ</sub></th>
+          <th>Radial σ<sub>r</sub></th>
+          <th>Longitudinal σ<sub>L</sub></th>
+          <th>Von Mises σ<sub>VM</sub></th>
+        </tr>
+      </thead>
+      <tbody id="stress-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Lamé Equations — Thick-Walled Cylinder</p>
+    <div class="formula-block">
+      <span>σ<sub>θ</sub> = P·rᵢ² / (r<sub>o</sub>²−rᵢ²) · (1 + r<sub>o</sub>²/r²)&nbsp;&nbsp;[tangential]</span>
+      <span>σ<sub>r</sub> = P·rᵢ² / (r<sub>o</sub>²−rᵢ²) · (1 − r<sub>o</sub>²/r²)&nbsp;&nbsp;[radial]</span>
+      <span>σ<sub>L</sub> = P·rᵢ² / (r<sub>o</sub>²−rᵢ²)&nbsp;&nbsp;[longitudinal, closed ends]</span>
+      <span>σ<sub>VM</sub> = √(σ<sub>θ</sub>²+σ<sub>r</sub>²+σ<sub>L</sub>²−σ<sub>θ</sub>σ<sub>r</sub>−σ<sub>θ</sub>σ<sub>L</sub>−σ<sub>r</sub>σ<sub>L</sub>)&nbsp;&nbsp;[Von Mises]</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>P</strong> = internal pressure</span>
+      <span class="fvar"><strong>rᵢ</strong> = inner radius</span>
+      <span class="fvar"><strong>r<sub>o</sub></strong> = outer radius</span>
+      <span class="fvar"><strong>r</strong> = radius at point of interest</span>
+      <span class="fvar"><strong>Sᵧ</strong> = material yield strength (for safety factor)</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const toPsi = { psi: 1, bar: 14.5038, kpa: 0.145038, mpa: 145.038 };
+const toIn  = { in: 1, mm: 0.0393701, cm: 0.393701 };
+const toSyPsi = { psi: 1, mpa: 145.038, ksi: 1000 };
+
+let chart = null;
+
+function fmt(v, dec) {
+  if (!isFinite(v)) return '—';
+  return v.toLocaleString(undefined, { minimumFractionDigits: dec ?? 1, maximumFractionDigits: dec ?? 1 });
+}
+
+function vonMises(st, sr, sl) {
+  return Math.sqrt(st*st + sr*sr + sl*sl - st*sr - st*sl - sr*sl);
+}
+
+function calc() {
+  const P_raw  = parseFloat(document.getElementById('inp-P').value)     || 0;
+  const ri_raw = parseFloat(document.getElementById('inp-ri').value)    || 0;
+  const ro_raw = parseFloat(document.getElementById('inp-ro').value)    || 0;
+  const Sy_raw = parseFloat(document.getElementById('inp-Sy').value)    || 0;
+  const steps  = Math.max(2, Math.min(50, parseInt(document.getElementById('inp-steps').value) || 10));
+
+  const P  = P_raw  * toPsi[document.getElementById('unit-P').value];
+  const ri = ri_raw * toIn[document.getElementById('unit-r').value];
+  const ro = ro_raw * toIn[document.getElementById('unit-r').value];
+  const Sy = Sy_raw * toSyPsi[document.getElementById('unit-Sy').value];
+
+  const unitLabel = document.getElementById('unit-P').value === 'mpa' ? 'MPa' : 'psi';
+
+  if (!P || !ri || !ro || ro <= ri) return;
+
+  const k  = ri * ri;
+  const m  = ro * ro;
+  const A  = P * k / (m - k);
+  const sl = A; // longitudinal (closed ends)
+
+  const radii = [];
+  for (let i = 0; i <= steps; i++) {
+    radii.push(ri + (ro - ri) * i / steps);
+  }
+
+  const rows = radii.map(r => {
+    const r2 = r * r;
+    const st = A * (1 + m / r2);   // tangential
+    const sr = A * (1 - m / r2);   // radial
+    const vm = vonMises(st, sr, sl);
+    return { r, st, sr, sl, vm };
+  });
+
+  // Summary (inner wall is critical)
+  const inner = rows[0];
+  const maxVm = Math.max(...rows.map(r => r.vm));
+
+  document.getElementById('res-tan-inner').textContent     = fmt(inner.st);
+  document.getElementById('res-rad-inner').textContent     = fmt(inner.sr);
+  document.getElementById('res-long').textContent          = fmt(sl);
+  document.getElementById('res-vm-max').textContent        = fmt(maxVm);
+  ['res-tan-inner-unit','res-rad-inner-unit','res-long-unit','res-vm-max-unit']
+    .forEach(id => document.getElementById(id).textContent = 'psi');
+
+  // Safety factor badge
+  const SF = Sy / maxVm;
+  const badge = document.getElementById('sf-badge');
+  if (Sy > 0) {
+    badge.textContent = `SF = ${SF.toFixed(2)}`;
+    badge.className = 'sf-badge ' + (SF >= 1 ? 'sf-ok' : 'sf-warn');
+  } else {
+    badge.textContent = '';
+  }
+
+  // Table
+  const tbody = document.getElementById('stress-tbody');
+  tbody.innerHTML = '';
+  rows.forEach((row, i) => {
+    const tr = document.createElement('tr');
+    if (i === 0) tr.classList.add('wall-inner');
+    if (i === rows.length - 1) tr.classList.add('wall-outer');
+    const loc = i === 0 ? 'Inner wall' : i === rows.length - 1 ? 'Outer wall' : `Step ${i}`;
+    tr.innerHTML = `
+      <td>${loc}</td>
+      <td>${fmt(row.r, 3)} in</td>
+      <td class="pos">${fmt(row.st)}</td>
+      <td class="${row.sr < 0 ? 'neg' : 'pos'}">${fmt(row.sr)}</td>
+      <td class="pos">${fmt(row.sl)}</td>
+      <td>${fmt(row.vm)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Chart
+  const labels = rows.map(r => r.r.toFixed(3));
+  const tan  = rows.map(r => r.st);
+  const rad  = rows.map(r => r.sr);
+  const vm   = rows.map(r => r.vm);
+
+  const parchment = '#f5eedf';
+  const gold      = '#c9a84c';
+  const redC      = '#7a2a2a';
+  const blueC     = '#1c4f82';
+
+  if (chart) chart.destroy();
+  const ctx = document.getElementById('stress-chart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Tangential', data: tan, borderColor: gold,  backgroundColor: gold  + '18', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false },
+        { label: 'Radial',     data: rad, borderColor: redC,  backgroundColor: redC  + '18', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false },
+        { label: 'Von Mises',  data: vm,  borderColor: blueC, backgroundColor: blueC + '18', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: false },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#2a2218ee',
+          titleColor: '#f5eedf',
+          bodyColor: '#d9cdb0',
+          callbacks: {
+            title: items => `r = ${items[0].label} in`,
+            label: item => ` ${item.dataset.label}: ${Number(item.raw).toLocaleString(undefined,{maximumFractionDigits:1})} psi`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Radius (in)', color: '#9a8e78', font: { size: 11 } },
+          ticks: { color: '#9a8e78', font: { size: 11 }, maxTicksLimit: 8 },
+          grid: { color: 'rgba(138,109,47,0.12)' }
+        },
+        y: {
+          title: { display: true, text: 'Stress (psi)', color: '#9a8e78', font: { size: 11 } },
+          ticks: { color: '#9a8e78', font: { size: 11 },
+            callback: v => v >= 1000 || v <= -1000 ? (v/1000).toFixed(0)+'k' : v
+          },
+          grid: { color: 'rgba(138,109,47,0.12)' }
+        }
+      }
+    }
+  });
+}
+
+calc();
+</script>
+</body>
+</html>

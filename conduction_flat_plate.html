@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conduction — Flat Plate</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      color: var(--ink-mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 3rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      max-width: 560px;
+      line-height: 1.7;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    /* ── INPUTS ── */
+    .inputs-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .mat-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .mat-row label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      white-space: nowrap;
+    }
+    .mat-row select {
+      flex: 1;
+      min-width: 180px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .mat-row select:focus { border-color: var(--border-strong); }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-mid);
+      background: var(--parchment);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+
+    /* ── RESULTS ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 1.5rem;
+    }
+
+    .result-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .result-card.primary {
+      background: var(--gold-pale);
+      border-color: var(--border-strong);
+    }
+    .result-card .rlabel {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+    }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue {
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .result-card .runit {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+    .result-card .rsub {
+      font-size: 12px;
+      color: var(--ink-mid);
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 0.5px solid var(--border);
+    }
+
+    /* ── REFERENCE TABLE ── */
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+    .search-wrap svg {
+      position: absolute;
+      left: 10px; top: 50%;
+      transform: translateY(-50%);
+      width: 14px; height: 14px;
+      stroke: var(--ink-faint); fill: none;
+      stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .search-wrap input {
+      width: 100%;
+      padding: 9px 12px 9px 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--parchment-dark);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-wrap input:focus { border-color: var(--border-strong); }
+    .search-wrap input::placeholder { color: var(--ink-faint); }
+
+    .table-wrap {
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    thead th {
+      background: var(--parchment-deeper);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    thead th:not(:first-child) { text-align: right; }
+    thead th:hover { color: var(--gold); }
+    thead th.sorted .sort-arrow { color: var(--gold); }
+
+    tbody td {
+      padding: 10px 14px;
+      border-bottom: 0.5px solid var(--border);
+      color: var(--ink);
+    }
+    tbody td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--gold-pale); }
+    tbody tr.active-row td { background: var(--gold-pale); color: var(--gold); font-weight: 500; }
+
+    .count-label {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 8px;
+      text-align: right;
+    }
+
+    /* ── FORMULA ── */
+    .formula-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.75rem;
+    }
+    .formula-title {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 10px;
+    }
+    .formula-block {
+      font-family: 'Georgia', serif;
+      font-size: 20px;
+      color: var(--ink);
+      text-align: center;
+      padding: 12px 0;
+      letter-spacing: 0.02em;
+    }
+    .formula-vars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .result-card .rvalue { font-size: 20px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Heat Transfer</p>
+    <h1 class="page-title">Conduction — Flat Plate</h1>
+    <p class="page-subtitle">Fourier's Law for steady-state conduction through a flat plate — computes heat transfer rate from geometry, temperature difference, and material conductivity.</p>
+  </div>
+
+  <!-- INPUTS -->
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="mat-row">
+      <label>Material preset</label>
+      <select id="mat-preset" onchange="applyPreset()">
+        <option value="">— select a material —</option>
+        <option value="50">Cast Iron (Gray) — 50 W/m·K</option>
+        <option value="50">Mild Steel (A36) — 50 W/m·K</option>
+        <option value="51">Steel G10300 (1030) — 51 W/m·K</option>
+        <option value="49">Carbon Steel 1045 — 49 W/m·K</option>
+        <option value="42.7">4140 — 42.7 W/m·K</option>
+        <option value="44.5">4340 — 44.5 W/m·K</option>
+        <option value="20">Tool Steel D2 — 20 W/m·K</option>
+        <option value="44">8620 (carburized) — 44 W/m·K</option>
+        <option value="16.2">Stainless Steel 304 — 16.2 W/m·K</option>
+        <option value="16.3">Stainless Steel 316 — 16.3 W/m·K</option>
+        <option value="24.9">416 Stainless (HT) — 24.9 W/m·K</option>
+        <option value="120">Brass C26000 — 120 W/m·K</option>
+        <option value="115">Brass C36000 — 115 W/m·K</option>
+        <option value="59">Aluminum Bronze C95400 — 59 W/m·K</option>
+        <option value="401">Copper C10100 — 401 W/m·K</option>
+        <option value="167">Aluminum 6061-T6 — 167 W/m·K</option>
+        <option value="130">Aluminum 7075-T6 — 130 W/m·K</option>
+        <option value="6.7">Titanium Ti-6Al-4V — 6.7 W/m·K</option>
+        <option value="96">Magnesium AZ31B — 96 W/m·K</option>
+        <option value="0.25">PTFE (Teflon) — 0.25 W/m·K</option>
+        <option value="0.25">Nylon 6/6 — 0.25 W/m·K</option>
+        <option value="0.2">Polycarbonate — 0.2 W/m·K</option>
+        <option value="0.18">ABS — 0.18 W/m·K</option>
+        <option value="0.25">PEEK — 0.25 W/m·K</option>
+        <option value="0.2">Epoxy (unfilled) — 0.2 W/m·K</option>
+        <option value="1.4">Concrete — 1.4 W/m·K</option>
+        <option value="0.17">Wood (Oak) — 0.17 W/m·K</option>
+        <option value="0.04">Fiberglass Insulation — 0.04 W/m·K</option>
+      </select>
+    </div>
+
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Conductivity (k)</label>
+        <div class="field-row">
+          <input type="number" id="inp-k" value="50" min="0.001" step="0.1" oninput="calc()" />
+          <select id="unit-k" onchange="calc()">
+            <option value="wmk">W/m·K</option>
+            <option value="btu">BTU/hr·ft·°F</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Area (A)</label>
+        <div class="field-row">
+          <input type="number" id="inp-A" value="675" min="0.001" step="1" oninput="calc()" />
+          <select id="unit-A" onchange="calc()">
+            <option value="in2">in²</option>
+            <option value="ft2">ft²</option>
+            <option value="m2">m²</option>
+            <option value="cm2">cm²</option>
+            <option value="mm2">mm²</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Thickness (X)</label>
+        <div class="field-row">
+          <input type="number" id="inp-X" value="1.75" min="0.0001" step="0.01" oninput="calc()" />
+          <select id="unit-X" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="m">m</option>
+            <option value="ft">ft</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Temperature difference (ΔT)</label>
+        <div class="field-row">
+          <input type="number" id="inp-dT" value="42" step="0.1" oninput="calc()" />
+          <select id="unit-dT" onchange="calc()">
+            <option value="C">°C / K</option>
+            <option value="F">°F</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card primary">
+      <p class="rlabel">Heat transfer rate (Q)</p>
+      <p class="rvalue" id="res-Q-W">—</p>
+      <p class="runit">watts</p>
+      <p class="rsub" id="res-Q-sub">—</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Thermal resistance (R)</p>
+      <p class="rvalue" id="res-R">—</p>
+      <p class="runit">K/W</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Heat flux (q)</p>
+      <p class="rvalue" id="res-flux">—</p>
+      <p class="runit">W/m²</p>
+      <p class="rsub" id="res-flux-sub">—</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Insulation R-value</p>
+      <p class="rvalue" id="res-Rimp">—</p>
+      <p class="runit">hr·ft²·°F / BTU</p>
+      <p class="rsub" id="res-Rimp-sub">—</p>
+    </div>
+  </div>
+
+  <!-- REFERENCE TABLE -->
+  <p class="section-label">Material reference table</p>
+  <div class="controls">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search" placeholder="Search materials…" />
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th id="th-name" onclick="sortBy('name')">Material <span class="sort-arrow">↕</span></th>
+          <th id="th-k" onclick="sortBy('k')" class="sorted" style="text-align:right;">k (W/m·K) <span class="sort-arrow">↓</span></th>
+          <th style="text-align:right;">k (BTU/hr·ft·°F)</th>
+          <th style="text-align:right;">Q at inputs (W)</th>
+        </tr>
+      </thead>
+      <tbody id="mat-tbody"></tbody>
+    </table>
+  </div>
+  <p class="count-label" id="count-label"></p>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Fourier's Law — Flat Plate</p>
+    <div class="formula-block">Q = k · A · ΔT / X</div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>Q</strong> = heat transfer rate (W)</span>
+      <span class="fvar"><strong>k</strong> = thermal conductivity (W/m·K)</span>
+      <span class="fvar"><strong>A</strong> = cross-sectional area (m²)</span>
+      <span class="fvar"><strong>ΔT</strong> = temperature difference (K or °C)</span>
+      <span class="fvar"><strong>X</strong> = plate thickness (m)</span>
+      <span class="fvar"><strong>R (SI)</strong> = X / (k·A) — thermal resistance (K/W)</span>
+      <span class="fvar"><strong>R (imperial)</strong> = X<sub>ft</sub> / k<sub>BTU</sub> — insulation R-value (hr·ft²·°F/BTU)</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+const materials = [
+  { name: "Cast Iron (Gray)",          k: 50    },
+  { name: "Mild Steel (A36)",          k: 50    },
+  { name: "Steel G10300 (1030)",       k: 51    },
+  { name: "Carbon Steel 1045",         k: 49    },
+  { name: "4140",                      k: 42.7  },
+  { name: "4340",                      k: 44.5  },
+  { name: "Tool Steel D2",             k: 20    },
+  { name: "8620 (carburized)",         k: 44    },
+  { name: "Stainless Steel 304",       k: 16.2  },
+  { name: "Stainless Steel 316",       k: 16.3  },
+  { name: "416 Stainless (HT)",        k: 24.9  },
+  { name: "Brass (C26000)",            k: 120   },
+  { name: "Brass C36000",              k: 115   },
+  { name: "Aluminum Bronze C95400",    k: 59    },
+  { name: "Copper (C10100)",           k: 401   },
+  { name: "Aluminum 6061-T6",          k: 167   },
+  { name: "Aluminum 7075-T6",          k: 130   },
+  { name: "Titanium Ti-6Al-4V",        k: 6.7   },
+  { name: "Magnesium AZ31B",           k: 96    },
+  { name: "PTFE (Teflon)",             k: 0.25  },
+  { name: "Nylon 6/6 (dry)",           k: 0.25  },
+  { name: "Polycarbonate",             k: 0.2   },
+  { name: "ABS",                       k: 0.18  },
+  { name: "PEEK",                      k: 0.25  },
+  { name: "Epoxy (unfilled)",          k: 0.2   },
+  { name: "Concrete",                  k: 1.4   },
+  { name: "Wood (Oak)",                k: 0.17  },
+  { name: "Fiberglass Insulation",     k: 0.04  },
+];
+
+// Unit conversions to SI
+const toWmK = { wmk: 1, btu: 1.73073 };
+const toM2  = { in2: 6.4516e-4, ft2: 0.092903, m2: 1, cm2: 1e-4, mm2: 1e-6 };
+const toM   = { in: 0.0254, mm: 0.001, cm: 0.01, m: 1, ft: 0.3048 };
+const toDTK = { C: 1, F: 5/9 };
+
+let sortKey = 'k';
+let sortDir = -1;
+let query = '';
+
+function getInputsSI() {
+  const k  = parseFloat(document.getElementById('inp-k').value)  || 0;
+  const A  = parseFloat(document.getElementById('inp-A').value)  || 0;
+  const X  = parseFloat(document.getElementById('inp-X').value)  || 0;
+  const dT = parseFloat(document.getElementById('inp-dT').value) || 0;
+  return {
+    k_si:  k  * toWmK[document.getElementById('unit-k').value],
+    A_si:  A  * toM2[document.getElementById('unit-A').value],
+    X_si:  X  * toM[document.getElementById('unit-X').value],
+    dT_si: dT * toDTK[document.getElementById('unit-dT').value],
+  };
+}
+
+function fmt(v, dec) {
+  if (!isFinite(v) || v === 0) return '—';
+  if (Math.abs(v) >= 1e6)  return (v/1e6).toLocaleString(undefined,{maximumFractionDigits:2}) + ' M';
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined,{maximumFractionDigits:0});
+  if (Math.abs(v) >= 1)    return v.toLocaleString(undefined,{maximumFractionDigits: dec ?? 2});
+  return v.toPrecision(3);
+}
+
+function calc() {
+  const { k_si, A_si, X_si, dT_si } = getInputsSI();
+  if (!k_si || !A_si || !X_si || !dT_si) return;
+
+  const Q_W   = k_si * A_si * dT_si / X_si;
+  const R_KW  = X_si / (k_si * A_si);
+  const flux  = Q_W / A_si; // W/m²
+
+  document.getElementById('res-Q-W').textContent   = fmt(Q_W, 1);
+  document.getElementById('res-Q-sub').textContent = fmt(Q_W / 1000, 3) + ' kW  |  ' + fmt(Q_W * 3.41214, 1) + ' BTU/hr';
+  document.getElementById('res-R').textContent     = fmt(R_KW, 4);
+  document.getElementById('res-flux').textContent  = fmt(flux, 1);
+  document.getElementById('res-flux-sub').textContent = fmt(flux / 10000, 3) + ' W/cm²';
+
+  // Imperial R-value: R = X_ft / k_btu  (hr·ft²·°F/BTU) — material property per unit area, independent of A
+  const k_btu  = k_si / 1.73073;          // W/m·K → BTU/hr·ft·°F
+  const X_ft   = X_si / 0.3048;           // m → ft
+  const R_imp  = X_ft / k_btu;
+  document.getElementById('res-Rimp').textContent = fmt(R_imp, 2);
+  document.getElementById('res-Rimp-sub').textContent = 'R-' + Math.round(R_imp) + ' (nearest whole)';
+
+  renderTable();
+}
+
+function renderTable() {
+  const { k_si, A_si, X_si, dT_si } = getInputsSI();
+  const activeK = parseFloat(document.getElementById('inp-k').value) *
+                  toWmK[document.getElementById('unit-k').value];
+
+  let rows = materials.filter(m => m.name.toLowerCase().includes(query.toLowerCase()));
+  rows = rows.slice().sort((a, b) => {
+    if (sortKey === 'name') return sortDir * a.name.localeCompare(b.name);
+    return sortDir * (a.k - b.k);
+  });
+
+  const tbody = document.getElementById('mat-tbody');
+  tbody.innerHTML = '';
+  rows.forEach(m => {
+    const Q = A_si && X_si && dT_si ? m.k * A_si * dT_si / X_si : null;
+    const btu = (m.k / 1.73073).toFixed(3);
+    const tr = document.createElement('tr');
+    if (Math.abs(m.k - activeK) < 0.001) tr.classList.add('active-row');
+    tr.innerHTML = `
+      <td>${m.name}</td>
+      <td>${m.k}</td>
+      <td>${btu}</td>
+      <td>${Q !== null ? fmt(Q, 1) : '—'}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('count-label').textContent =
+    rows.length === materials.length ? `${materials.length} materials` : `${rows.length} of ${materials.length} materials`;
+
+  ['name','k'].forEach(k => {
+    const th = document.getElementById('th-' + k);
+    if (!th) return;
+    th.classList.toggle('sorted', sortKey === k);
+    th.querySelector('.sort-arrow').textContent = (sortKey === k) ? (sortDir === 1 ? '↑' : '↓') : '↕';
+  });
+}
+
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = key === 'k' ? -1 : 1; }
+  renderTable();
+}
+
+function applyPreset() {
+  const val = document.getElementById('mat-preset').value;
+  if (!val) return;
+  document.getElementById('inp-k').value = val;
+  document.getElementById('unit-k').value = 'wmk';
+  calc();
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  query = e.target.value;
+  renderTable();
+});
+
+['unit-k','unit-A','unit-X','unit-dT'].forEach(id =>
+  document.getElementById(id).addEventListener('change', calc)
+);
+
+calc();
+</script>
+</body>
+</html>

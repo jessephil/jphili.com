@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bearing L10 Life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      color: var(--ink-mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 3rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      max-width: 580px;
+      line-height: 1.7;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--parchment-dark);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 11px 16px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-mid);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .tab-btn.active {
+      background: var(--ink);
+      color: var(--parchment);
+    }
+    .tab-btn:not(.active):hover { background: var(--parchment-deeper); }
+
+    /* ── CARDS ── */
+    .calc-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .calc-card.active { display: block; }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 1.25rem;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-mid);
+      background: var(--parchment);
+      outline: none;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+    .field-note {
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-style: italic;
+    }
+
+    /* ── RESULT AREA ── */
+    .result-area {
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+      margin-top: 0.25rem;
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .result-card {
+      background: var(--parchment);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .result-card.primary {
+      background: var(--gold-pale);
+      border-color: var(--border-strong);
+    }
+    .result-card .rlabel {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+    }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue {
+      font-size: 26px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .result-card .runit {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+    .result-card .rsub {
+      font-size: 12px;
+      color: var(--ink-mid);
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 0.5px solid var(--border);
+    }
+
+    /* life badge */
+    .life-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-good   { background: var(--green-pale); color: var(--green); }
+    .badge-warn   { background: var(--amber-pale); color: var(--amber); }
+    .badge-bad    { background: var(--red-pale);   color: var(--red); }
+
+    /* ── FORMULA ── */
+    .formula-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.75rem;
+    }
+    .formula-title {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 10px;
+    }
+    .formula-block {
+      font-family: 'Georgia', serif;
+      font-size: 17px;
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 0;
+    }
+    .formula-vars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .result-row { grid-template-columns: 1fr 1fr; }
+      .result-card .rvalue { font-size: 20px; }
+      .tab-btn { font-size: 12px; padding: 10px 8px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Bearing L10 Life</h1>
+    <p class="page-subtitle">Standard bearing life calculations per ISO 281 — compute expected L10 life from a known bearing rating, or find the required dynamic load rating for a target service life.</p>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('l10')">Calculate L10 Life</button>
+    <button class="tab-btn" onclick="switchTab('c')">Find Required Rating (C)</button>
+  </div>
+
+  <!-- CALCULATOR 1: L10 from C -->
+  <div class="calc-card active" id="card-l10">
+    <p class="section-label" style="margin-bottom:14px;">Inputs</p>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Dynamic load rating (C)</label>
+        <div class="field-row">
+          <input type="number" id="l10-C" value="104000" min="0.001" step="100" oninput="calcL10()" />
+          <select id="l10-unit-C" onchange="calcL10()">
+            <option value="lbs">lbs</option>
+            <option value="kN">kN</option>
+            <option value="N">N</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Equivalent radial load (Pr)</label>
+        <div class="field-row">
+          <input type="number" id="l10-Pr" value="43960" min="0.001" step="100" oninput="calcL10()" />
+          <select id="l10-unit-Pr" onchange="calcL10()">
+            <option value="lbs">lbs</option>
+            <option value="kN">kN</option>
+            <option value="N">N</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Speed (n)</label>
+        <div class="field-row">
+          <input type="number" id="l10-n" value="50" min="0.001" step="1" oninput="calcL10()" />
+          <select id="l10-unit-n" onchange="calcL10()">
+            <option value="rpm">rpm</option>
+            <option value="rps">rps</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bearing type</label>
+        <div class="field-row">
+          <select id="l10-e" onchange="calcL10()" style="flex:1;">
+            <option value="3.3333">Tapered roller bearing (e = 10/3, 90M rev ref)</option>
+            <option value="3">Ball bearing (e = 3, 1M rev ref)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="result-area">
+      <p class="section-label" style="margin-bottom:12px;">Results</p>
+      <div class="result-row">
+        <div class="result-card primary">
+          <p class="rlabel">L10 life</p>
+          <p class="rvalue" id="l10-res-hours">—</p>
+          <p class="runit">hours</p>
+          <span class="life-badge" id="l10-badge"></span>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">L10 life</p>
+          <p class="rvalue" id="l10-res-revs">—</p>
+          <p class="runit">million revolutions</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Load ratio (C / Pr)</p>
+          <p class="rvalue" id="l10-res-ratio">—</p>
+          <p class="runit">dimensionless</p>
+          <p class="rsub" id="l10-res-ratio-sub"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULATOR 2: Required C -->
+  <div class="calc-card" id="card-c">
+    <p class="section-label" style="margin-bottom:14px;">Inputs</p>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Equivalent radial load (Pr)</label>
+        <div class="field-row">
+          <input type="number" id="c-Pr" value="43982" min="0.001" step="100" oninput="calcC()" />
+          <select id="c-unit-Pr" onchange="calcC()">
+            <option value="lbs">lbs</option>
+            <option value="kN">kN</option>
+            <option value="N">N</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Speed (n)</label>
+        <div class="field-row">
+          <input type="number" id="c-n" value="50" min="0.001" step="1" oninput="calcC()" />
+          <select id="c-unit-n" onchange="calcC()">
+            <option value="rpm">rpm</option>
+            <option value="rps">rps</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Target L10 life</label>
+        <div class="field-row">
+          <input type="number" id="c-life" value="50000" min="1" step="100" oninput="calcC()" />
+          <select id="c-unit-life" onchange="calcC()">
+            <option value="hours">hours</option>
+            <option value="revs">million rev</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bearing type</label>
+        <div class="field-row">
+          <select id="c-e" onchange="calcC()" style="flex:1;">
+            <option value="3.3333">Tapered roller bearing (e = 10/3, 90M rev ref)</option>
+            <option value="3">Ball bearing (e = 3, 1M rev ref)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="result-area">
+      <p class="section-label" style="margin-bottom:12px;">Results</p>
+      <div class="result-row">
+        <div class="result-card primary">
+          <p class="rlabel">Required rating (C)</p>
+          <p class="rvalue" id="c-res-C">—</p>
+          <p class="runit" id="c-res-C-unit">lbs</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Target life</p>
+          <p class="rvalue" id="c-res-revs">—</p>
+          <p class="runit">million revolutions</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">C / Pr ratio</p>
+          <p class="rvalue" id="c-res-ratio">—</p>
+          <p class="runit">dimensionless</p>
+          <p class="rsub" id="c-res-ratio-sub"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">ISO 281 — Basic Rating Life</p>
+    <div class="formula-block">
+      <span><em>Ball bearings (e = 3, ref = 1M rev):</em></span>
+      <span>L10 (rev) = (C / Pr)³ × 1 &nbsp;&nbsp;[millions of revolutions]</span>
+      <span><em>Roller bearings (e = 10/3, ref = 90M rev):</em></span>
+      <span>L10 (rev) = (C / Pr)<sup>10/3</sup> × 90 &nbsp;&nbsp;[millions of revolutions]</span>
+      <span>L10 (hrs) = L10 (rev) × 10⁶ / (60 × n)</span>
+      <span>C = Pr × (L10_rev / L<sub>ref</sub>)<sup>1/e</sup> &nbsp;&nbsp;[required rating]</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>C</strong> = basic dynamic load rating (lbs or kN)</span>
+      <span class="fvar"><strong>Pr</strong> = equivalent radial load</span>
+      <span class="fvar"><strong>n</strong> = rotational speed (rpm)</span>
+      <span class="fvar"><strong>e</strong> = load-life exponent (3 = ball, 10/3 = roller)</span>
+      <span class="fvar"><strong>L<sub>ref</sub></strong> = reference life (1M rev = ball, 90M rev = roller)</span>
+      <span class="fvar"><strong>L10</strong> = life at 90% reliability</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// Unit conversions — keep everything in lbs and rpm internally
+const toForce = { lbs: 1, kN: 224.809, N: 0.224809 };
+const toRpm   = { rpm: 1, rps: 60 };
+
+function fmt(v, dec) {
+  if (!isFinite(v) || v === null) return '—';
+  if (v === 0) return '0';
+  if (Math.abs(v) >= 1e9)  return (v/1e9).toFixed(2) + 'B';
+  if (Math.abs(v) >= 1e6)  return (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  return v.toLocaleString(undefined, { maximumFractionDigits: dec ?? 1 });
+}
+
+function lifeBadge(hours) {
+  if (hours >= 50000) return ['badge-good', '≥ 50,000 hrs — long service life'];
+  if (hours >= 20000) return ['badge-warn', '20,000–50,000 hrs — moderate service life'];
+  return ['badge-bad', '< 20,000 hrs — short service life'];
+}
+
+// ISO 281: C is rated at 1M rev for ball bearings (e=3), 90M rev for roller bearings (e=10/3)
+function refLife(e) { return Math.abs(e - 3) < 0.01 ? 1 : 90; }
+
+function calcL10() {
+  const C  = (parseFloat(document.getElementById('l10-C').value)  || 0) * toForce[document.getElementById('l10-unit-C').value];
+  const Pr = (parseFloat(document.getElementById('l10-Pr').value) || 0) * toForce[document.getElementById('l10-unit-Pr').value];
+  const n  = (parseFloat(document.getElementById('l10-n').value)  || 0) * toRpm[document.getElementById('l10-unit-n').value];
+  const e  =  parseFloat(document.getElementById('l10-e').value)  || 3;
+
+  if (!C || !Pr || !n) return;
+
+  const Lref    = refLife(e);                        // 1 or 90 million rev
+  const ratio   = C / Pr;
+  const L10_rev = Math.pow(ratio, e) * Lref;         // millions of revolutions
+  const L10_hrs = (L10_rev * 1e6) / (60 * n);        // hours
+
+  document.getElementById('l10-res-hours').textContent = fmt(L10_hrs, 0);
+  document.getElementById('l10-res-revs').textContent  = fmt(L10_rev, 2);
+  document.getElementById('l10-res-ratio').textContent = ratio.toFixed(3);
+  document.getElementById('l10-res-ratio-sub').textContent =
+    'Ref life: ' + Lref + 'M rev (' + (Lref === 1 ? 'ball' : 'roller') + ')';
+
+  const [cls, label] = lifeBadge(L10_hrs);
+  const badge = document.getElementById('l10-badge');
+  badge.textContent = label;
+  badge.className = 'life-badge ' + cls;
+}
+
+function calcC() {
+  const Pr      = (parseFloat(document.getElementById('c-Pr').value)   || 0) * toForce[document.getElementById('c-unit-Pr').value];
+  const n       = (parseFloat(document.getElementById('c-n').value)    || 0) * toRpm[document.getElementById('c-unit-n').value];
+  const e       =  parseFloat(document.getElementById('c-e').value)    || 3;
+  const lifeRaw  = parseFloat(document.getElementById('c-life').value) || 0;
+  const lifeUnit = document.getElementById('c-unit-life').value;
+
+  if (!Pr || !n || !lifeRaw) return;
+
+  const Lref = refLife(e); // 1 or 90 million rev
+
+  // Convert target life to millions of revolutions
+  const L10_rev = lifeUnit === 'hours'
+    ? (lifeRaw * 60 * n) / 1e6
+    : lifeRaw;
+
+  // Solve C = Pr * (L10_rev / Lref)^(1/e)
+  const C_lbs = Pr * Math.pow(L10_rev / Lref, 1 / e);
+  const ratio  = C_lbs / Pr;
+
+  document.getElementById('c-res-C').textContent      = fmt(C_lbs, 0);
+  document.getElementById('c-res-C-unit').textContent = 'lbs';
+  document.getElementById('c-res-revs').textContent   = fmt(L10_rev, 2);
+  document.getElementById('c-res-ratio').textContent  = ratio.toFixed(3);
+  document.getElementById('c-res-ratio-sub').textContent =
+    'Ref life: ' + Lref + 'M rev (' + (Lref === 1 ? 'ball' : 'roller') + ')';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) => {
+    b.classList.toggle('active', (i === 0 && tab === 'l10') || (i === 1 && tab === 'c'));
+  });
+  document.getElementById('card-l10').classList.toggle('active', tab === 'l10');
+  document.getElementById('card-c').classList.toggle('active', tab === 'c');
+}
+
+// Wire up all selects for unit changes
+['l10-unit-C','l10-unit-Pr','l10-unit-n'].forEach(id =>
+  document.getElementById(id).addEventListener('change', calcL10));
+['c-unit-Pr','c-unit-n','c-unit-life'].forEach(id =>
+  document.getElementById(id).addEventListener('change', calcC));
+
+calcL10();
+calcC();
+</script>
+</body>
+</html>

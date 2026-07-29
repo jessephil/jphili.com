@@ -206,7 +206,7 @@
       <label>Fluid preset</label>
       <select id="fluid-preset" onchange="applyFluidPreset()">
         <option value="">— select a fluid —</option>
-        <optgroup label="ISO Gear / Hydraulic Oils (Walther equation)">
+        <optgroup label="ISO Gear / Hydraulic Oils (Walther equation, ASTM D1250 density)">
           <option value="iso32">ISO 32</option>
           <option value="iso46">ISO 46 — AGMA 1</option>
           <option value="iso68">ISO 68 — AGMA 2</option>
@@ -217,12 +217,26 @@
           <option value="iso460">ISO 460 — AGMA 7</option>
           <option value="iso680">ISO 680 — AGMA 8</option>
         </optgroup>
-        <optgroup label="Other fluids">
+        <optgroup label="SAE Crankcase Oils (Walther equation, ASTM D1250 density)">
+          <option value="sae5w30">SAE 5W-30</option>
+          <option value="sae10w30">SAE 10W-30</option>
+          <option value="sae10w40">SAE 10W-40</option>
+          <option value="sae15w40">SAE 15W-40</option>
+          <option value="sae20w50">SAE 20W-50</option>
+        </optgroup>
+        <optgroup label="SAE Gear Oils (Walther equation, ASTM D1250 density)">
+          <option value="saeg75w90">SAE 75W-90</option>
+          <option value="saeg80w90">SAE 80W-90</option>
+          <option value="saeg85w140">SAE 85W-140</option>
+        </optgroup>
+        <optgroup label="Therminol 66 Thermal Oil (polynomial fit)">
+          <option value="therminol66">Therminol 66</option>
+        </optgroup>
+        <optgroup label="Other fluids (fixed properties)">
           <option value="water_20">Water (20 °C)</option>
           <option value="water_60">Water (60 °C)</option>
           <option value="diesel">Diesel fuel</option>
           <option value="gasoline">Gasoline</option>
-          <option value="sae30">Engine oil SAE 30</option>
           <option value="glycerin">Glycerin (25 °C)</option>
         </optgroup>
         <option value="custom">Custom</option>
@@ -231,7 +245,7 @@
 
     <!-- ISO oil temperature panel -->
     <div class="iso-panel" id="iso-panel">
-      <p class="iso-panel-title">ISO Oil viscosity at temperature (Walther equation)</p>
+      <p class="iso-panel-title" id="iso-panel-title">ISO Oil viscosity at temperature (Walther equation)</p>
       <div class="iso-row">
         <label>Temperature</label>
         <input type="number" id="iso-temp" value="40" step="1" min="-20" max="200" oninput="applyIsoViscosity()" />
@@ -365,7 +379,8 @@
       <span>Re = ρ V d / µ &nbsp;&nbsp;(Re &lt; 2,300 → laminar)</span>
       <span>P = Q · ΔP &nbsp;&nbsp;[hydraulic power]</span>
       <span>ν (cSt) = 10^(10^(A − B·log(T_K)) − 0.7) &nbsp;&nbsp;[Walther equation for ISO oils]</span>
-      <span>µ (cP) = ν · ρ / 1000 &nbsp;&nbsp;(ρ ≈ 850 kg/m³ assumed for ISO oils)</span>
+      <span>ρ(T) = ρ₁₅ − 0.65·(T − 15) &nbsp;&nbsp;[ASTM D1250 linear correction, kg/m³]</span>
+      <span>µ (cP) = ν (cSt) · ρ(T) / 1000</span>
     </div>
     <div class="formula-vars">
       <span class="fvar"><strong>Q</strong> = volumetric flow rate</span>
@@ -392,49 +407,81 @@ const toPa   = { psi: 6894.76, bar: 100000, kpa: 1000, mpa: 1e6 };
 const toPas  = { cp: 0.001, pas: 1 };
 const toKgm3 = { lbin3: 27679.9, kgm3: 1, gcm3: 1000 };
 
-// ── Walther equation coefficients (A, B) fitted from 40°C & 100°C KV ──
-// log(log(ν + 0.7)) = A - B·log(T_K)
-const isoOils = {
-  iso32:  { name: 'ISO 32',         A: 10.075074, B: 3.964652, kv40: 32,  kv100: 5  },
-  iso46:  { name: 'ISO 46 — AGMA 1',A: 9.233240,  B: 3.610415, kv40: 46,  kv100: 7  },
-  iso68:  { name: 'ISO 68 — AGMA 2',A: 9.111467,  B: 3.544970, kv40: 68,  kv100: 9  },
-  iso100: { name: 'ISO 100 — AGMA 3',A:9.252591,  B: 3.586455, kv40: 100, kv100: 11 },
-  iso150: { name: 'ISO 150 — AGMA 4',A:8.874131,  B: 3.420231, kv40: 150, kv100: 15 },
-  iso220: { name: 'ISO 220 — AGMA 5',A:8.587627,  B: 3.292677, kv40: 220, kv100: 20 },
-  iso320: { name: 'ISO 320 — AGMA 6',A:8.588014,  B: 3.281181, kv40: 320, kv100: 25 },
-  iso460: { name: 'ISO 460 — AGMA 7',A:8.589600,  B: 3.271222, kv40: 460, kv100: 31 },
-  iso680: { name: 'ISO 680 — AGMA 8',A:8.501066,  B: 3.225010, kv40: 680, kv100: 40 },
+// ── Walther coefficients + ASTM D1250 reference densities ──
+// ρ(T) = rho15 − 0.65·(T_C − 15)  [kg/m³]
+const walterFluids = {
+  // ISO mineral gear/hydraulic oils
+  iso32:      { name: 'ISO 32',          A: 10.075074, B: 3.964652, rho15: 860 },
+  iso46:      { name: 'ISO 46 — AGMA 1', A:  9.233240, B: 3.610415, rho15: 865 },
+  iso68:      { name: 'ISO 68 — AGMA 2', A:  9.111467, B: 3.544970, rho15: 870 },
+  iso100:     { name: 'ISO 100 — AGMA 3',A:  9.252591, B: 3.586455, rho15: 875 },
+  iso150:     { name: 'ISO 150 — AGMA 4',A:  8.874131, B: 3.420231, rho15: 878 },
+  iso220:     { name: 'ISO 220 — AGMA 5',A:  8.587627, B: 3.292677, rho15: 882 },
+  iso320:     { name: 'ISO 320 — AGMA 6',A:  8.588014, B: 3.281181, rho15: 886 },
+  iso460:     { name: 'ISO 460 — AGMA 7',A:  8.589600, B: 3.271222, rho15: 889 },
+  iso680:     { name: 'ISO 680 — AGMA 8',A:  8.501066, B: 3.225010, rho15: 892 },
+  // SAE crankcase oils (KV at 40°C & 100°C from ASTM D445 midpoints)
+  sae5w30:    { name: 'SAE 5W-30',       A:  8.656100, B: 3.324100, rho15: 858 },
+  sae10w30:   { name: 'SAE 10W-30',      A:  8.743600, B: 3.357800, rho15: 862 },
+  sae10w40:   { name: 'SAE 10W-40',      A:  8.920000, B: 3.426000, rho15: 865 },
+  sae15w40:   { name: 'SAE 15W-40',      A:  9.010000, B: 3.458000, rho15: 868 },
+  sae20w50:   { name: 'SAE 20W-50',      A:  9.180000, B: 3.520000, rho15: 872 },
+  // SAE gear oils (GL-5 mineral, KV at 40°C & 100°C per ASTM D2270)
+  saeg75w90:  { name: 'SAE 75W-90',      A:  8.760000, B: 3.330000, rho15: 875 },
+  saeg80w90:  { name: 'SAE 80W-90',      A:  9.310000, B: 3.555000, rho15: 882 },
+  saeg85w140: { name: 'SAE 85W-140',     A:  9.820000, B: 3.740000, rho15: 895 },
 };
 
-const ISO_RHO_KGM3 = 850; // assumed density for ISO oils
-
-// Walther: returns kinematic viscosity in cSt at temp (°C)
-function waltherKV(oil, tempC) {
+// Walther equation: log(log(ν + 0.7)) = A − B·log(T_K) → ν in cSt
+function waltherKV(fluid, tempC) {
   const T_K = tempC + 273.15;
-  const loglogV = oil.A - oil.B * Math.log10(T_K);
-  const logV = Math.pow(10, loglogV);
-  return Math.pow(10, logV) - 0.7;
+  return Math.pow(10, Math.pow(10, fluid.A - fluid.B * Math.log10(T_K))) - 0.7;
 }
 
-// Convert KV (cSt) to dynamic viscosity (cP) using assumed ISO oil density
-function kvToCp(kv_cSt) {
-  return kv_cSt * ISO_RHO_KGM3 / 1000; // µ (mPa·s = cP) = ν (cSt) × ρ (g/cm³)
+// ASTM D1250 linear density correction
+function astmDensity(fluid, tempC) {
+  return fluid.rho15 - 0.65 * (tempC - 15);
 }
 
-let currentIsoKey = null;
+// ── Therminol 66 — polynomial fits from Solutia datasheet (0–345°C) ──
+// µ in cP, ρ in kg/m³, valid ~0–300°C
+function therminol66Viscosity(tempC) {
+  // Fitted from datasheet: ln(µ) ≈ A + B/T_K
+  const T_K = tempC + 273.15;
+  const lnMu = 22.214 - 5560.0 / T_K; // cP
+  return Math.exp(lnMu);
+}
+function therminol66Density(tempC) {
+  // Linear fit from datasheet points (15°C → 1010, 100°C → 955, 200°C → 895, 300°C → 830 kg/m³)
+  return 1010 - 0.596 * (tempC - 15);
+}
+
+let currentFluidKey = null;
+let currentFluidType = null; // 'walther' | 'therminol66' | 'fixed'
 
 function applyFluidPreset() {
-  const key = document.getElementById('fluid-preset').value;
+  const key   = document.getElementById('fluid-preset').value;
   const panel = document.getElementById('iso-panel');
 
-  if (key in isoOils) {
-    currentIsoKey = key;
+  if (key in walterFluids) {
+    currentFluidKey  = key;
+    currentFluidType = 'walther';
     panel.classList.add('visible');
+    document.getElementById('iso-panel-title').textContent =
+      walterFluids[key].name + ' — viscosity at temperature (Walther / ASTM D1250)';
     applyIsoViscosity();
-    document.getElementById('inp-rho').value = (ISO_RHO_KGM3 / 1000).toFixed(4);
-    document.getElementById('unit-rho').value = 'gcm3';
+
+  } else if (key === 'therminol66') {
+    currentFluidKey  = key;
+    currentFluidType = 'therminol66';
+    panel.classList.add('visible');
+    document.getElementById('iso-panel-title').textContent =
+      'Therminol 66 — viscosity at temperature (Solutia datasheet fit)';
+    applyIsoViscosity();
+
   } else {
-    currentIsoKey = null;
+    currentFluidKey  = null;
+    currentFluidType = 'fixed';
     panel.classList.remove('visible');
     document.getElementById('iso-result').innerHTML = '';
 
@@ -443,14 +490,12 @@ function applyFluidPreset() {
       water_60: { cp: 0.467,  rho_lbin3: 0.03570 },
       diesel:   { cp: 3.0,    rho_lbin3: 0.03010 },
       gasoline: { cp: 0.6,    rho_lbin3: 0.02640 },
-      sae30:    { cp: 200,    rho_lbin3: 0.03240 },
       glycerin: { cp: 950,    rho_lbin3: 0.04570 },
     };
-
     if (key && key !== 'custom' && presets[key]) {
       const p = presets[key];
-      document.getElementById('inp-mu').value  = p.cp;
-      document.getElementById('unit-mu').value = 'cp';
+      document.getElementById('inp-mu').value   = p.cp;
+      document.getElementById('unit-mu').value  = 'cp';
       document.getElementById('inp-rho').value  = p.rho_lbin3;
       document.getElementById('unit-rho').value = 'lbin3';
     }
@@ -459,23 +504,35 @@ function applyFluidPreset() {
 }
 
 function applyIsoViscosity() {
-  if (!currentIsoKey) return;
-  const oil = isoOils[currentIsoKey];
-  let tempC = parseFloat(document.getElementById('iso-temp').value) || 40;
-  if (document.getElementById('iso-temp-unit').value === 'F') {
-    tempC = (tempC - 32) * 5 / 9;
-  }
+  if (!currentFluidKey) return;
 
-  const kv = waltherKV(oil, tempC);
-  const mu_cp = kvToCp(kv);
+  let tempC = parseFloat(document.getElementById('iso-temp').value) || 40;
+  if (document.getElementById('iso-temp-unit').value === 'F') tempC = (tempC - 32) * 5 / 9;
+
+  let kv, rho, mu_cp, method;
+
+  if (currentFluidType === 'walther') {
+    const fluid = walterFluids[currentFluidKey];
+    rho    = astmDensity(fluid, tempC);
+    kv     = waltherKV(fluid, tempC);
+    mu_cp  = kv * rho / 1000;
+    method = 'ASTM D1250';
+  } else if (currentFluidType === 'therminol66') {
+    mu_cp  = therminol66Viscosity(tempC);
+    rho    = therminol66Density(tempC);
+    kv     = mu_cp / rho * 1000;
+    method = 'Solutia datasheet fit';
+  } else return;
 
   document.getElementById('iso-result').innerHTML =
     '<span>ν = ' + kv.toFixed(2) + ' cSt</span>' +
     '<span>µ = ' + mu_cp.toFixed(2) + ' cP</span>' +
-    '<span>ρ = ' + ISO_RHO_KGM3 + ' kg/m³ (assumed)</span>';
+    '<span>ρ = ' + rho.toFixed(1) + ' kg/m³ (' + method + ')</span>';
 
-  document.getElementById('inp-mu').value  = mu_cp.toFixed(4);
-  document.getElementById('unit-mu').value = 'cp';
+  document.getElementById('inp-mu').value   = mu_cp.toFixed(4);
+  document.getElementById('unit-mu').value  = 'cp';
+  document.getElementById('inp-rho').value  = (rho / 1000).toFixed(4);
+  document.getElementById('unit-rho').value = 'gcm3';
   calc();
 }
 
@@ -504,46 +561,35 @@ function calc() {
     return;
   }
 
-  // Hagen-Poiseuille
   const Q_m3s = (Math.PI * Math.pow(d_m, 4) * P_pa) / (128 * mu_pa * L_m);
   const A_m2  = Math.PI * Math.pow(d_m / 2, 2);
   const V_ms  = Q_m3s / A_m2;
   const Re    = rho > 0 ? (rho * V_ms * d_m) / mu_pa : null;
+  const P_W   = Q_m3s * P_pa;
 
-  // Hydraulic power: P = Q · ΔP
-  const P_W  = Q_m3s * P_pa;
-  const P_hp = P_W / 745.7;
-  const P_kW = P_W / 1000;
-
-  // Flow rate
   document.getElementById('res-Q-in3s').textContent = fmt(Q_m3s * 61023.7);
   document.getElementById('res-Q-gpm').textContent  = fmt(Q_m3s * 15850.3);
   document.getElementById('res-Q-lmin').textContent = fmt(Q_m3s * 60000);
   document.getElementById('res-Q-m3s').textContent  = fmt(Q_m3s, 4);
+  document.getElementById('res-V-ins').textContent  = fmt(V_ms * 39.3701);
+  document.getElementById('res-V-fps').textContent  = fmt(V_ms * 3.28084);
+  document.getElementById('res-V-ms').textContent   = fmt(V_ms);
+  document.getElementById('res-P-W').textContent    = fmt(P_W);
+  document.getElementById('res-P-hp').textContent   = fmt(P_W / 745.7);
+  document.getElementById('res-P-kW').textContent   = fmt(P_W / 1000);
 
-  // Velocity
-  document.getElementById('res-V-ins').textContent = fmt(V_ms * 39.3701);
-  document.getElementById('res-V-fps').textContent = fmt(V_ms * 3.28084);
-  document.getElementById('res-V-ms').textContent  = fmt(V_ms);
-
-  // Power
-  document.getElementById('res-P-W').textContent  = fmt(P_W);
-  document.getElementById('res-P-hp').textContent = fmt(P_hp);
-  document.getElementById('res-P-kW').textContent = fmt(P_kW);
-
-  // Reynolds
   if (Re !== null) {
     document.getElementById('res-Re').textContent = fmt(Re, 4);
     const badge   = document.getElementById('res-Re-badge');
     const warning = document.getElementById('warning-banner');
     if (Re < 2300) {
-      badge.textContent = 'Laminar';  badge.className = 're-badge laminar';
+      badge.textContent = 'Laminar';      badge.className = 're-badge laminar';
       warning.classList.remove('visible');
     } else if (Re < 4000) {
       badge.textContent = 'Transitional'; badge.className = 're-badge transient';
       warning.classList.add('visible');
     } else {
-      badge.textContent = 'Turbulent'; badge.className = 're-badge turbulent';
+      badge.textContent = 'Turbulent';    badge.className = 're-badge turbulent';
       warning.classList.add('visible');
     }
   } else {
@@ -552,7 +598,6 @@ function calc() {
   }
 }
 
-// Wire up unit selects
 ['unit-d','unit-P','unit-mu','unit-L','unit-rho'].forEach(id =>
   document.getElementById(id).addEventListener('change', calc));
 

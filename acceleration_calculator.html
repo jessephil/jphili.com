@@ -99,15 +99,19 @@
     .footer-name { color: var(--ink-mid); }
     .footer-year { color: var(--ink-faint); font-style: italic; }
 
+    /* make table scrollable on narrow screens */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
     @media (max-width: 640px) {
       nav { padding: 0 1.25rem; }
       .page { padding: 2rem 1.25rem 4rem; }
       .inputs-grid { grid-template-columns: 1fr 1fr; }
       .inputs-grid-2 { grid-template-columns: 1fr; }
-      .summary-grid { grid-template-columns: 1fr 1fr; }
-      .s-card .svalue { font-size: 20px; }
-      table { font-size: 12px; }
-      thead th, tbody td { padding: 8px 8px; }
+      .gear-row { grid-template-columns: 64px 1fr 28px; }
+      table { font-size: 12px; min-width: 520px; }
+      thead th, tbody td { padding: 8px 8px; white-space: nowrap; }
+      /* hide least-critical columns on mobile */
+      .col-ratio, .col-final { display: none; }
       footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
     }
   </style>
@@ -246,8 +250,8 @@
       <thead>
         <tr>
           <th>Gear</th>
-          <th>Ratio</th>
-          <th>Final ratio</th>
+          <th class="col-ratio">Ratio</th>
+          <th class="col-final">Final ratio</th>
           <th>Wheel torque (ft·lb)</th>
           <th>Wheel force (lbs)</th>
           <th>Speed @ RPM (mph)</th>
@@ -408,8 +412,8 @@ function calc() {
     if (i === bestIdx) tr.classList.add('best-gear');
     tr.innerHTML = `
       <td>${r.g.name}</td>
-      <td>${fmt(r.g.ratio)}</td>
-      <td>${fmt(r.final)}</td>
+      <td class="col-ratio">${fmt(r.g.ratio)}</td>
+      <td class="col-final">${fmt(r.final)}</td>
       <td>${fmt(r.wTorq_ftlb, 1)}</td>
       <td>${fmt(r.force_lbs, 1)}</td>
       <td>${fmt(r.speed_mph, 1)}</td>

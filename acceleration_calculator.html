@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceleration Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --parchment: #f5eedf; --parchment-dark: #ede3cc; --parchment-deeper: #d9cdb0;
+      --ink: #2a2218; --ink-mid: #5a4e38; --ink-faint: #9a8e78;
+      --gold: #8a6d2f; --gold-light: #c9a84c; --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25); --border-strong: rgba(138,109,47,0.5);
+      --blue: #1c4f82; --blue-pale: #e6f0fb;
+      --green: #2d5a27; --green-pale: #e8f2e7;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--parchment); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px); pointer-events: none; z-index: 0; }
+
+    nav { position: relative; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 3rem; height: 64px; background: var(--parchment); border-bottom: 1px solid var(--border); }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 560px; line-height: 1.7; }
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    /* cards */
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .inputs-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; transition: border-color 0.2s; min-width: 0; }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select { border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px; font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment); outline: none; cursor: pointer; }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; }
+
+    /* sub-section divider */
+    .sub-label { font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-mid); margin: 1rem 0 10px; padding-top: 1rem; border-top: 0.5px solid var(--border); }
+
+    /* gear rows */
+    .gear-rows { display: flex; flex-direction: column; gap: 8px; }
+    .gear-row { display: grid; grid-template-columns: 80px 1fr 28px; align-items: center; gap: 8px; }
+    .gear-row label { font-size: 12px; color: var(--ink-mid); font-weight: 500; }
+    .gear-row input { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; width: 100%; }
+    .gear-row input:focus { border-color: var(--border-strong); }
+    .btn-remove { background: none; border: 1px solid var(--border); border-radius: 6px; color: var(--ink-faint); font-size: 16px; cursor: pointer; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s; line-height: 1; }
+    .btn-remove:hover { border-color: #a33; color: #a33; }
+    .btn-add { margin-top: 8px; background: none; border: 1px solid var(--border); border-radius: 8px; padding: 7px 14px; font-family: inherit; font-size: 12px; color: var(--ink-mid); cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+    .btn-add:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* torque convert pill */
+    .torque-pill { display: flex; align-items: center; gap: 10px; background: var(--blue-pale); border: 1px solid rgba(28,79,130,0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 1rem; flex-wrap: wrap; font-size: 13px; color: var(--blue); }
+    .torque-pill strong { font-weight: 500; }
+
+    /* results table */
+    .table-wrap { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th { background: var(--parchment-deeper); font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-mid); text-align: right; padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    thead th:first-child { text-align: left; }
+    tbody td { padding: 11px 14px; border-bottom: 0.5px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+    tbody td:first-child { text-align: left; font-weight: 500; color: var(--ink-mid); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--gold-pale); }
+    .best-gear td { background: var(--green-pale) !important; }
+    .best-gear td:first-child { color: var(--green); }
+
+    /* summary cards */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .s-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .s-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .s-card .slabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .s-card.primary .slabel { color: var(--gold); }
+    .s-card .svalue { font-size: 24px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .s-card .sunit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+
+    /* formula */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 14px; color: var(--ink); display: flex; flex-direction: column; gap: 6px; padding: 10px 0; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr 1fr; }
+      .inputs-grid-2 { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .s-card .svalue { font-size: 20px; }
+      table { font-size: 12px; }
+      thead th, tbody td { padding: 8px 8px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Vehicle Engineering</p>
+    <h1 class="page-title">Acceleration Calculator</h1>
+    <p class="page-subtitle">Compute wheel force and acceleration in each gear from engine torque, gear ratios, differential ratio, tire size, and vehicle weight.</p>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+
+    <!-- Engine -->
+    <p class="sub-label" style="border-top:none; padding-top:0; margin-top:0;">Engine</p>
+    <div class="torque-pill" id="torque-pill" style="display:none;"></div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Peak torque</label>
+        <div class="field-row">
+          <input type="number" id="inp-torque" value="119" min="0" step="0.1" oninput="calc()" />
+          <select id="unit-torque" onchange="calc()">
+            <option value="ftlb">ft·lb</option>
+            <option value="nm">N·m</option>
+            <option value="inlb">in·lb</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Horsepower (optional)</label>
+        <div class="field-row">
+          <input type="number" id="inp-hp" value="140" min="0" step="0.1" oninput="calc()" />
+          <select id="unit-hp" onchange="calc()">
+            <option value="hp">hp</option>
+            <option value="kw">kW</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>At RPM</label>
+        <div class="field-row">
+          <input type="number" id="inp-rpm" value="6500" min="1" step="100" oninput="calc()" />
+        </div>
+        <span class="field-note">RPM at which HP is measured</span>
+      </div>
+    </div>
+
+    <!-- Drivetrain -->
+    <p class="sub-label">Drivetrain</p>
+    <div class="inputs-grid-2" style="margin-bottom:14px;">
+      <div class="field">
+        <label>Differential ratio</label>
+        <div class="field-row">
+          <input type="number" id="inp-diff" value="4.1" min="0.1" step="0.01" oninput="calc()" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Drivetrain efficiency (%)</label>
+        <div class="field-row">
+          <input type="number" id="inp-eff" value="85" min="1" max="100" step="1" oninput="calc()" />
+        </div>
+        <span class="field-note">Typically 80–90% for manual, 75–85% for auto</span>
+      </div>
+    </div>
+
+    <p class="section-label" style="margin-bottom:8px;">Gear ratios</p>
+    <div class="gear-rows" id="gear-rows"></div>
+    <button class="btn-add" onclick="addGear()">+ Add gear</button>
+
+    <!-- Vehicle -->
+    <p class="sub-label">Vehicle</p>
+    <div class="inputs-grid-2">
+      <div class="field">
+        <label>Curb weight</label>
+        <div class="field-row">
+          <input type="number" id="inp-weight" value="2336" min="1" step="1" oninput="calc()" />
+          <select id="unit-weight" onchange="calc()">
+            <option value="lbs">lbs</option>
+            <option value="kg">kg</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Occupant + cargo weight</label>
+        <div class="field-row">
+          <input type="number" id="inp-payload" value="0" min="0" step="1" oninput="calc()" />
+        </div>
+        <span class="field-note">Same unit as curb weight</span>
+      </div>
+    </div>
+
+    <!-- Tire -->
+    <p class="sub-label">Tire</p>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Tire width (mm)</label>
+        <div class="field-row">
+          <input type="number" id="tire-w" value="205" min="1" step="5" oninput="calcTire()" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Aspect ratio (%)</label>
+        <div class="field-row">
+          <input type="number" id="tire-ar" value="55" min="1" max="100" step="5" oninput="calcTire()" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Rim diameter (in)</label>
+        <div class="field-row">
+          <input type="number" id="tire-rim" value="16" min="8" step="1" oninput="calcTire()" />
+        </div>
+      </div>
+    </div>
+    <div class="torque-pill" id="tire-pill" style="margin-top:10px; margin-bottom:0;"></div>
+
+  </div>
+
+  <p class="section-label">Results by gear</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Gear</th>
+          <th>Ratio</th>
+          <th>Final ratio</th>
+          <th>Wheel torque (ft·lb)</th>
+          <th>Wheel force (lbs)</th>
+          <th>Speed @ RPM (mph)</th>
+          <th>Accel (g)</th>
+        </tr>
+      </thead>
+      <tbody id="results-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Drivetrain Acceleration</p>
+    <div class="formula-block">
+      <span>Wheel torque = Engine torque × gear ratio × diff ratio × η</span>
+      <span>Wheel force (lbs) = Wheel torque (ft·lb) / tire radius (ft)</span>
+      <span>Acceleration (m/s²) = Wheel force (N) / total mass (kg)</span>
+      <span>g = acceleration / 9.81</span>
+      <span>Tire radius (in) = rim_dia/2 + tire_width(mm) × aspect/100 / 25.4</span>
+      <span>HP ↔ Torque: T (ft·lb) = HP × 5252 / RPM</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>η</strong> = drivetrain efficiency</span>
+      <span class="fvar"><strong>Diff ratio</strong> = axle / differential gear ratio</span>
+      <span class="fvar"><strong>Final ratio</strong> = gear ratio × diff ratio</span>
+      <span class="fvar"><strong>1 ft·lb</strong> = 1.35582 N·m</span>
+      <span class="fvar"><strong>1 lbf</strong> = 4.44822 N</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// Default gear ratios from spreadsheet
+const defaultGears = [
+  { name: '1st', ratio: 3.136 },
+  { name: '2nd', ratio: 1.888 },
+  { name: '3rd', ratio: 1.330 },
+  { name: '4th', ratio: 1.000 },
+  { name: '5th', ratio: 0.814 },
+];
+
+let gears = defaultGears.map(g => ({ ...g }));
+
+function buildGearRows() {
+  const container = document.getElementById('gear-rows');
+  container.innerHTML = '';
+  gears.forEach((g, i) => {
+    const row = document.createElement('div');
+    row.className = 'gear-row';
+    row.innerHTML = `
+      <label>${g.name}</label>
+      <input type="number" value="${g.ratio}" min="0.1" step="0.001"
+        oninput="gears[${i}].ratio = parseFloat(this.value) || 0; calc();" />
+      <button class="btn-remove" onclick="removeGear(${i})" title="Remove">×</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+function addGear() {
+  const n = gears.length + 1;
+  const names = ['1st','2nd','3rd','4th','5th','6th','7th','8th','9th','10th'];
+  gears.push({ name: names[n-1] || `G${n}`, ratio: 0.700 });
+  buildGearRows();
+  calc();
+}
+
+function removeGear(i) {
+  if (gears.length <= 1) return;
+  gears.splice(i, 1);
+  buildGearRows();
+  calc();
+}
+
+// Tire calc
+let tireRadius_ft = 0.944883; // default from spreadsheet
+
+function calcTire() {
+  const w   = parseFloat(document.getElementById('tire-w').value)   || 0;
+  const ar  = parseFloat(document.getElementById('tire-ar').value)  || 0;
+  const rim = parseFloat(document.getElementById('tire-rim').value) || 0;
+  if (!w || !ar || !rim) return;
+  const sidewall_in  = (w * ar / 100) / 25.4;
+  const radius_in    = rim / 2 + sidewall_in;
+  tireRadius_ft      = radius_in / 12;
+  const circ_m       = tireRadius_ft * 2 * Math.PI * 0.3048;
+  document.getElementById('tire-pill').textContent =
+    'Tire radius: ' + radius_in.toFixed(3) + ' in  |  ' + (tireRadius_ft).toFixed(4) + ' ft  |  ' +
+    (tireRadius_ft * 0.3048).toFixed(4) + ' m  |  Circumference: ' + circ_m.toFixed(4) + ' m';
+  document.getElementById('tire-pill').style.display = 'flex';
+  calc();
+}
+
+const toFtLb = { ftlb: 1, nm: 0.737562, inlb: 1/12 };
+const toLbs  = { lbs: 1, kg: 2.20462 };
+const toHpW  = { hp: 745.699, kw: 1000 };
+
+function fmt(v, dec) {
+  if (!isFinite(v)) return '—';
+  if (Math.abs(v) >= 10000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (Math.abs(v) >= 100)   return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  return v.toLocaleString(undefined, { maximumFractionDigits: dec ?? 3 });
+}
+
+function calc() {
+  const torque_ftlb = (parseFloat(document.getElementById('inp-torque').value) || 0)
+                    * toFtLb[document.getElementById('unit-torque').value];
+  const hp_raw      = parseFloat(document.getElementById('inp-hp').value) || 0;
+  const hp_W        = hp_raw * toHpW[document.getElementById('unit-hp').value];
+  const rpm         = parseFloat(document.getElementById('inp-rpm').value) || 1;
+  const diff        = parseFloat(document.getElementById('inp-diff').value) || 1;
+  const eff         = (parseFloat(document.getElementById('inp-eff').value) || 85) / 100;
+  const weight_lbs  = ((parseFloat(document.getElementById('inp-weight').value)  || 0) +
+                       (parseFloat(document.getElementById('inp-payload').value) || 0))
+                    * toLbs[document.getElementById('unit-weight').value];
+  const mass_kg     = weight_lbs / 2.20462;
+
+  // HP → torque conversion note
+  const hp_torque_ftlb = hp_W > 0 ? (hp_W / (rpm * 2 * Math.PI / 60)) / 1.35582 : 0;
+  const pill = document.getElementById('torque-pill');
+  if (hp_torque_ftlb > 0) {
+    pill.style.display = 'flex';
+    pill.innerHTML = '<strong>' + fmt(hp_raw) + ' ' + document.getElementById('unit-hp').value.toUpperCase() +
+      ' @ ' + rpm.toLocaleString() + ' RPM</strong> → ' + fmt(hp_torque_ftlb, 1) + ' ft·lb  ' +
+      '<span style="color:var(--ink-faint);font-size:12px;">(entered torque: ' + fmt(torque_ftlb, 1) + ' ft·lb)</span>';
+  } else {
+    pill.style.display = 'none';
+  }
+
+  if (!torque_ftlb || !tireRadius_ft || !mass_kg) return;
+
+  const tbody  = document.getElementById('results-tbody');
+  tbody.innerHTML = '';
+
+  let bestAccel = -Infinity, bestIdx = -1;
+
+  const rows = gears.map((g, i) => {
+    const final      = g.ratio * diff;
+    const wTorq_ftlb = torque_ftlb * final * eff;
+    const force_lbs  = wTorq_ftlb / tireRadius_ft;
+    const force_N    = force_lbs * 4.44822;
+    const accel_ms2  = mass_kg > 0 ? force_N / mass_kg : 0;
+    const accel_g    = accel_ms2 / 9.81;
+    // Speed: wheel RPM = engine RPM / final ratio; mph = wheel RPM × circ_ft × 60 / 5280
+    const circ_ft    = tireRadius_ft * 2 * Math.PI;
+    const speed_mph  = (rpm / final) * circ_ft * 60 / 5280;
+    if (accel_g > bestAccel) { bestAccel = accel_g; bestIdx = i; }
+    return { g, final, wTorq_ftlb, force_lbs, accel_g, speed_mph };
+  });
+
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    if (i === bestIdx) tr.classList.add('best-gear');
+    tr.innerHTML = `
+      <td>${r.g.name}</td>
+      <td>${fmt(r.g.ratio)}</td>
+      <td>${fmt(r.final)}</td>
+      <td>${fmt(r.wTorq_ftlb, 1)}</td>
+      <td>${fmt(r.force_lbs, 1)}</td>
+      <td>${fmt(r.speed_mph, 1)}</td>
+      <td>${fmt(r.accel_g, 3)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // Summary removed
+}
+
+// wire up all unit selects
+['unit-torque','unit-hp','unit-weight'].forEach(id =>
+  document.getElementById(id).addEventListener('change', calc));
+
+// init
+buildGearRows();
+calcTire();
+calc();
+</script>
+</body>
+</html>

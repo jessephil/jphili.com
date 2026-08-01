@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Torque Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --parchment: #f5eedf; --parchment-dark: #ede3cc; --parchment-deeper: #d9cdb0;
+      --ink: #2a2218; --ink-mid: #5a4e38; --ink-faint: #9a8e78;
+      --gold: #8a6d2f; --gold-light: #c9a84c; --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25); --border-strong: rgba(138,109,47,0.5);
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--parchment); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px); pointer-events: none; z-index: 0; }
+
+    nav { position: relative; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 3rem; height: 64px; background: var(--parchment); border-bottom: 1px solid var(--border); }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 540px; line-height: 1.7; }
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    /* tabs */
+    .tabs { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--parchment-dark); margin-bottom: 1.5rem; }
+    .tab-btn { flex: 1; padding: 11px 16px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink-mid); background: transparent; border: none; cursor: pointer; transition: background 0.15s, color 0.15s; text-align: center; }
+    .tab-btn.active { background: var(--ink); color: var(--parchment); }
+    .tab-btn:not(.active):hover { background: var(--parchment-deeper); }
+
+    .calc-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; display: none; }
+    .calc-card.active { display: block; }
+
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; transition: border-color 0.2s; min-width: 0; }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select { border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px; font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment); outline: none; cursor: pointer; }
+    .field select:focus { border-color: var(--border-strong); }
+
+    /* results */
+    .result-area { border-top: 1px solid var(--border); padding-top: 1.25rem; }
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .result-card { background: var(--parchment); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 26px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+
+    /* formula */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 15px; color: var(--ink); display: flex; flex-direction: column; gap: 6px; padding: 10px 0; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .result-card .rvalue { font-size: 20px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Torque Calculator</h1>
+    <p class="page-subtitle">Convert between power, speed, and torque — useful for shaft design, coupling selection, gearbox sizing, and motor selection.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('pt')">Power + Speed → Torque</button>
+    <button class="tab-btn" onclick="switchTab('tp')">Torque + Speed → Power</button>
+  </div>
+
+  <!-- ── TAB 1: Power + Speed → Torque ── -->
+  <div class="calc-card active" id="card-pt">
+    <p class="section-label" style="margin-bottom:14px;">Inputs</p>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Power</label>
+        <div class="field-row">
+          <input type="number" id="pt-power" value="30" min="0" step="0.1" oninput="calcPT()" />
+          <select id="pt-unit-power" onchange="calcPT()">
+            <option value="hp">hp</option>
+            <option value="kw">kW</option>
+            <option value="w">W</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Speed</label>
+        <div class="field-row">
+          <input type="number" id="pt-rpm" value="50" min="0.001" step="1" oninput="calcPT()" />
+          <select id="pt-unit-rpm" onchange="calcPT()">
+            <option value="rpm">rpm</option>
+            <option value="rps">rps</option>
+            <option value="rads">rad/s</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="result-area">
+      <p class="section-label" style="margin-bottom:12px;">Torque</p>
+      <div class="results-grid">
+        <div class="result-card primary">
+          <p class="rlabel">Torque</p>
+          <p class="rvalue" id="pt-res-inlb">—</p>
+          <p class="runit">in·lb</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Torque</p>
+          <p class="rvalue" id="pt-res-ftlb">—</p>
+          <p class="runit">ft·lb</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Torque</p>
+          <p class="rvalue" id="pt-res-nm">—</p>
+          <p class="runit">N·m</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2: Torque + Speed → Power ── -->
+  <div class="calc-card" id="card-tp">
+    <p class="section-label" style="margin-bottom:14px;">Inputs</p>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Torque</label>
+        <div class="field-row">
+          <input type="number" id="tp-torque" value="37814" min="0" step="1" oninput="calcTP()" />
+          <select id="tp-unit-torque" onchange="calcTP()">
+            <option value="inlb">in·lb</option>
+            <option value="ftlb">ft·lb</option>
+            <option value="nm">N·m</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Speed</label>
+        <div class="field-row">
+          <input type="number" id="tp-rpm" value="50" min="0.001" step="1" oninput="calcTP()" />
+          <select id="tp-unit-rpm" onchange="calcTP()">
+            <option value="rpm">rpm</option>
+            <option value="rps">rps</option>
+            <option value="rads">rad/s</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="result-area">
+      <p class="section-label" style="margin-bottom:12px;">Power</p>
+      <div class="results-grid">
+        <div class="result-card primary">
+          <p class="rlabel">Power</p>
+          <p class="rvalue" id="tp-res-hp">—</p>
+          <p class="runit">hp</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Power</p>
+          <p class="rvalue" id="tp-res-kw">—</p>
+          <p class="runit">kW</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Power</p>
+          <p class="rvalue" id="tp-res-w">—</p>
+          <p class="runit">W</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Power — Speed — Torque</p>
+    <div class="formula-block">
+      <span>T (in·lb) = (HP × 63,025) / RPM</span>
+      <span>T (N·m) = P (W) / ω &nbsp;&nbsp;where ω (rad/s) = RPM × 2π / 60</span>
+      <span>P (W) = T (N·m) × ω (rad/s)</span>
+      <span>P (hp) = T (in·lb) × RPM / 63,025</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>T</strong> = torque</span>
+      <span class="fvar"><strong>P</strong> = power</span>
+      <span class="fvar"><strong>ω</strong> = angular velocity (rad/s)</span>
+      <span class="fvar"><strong>1 hp</strong> = 745.7 W</span>
+      <span class="fvar"><strong>1 ft·lb</strong> = 12 in·lb = 1.3558 N·m</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+function toOmega(val, unit) {
+  if (unit === 'rpm')  return val * 2 * Math.PI / 60;
+  if (unit === 'rps')  return val * 2 * Math.PI;
+  return val; // rad/s
+}
+function toPowerW(val, unit) {
+  if (unit === 'hp') return val * 745.699;
+  if (unit === 'kw') return val * 1000;
+  return val; // W
+}
+function toTorqueNm(val, unit) {
+  if (unit === 'inlb') return val * 0.112985;
+  if (unit === 'ftlb') return val * 1.35582;
+  return val; // N·m
+}
+
+function fmt(v) {
+  if (!isFinite(v) || v === 0) return '—';
+  if (Math.abs(v) >= 1e6)  return (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (Math.abs(v) >= 10)   return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  return v.toLocaleString(undefined, { maximumFractionDigits: 3 });
+}
+
+function calcPT() {
+  const P_W   = toPowerW(parseFloat(document.getElementById('pt-power').value) || 0, document.getElementById('pt-unit-power').value);
+  const omega = toOmega(parseFloat(document.getElementById('pt-rpm').value) || 0, document.getElementById('pt-unit-rpm').value);
+  if (!P_W || !omega) return;
+  const T_Nm   = P_W / omega;
+  const T_ftlb = T_Nm / 1.35582;
+  const T_inlb = T_ftlb * 12;
+  document.getElementById('pt-res-inlb').textContent = fmt(T_inlb);
+  document.getElementById('pt-res-ftlb').textContent = fmt(T_ftlb);
+  document.getElementById('pt-res-nm').textContent   = fmt(T_Nm);
+}
+
+function calcTP() {
+  const T_Nm  = toTorqueNm(parseFloat(document.getElementById('tp-torque').value) || 0, document.getElementById('tp-unit-torque').value);
+  const omega = toOmega(parseFloat(document.getElementById('tp-rpm').value) || 0, document.getElementById('tp-unit-rpm').value);
+  if (!T_Nm || !omega) return;
+  const P_W  = T_Nm * omega;
+  document.getElementById('tp-res-hp').textContent = fmt(P_W / 745.699);
+  document.getElementById('tp-res-kw').textContent = fmt(P_W / 1000);
+  document.getElementById('tp-res-w').textContent  = fmt(P_W);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='pt')||(i===1&&tab==='tp')));
+  document.getElementById('card-pt').classList.toggle('active', tab === 'pt');
+  document.getElementById('card-tp').classList.toggle('active', tab === 'tp');
+}
+
+['pt-unit-power','pt-unit-rpm'].forEach(id => document.getElementById(id).addEventListener('change', calcPT));
+['tp-unit-torque','tp-unit-rpm'].forEach(id => document.getElementById(id).addEventListener('change', calcTP));
+
+calcPT();
+calcTP();
+</script>
+</body>
+</html>

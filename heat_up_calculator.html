@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heat-Up Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --parchment: #f5eedf; --parchment-dark: #ede3cc; --parchment-deeper: #d9cdb0;
+      --ink: #2a2218; --ink-mid: #5a4e38; --ink-faint: #9a8e78;
+      --gold: #8a6d2f; --gold-light: #c9a84c; --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25); --border-strong: rgba(138,109,47,0.5);
+      --blue: #1c4f82; --blue-pale: #e6f0fb;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--parchment); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px); pointer-events: none; z-index: 0; }
+
+    nav { position: relative; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 3rem; height: 64px; background: var(--parchment); border-bottom: 1px solid var(--border); }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 540px; line-height: 1.7; }
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    /* tabs */
+    .tabs { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--parchment-dark); margin-bottom: 1.5rem; }
+    .tab-btn { flex: 1; padding: 11px 16px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink-mid); background: transparent; border: none; cursor: pointer; transition: background 0.15s, color 0.15s; text-align: center; line-height: 1.3; }
+    .tab-btn.active { background: var(--ink); color: var(--parchment); }
+    .tab-btn:not(.active):hover { background: var(--parchment-deeper); }
+
+    .calc-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; display: none; }
+    .calc-card.active { display: block; }
+
+    /* material row */
+    .mat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .mat-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .mat-row select { flex: 1; min-width: 180px; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; }
+
+    /* cp info pill */
+    .cp-info { display: inline-block; margin-bottom: 14px; background: var(--blue-pale); border: 1px solid rgba(28,79,130,0.2); border-radius: 8px; padding: 6px 14px; font-size: 13px; color: var(--blue); }
+
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; transition: border-color 0.2s; min-width: 0; }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select { border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px; font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment); outline: none; cursor: pointer; }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; }
+
+    /* results */
+    .result-area { border-top: 1px solid var(--border); padding-top: 1.25rem; }
+    .results-grid { display: grid; gap: 12px; }
+    .cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .result-card { background: var(--parchment); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 26px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+    .result-card .rsub { font-size: 12px; color: var(--ink-mid); margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+
+    /* formula */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 15px; color: var(--ink); display: flex; flex-direction: column; gap: 6px; padding: 10px 0; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .cols-3 { grid-template-columns: 1fr 1fr; }
+      .cols-2 { grid-template-columns: 1fr; }
+      .result-card .rvalue { font-size: 20px; }
+      .tab-btn { font-size: 12px; padding: 10px 8px; }
+      .mat-row select { min-width: 0; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Thermal Engineering</p>
+    <h1 class="page-title">Heat-Up Calculator</h1>
+    <p class="page-subtitle">Calculate the power required to heat a mass in a given time, or find the time required given a power input — using Q = m · Cp · ΔT.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('pt')">Find Required Power</button>
+    <button class="tab-btn" onclick="switchTab('tp')">Find Required Time</button>
+  </div>
+
+  <!-- ── TAB 1: Find Power ── -->
+  <div class="calc-card active" id="card-pt">
+    <p class="section-label" style="margin-bottom:14px;">Inputs</p>
+    <div class="mat-row">
+      <label>Material</label>
+      <select id="pt-mat" onchange="onMatChange('pt')">
+        <option value="water">Water</option>
+        <option value="therminol66">Therminol 66 (heating oil)</option>
+        <option value="iso220">ISO 220 (gear oil)</option>
+        <option value="steel">Mild Steel (A36)</option>
+        <option value="alum">Aluminum 6061</option>
+      </select>
+    </div>
+    <div class="cp-info" id="pt-cp-info"></div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Mass</label>
+        <div class="field-row">
+          <input type="number" id="pt-mass" value="727.3" min="0.001" step="0.1" oninput="calcPower()" />
+          <select id="pt-unit-mass" onchange="calcPower()">
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+            <option value="ton">ton (US)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Start temperature (T₁)</label>
+        <div class="field-row">
+          <input type="number" id="pt-T1" value="20" step="1" oninput="calcPower()" />
+          <select id="pt-unit-T" onchange="calcPower()">
+            <option value="C">°C</option>
+            <option value="F">°F</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>End temperature (T₂)</label>
+        <div class="field-row">
+          <input type="number" id="pt-T2" value="220" step="1" oninput="calcPower()" />
+        </div>
+        <span class="field-note">Same unit as start temperature</span>
+      </div>
+      <div class="field">
+        <label>Time to heat up</label>
+        <div class="field-row">
+          <input type="number" id="pt-time" value="4" min="0.001" step="0.1" oninput="calcPower()" />
+          <select id="pt-unit-time" onchange="calcPower()">
+            <option value="hr">hours</option>
+            <option value="min">minutes</option>
+            <option value="s">seconds</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>System efficiency (%)</label>
+        <div class="field-row">
+          <input type="number" id="pt-eff" value="100" min="1" max="100" step="1" oninput="calcPower()" />
+        </div>
+        <span class="field-note">Accounts for heat losses (100% = ideal)</span>
+      </div>
+    </div>
+    <div class="result-area">
+      <p class="section-label" style="margin-bottom:12px;">Results</p>
+      <div class="results-grid cols-3" style="margin-bottom:12px;">
+        <div class="result-card primary">
+          <p class="rlabel">Required power</p>
+          <p class="rvalue" id="pt-res-kw">—</p>
+          <p class="runit">kW</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Required power</p>
+          <p class="rvalue" id="pt-res-hp">—</p>
+          <p class="runit">hp</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Required power</p>
+          <p class="rvalue" id="pt-res-btu">—</p>
+          <p class="runit">BTU/hr</p>
+        </div>
+      </div>
+      <div class="results-grid cols-2">
+        <div class="result-card">
+          <p class="rlabel">Total heat energy (Q)</p>
+          <p class="rvalue" id="pt-res-Q-kj">—</p>
+          <p class="runit">kJ</p>
+          <p class="rsub" id="pt-res-Q-sub"></p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Specific heat used (Cp)</p>
+          <p class="rvalue" id="pt-res-cp">—</p>
+          <p class="runit">kJ/(kg·K)</p>
+          <p class="rsub" id="pt-res-cp-sub"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TAB 2: Find Time ── -->
+  <div class="calc-card" id="card-tp">
+    <p class="section-label" style="margin-bottom:14px;">Inputs</p>
+    <div class="mat-row">
+      <label>Material</label>
+      <select id="tp-mat" onchange="onMatChange('tp')">
+        <option value="water">Water</option>
+        <option value="therminol66">Therminol 66 (heating oil)</option>
+        <option value="iso220">ISO 220 (gear oil)</option>
+        <option value="steel">Mild Steel (A36)</option>
+        <option value="alum">Aluminum 6061</option>
+      </select>
+    </div>
+    <div class="cp-info" id="tp-cp-info"></div>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Mass</label>
+        <div class="field-row">
+          <input type="number" id="tp-mass" value="727.3" min="0.001" step="0.1" oninput="calcTime()" />
+          <select id="tp-unit-mass" onchange="calcTime()">
+            <option value="kg">kg</option>
+            <option value="lb">lb</option>
+            <option value="ton">ton (US)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Start temperature (T₁)</label>
+        <div class="field-row">
+          <input type="number" id="tp-T1" value="20" step="1" oninput="calcTime()" />
+          <select id="tp-unit-T" onchange="calcTime()">
+            <option value="C">°C</option>
+            <option value="F">°F</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>End temperature (T₂)</label>
+        <div class="field-row">
+          <input type="number" id="tp-T2" value="220" step="1" oninput="calcTime()" />
+        </div>
+        <span class="field-note">Same unit as start temperature</span>
+      </div>
+      <div class="field">
+        <label>Available power</label>
+        <div class="field-row">
+          <input type="number" id="tp-power" value="4.5" min="0.001" step="0.1" oninput="calcTime()" />
+          <select id="tp-unit-power" onchange="calcTime()">
+            <option value="kw">kW</option>
+            <option value="hp">hp</option>
+            <option value="btu">BTU/hr</option>
+            <option value="w">W</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>System efficiency (%)</label>
+        <div class="field-row">
+          <input type="number" id="tp-eff" value="100" min="1" max="100" step="1" oninput="calcTime()" />
+        </div>
+        <span class="field-note">Accounts for heat losses (100% = ideal)</span>
+      </div>
+    </div>
+    <div class="result-area">
+      <p class="section-label" style="margin-bottom:12px;">Results</p>
+      <div class="results-grid cols-3" style="margin-bottom:12px;">
+        <div class="result-card primary">
+          <p class="rlabel">Required time</p>
+          <p class="rvalue" id="tp-res-hr">—</p>
+          <p class="runit">hours</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Required time</p>
+          <p class="rvalue" id="tp-res-min">—</p>
+          <p class="runit">minutes</p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Required time</p>
+          <p class="rvalue" id="tp-res-s">—</p>
+          <p class="runit">seconds</p>
+        </div>
+      </div>
+      <div class="results-grid cols-2">
+        <div class="result-card">
+          <p class="rlabel">Total heat energy (Q)</p>
+          <p class="rvalue" id="tp-res-Q-kj">—</p>
+          <p class="runit">kJ</p>
+          <p class="rsub" id="tp-res-Q-sub"></p>
+        </div>
+        <div class="result-card">
+          <p class="rlabel">Specific heat used (Cp)</p>
+          <p class="rvalue" id="tp-res-cp">—</p>
+          <p class="runit">kJ/(kg·K)</p>
+          <p class="rsub" id="tp-res-cp-sub"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Sensible Heat Equation</p>
+    <div class="formula-block">
+      <span>Q = m · Cp · ΔT</span>
+      <span>P = Q / t &nbsp;&nbsp;[required power]</span>
+      <span>t = Q / P &nbsp;&nbsp;[required time]</span>
+      <span>P_actual = P_ideal / η &nbsp;&nbsp;[accounting for efficiency]</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>Q</strong> = heat energy (kJ)</span>
+      <span class="fvar"><strong>m</strong> = mass (kg)</span>
+      <span class="fvar"><strong>Cp</strong> = specific heat capacity (kJ/kg·K)</span>
+      <span class="fvar"><strong>ΔT</strong> = temperature rise (K or °C)</span>
+      <span class="fvar"><strong>P</strong> = power (kW)</span>
+      <span class="fvar"><strong>t</strong> = time (s)</span>
+      <span class="fvar"><strong>η</strong> = system efficiency</span>
+      <span class="fvar">Cp for oils evaluated at mean temperature (T₁+T₂)/2</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Material specific heat data ──
+// Fixed Cp materials (kJ/kg·K)
+const fixedCp = {
+  water: { name: 'Water',            cp: 4.186, note: 'Cp = 4.186 kJ/kg·K (constant)' },
+  steel: { name: 'Mild Steel (A36)', cp: 0.490, note: 'Cp = 0.490 kJ/kg·K (constant)' },
+  alum:  { name: 'Aluminum 6061',    cp: 0.896, note: 'Cp = 0.896 kJ/kg·K (constant)' },
+};
+
+// Temperature-dependent Cp: returns kJ/kg·K given mean temp in °C
+// Therminol 66: Solutia datasheet fit, valid 0–340°C
+// Cp(T) ≈ 1.498 + 0.00349·T  kJ/kg·K
+function cpTherminol66(Tmean_C) {
+  return 1.498 + 0.00349 * Tmean_C;
+}
+
+// ISO 220 mineral gear oil: Cp ≈ 1.67 + 0.0034·T  kJ/kg·K (typical mineral oil correlation)
+function cpISO220(Tmean_C) {
+  return 1.67 + 0.0034 * Tmean_C;
+}
+
+function getCp(matKey, Tmean_C) {
+  if (matKey === 'therminol66') return cpTherminol66(Tmean_C);
+  if (matKey === 'iso220')      return cpISO220(Tmean_C);
+  return fixedCp[matKey].cp;
+}
+
+function getCpNote(matKey, Tmean_C) {
+  if (matKey === 'therminol66') return 'Cp = ' + cpTherminol66(Tmean_C).toFixed(3) + ' kJ/kg·K at ' + Tmean_C.toFixed(0) + '°C mean (Solutia fit)';
+  if (matKey === 'iso220')      return 'Cp = ' + cpISO220(Tmean_C).toFixed(3) + ' kJ/kg·K at ' + Tmean_C.toFixed(0) + '°C mean (mineral oil correlation)';
+  return fixedCp[matKey].note;
+}
+
+function getMatLabel(matKey) {
+  if (matKey === 'therminol66') return 'Therminol 66';
+  if (matKey === 'iso220')      return 'ISO 220';
+  return fixedCp[matKey].name;
+}
+
+// ── Unit conversions ──
+const toKg   = { kg: 1, lb: 0.453592, ton: 907.185 };
+const toPowW = { kw: 1000, hp: 745.699, btu: 0.293071, w: 1 };
+const toTimeS = { hr: 3600, min: 60, s: 1 };
+
+function toDeltaC(T1, T2, unit) {
+  // ΔT is the same in °C and K; for °F just multiply by 5/9
+  const delta = T2 - T1;
+  return unit === 'F' ? delta * 5 / 9 : delta;
+}
+
+function toMeanC(T1, T2, unit) {
+  const mean = (T1 + T2) / 2;
+  return unit === 'F' ? (mean - 32) * 5 / 9 : mean;
+}
+
+function fmt(v, dec) {
+  if (!isFinite(v) || v === null) return '—';
+  if (Math.abs(v) >= 1e6)  return (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 10000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (Math.abs(v) >= 100)  return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(v) >= 1)    return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return v.toPrecision(3);
+}
+
+function onMatChange(tab) {
+  // Update cp-info display using current temp inputs
+  if (tab === 'pt') calcPower();
+  else              calcTime();
+}
+
+function calcPower() {
+  const matKey  = document.getElementById('pt-mat').value;
+  const mass_kg = (parseFloat(document.getElementById('pt-mass').value) || 0) * toKg[document.getElementById('pt-unit-mass').value];
+  const T1      = parseFloat(document.getElementById('pt-T1').value) || 0;
+  const T2      = parseFloat(document.getElementById('pt-T2').value) || 0;
+  const Tunit   = document.getElementById('pt-unit-T').value;
+  const time_s  = (parseFloat(document.getElementById('pt-time').value) || 0) * toTimeS[document.getElementById('pt-unit-time').value];
+  const eff     = (parseFloat(document.getElementById('pt-eff').value) || 100) / 100;
+
+  const dT_K    = toDeltaC(T1, T2, Tunit);
+  const Tmean_C = toMeanC(T1, T2, Tunit);
+  const Cp      = getCp(matKey, Tmean_C);
+  const note    = getCpNote(matKey, Tmean_C);
+
+  document.getElementById('pt-cp-info').textContent = note;
+
+  if (!mass_kg || !dT_K || !time_s || !eff) return;
+
+  const Q_kJ    = mass_kg * Cp * dT_K;           // total heat energy
+  const P_kW    = (Q_kJ / time_s) / eff;         // required power (kW)
+
+  document.getElementById('pt-res-kw').textContent  = fmt(P_kW);
+  document.getElementById('pt-res-hp').textContent  = fmt(P_kW / 0.745699);
+  document.getElementById('pt-res-btu').textContent = fmt(P_kW * 3412.14);
+  document.getElementById('pt-res-Q-kj').textContent = fmt(Q_kJ);
+  document.getElementById('pt-res-Q-sub').textContent = fmt(Q_kJ / 1055.06, 2) + ' BTU  |  ' + fmt(Q_kJ * 0.239006, 0) + ' kcal';
+  document.getElementById('pt-res-cp').textContent  = Cp.toFixed(3);
+  document.getElementById('pt-res-cp-sub').textContent = 'at mean temp ' + Tmean_C.toFixed(0) + '°C';
+}
+
+function calcTime() {
+  const matKey  = document.getElementById('tp-mat').value;
+  const mass_kg = (parseFloat(document.getElementById('tp-mass').value) || 0) * toKg[document.getElementById('tp-unit-mass').value];
+  const T1      = parseFloat(document.getElementById('tp-T1').value) || 0;
+  const T2      = parseFloat(document.getElementById('tp-T2').value) || 0;
+  const Tunit   = document.getElementById('tp-unit-T').value;
+  const P_W     = (parseFloat(document.getElementById('tp-power').value) || 0) * toPowW[document.getElementById('tp-unit-power').value];
+  const eff     = (parseFloat(document.getElementById('tp-eff').value) || 100) / 100;
+
+  const dT_K    = toDeltaC(T1, T2, Tunit);
+  const Tmean_C = toMeanC(T1, T2, Tunit);
+  const Cp      = getCp(matKey, Tmean_C);
+  const note    = getCpNote(matKey, Tmean_C);
+
+  document.getElementById('tp-cp-info').textContent = note;
+
+  if (!mass_kg || !dT_K || !P_W || !eff) return;
+
+  const Q_kJ  = mass_kg * Cp * dT_K;
+  const P_eff = P_W * eff / 1000;                // effective power in kW
+  const t_s   = Q_kJ / P_eff;                   // seconds
+
+  document.getElementById('tp-res-hr').textContent  = fmt(t_s / 3600);
+  document.getElementById('tp-res-min').textContent = fmt(t_s / 60);
+  document.getElementById('tp-res-s').textContent   = fmt(t_s);
+  document.getElementById('tp-res-Q-kj').textContent = fmt(Q_kJ);
+  document.getElementById('tp-res-Q-sub').textContent = fmt(Q_kJ / 1055.06, 2) + ' BTU  |  ' + fmt(Q_kJ * 0.239006, 0) + ' kcal';
+  document.getElementById('tp-res-cp').textContent  = Cp.toFixed(3);
+  document.getElementById('tp-res-cp-sub').textContent = 'at mean temp ' + Tmean_C.toFixed(0) + '°C';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', (i===0&&tab==='pt')||(i===1&&tab==='tp')));
+  document.getElementById('card-pt').classList.toggle('active', tab === 'pt');
+  document.getElementById('card-tp').classList.toggle('active', tab === 'tp');
+}
+
+['pt-unit-mass','pt-unit-T','pt-unit-time'].forEach(id => document.getElementById(id).addEventListener('change', calcPower));
+['tp-unit-mass','tp-unit-T','tp-unit-power'].forEach(id => document.getElementById(id).addEventListener('change', calcTime));
+
+calcPower();
+calcTime();
+</script>
+</body>
+</html>

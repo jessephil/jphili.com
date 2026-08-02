@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluid Power Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --parchment: #f5eedf; --parchment-dark: #ede3cc; --parchment-deeper: #d9cdb0;
+      --ink: #2a2218; --ink-mid: #5a4e38; --ink-faint: #9a8e78;
+      --gold: #8a6d2f; --gold-light: #c9a84c; --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25); --border-strong: rgba(138,109,47,0.5);
+      --blue: #1c4f82; --blue-pale: #e6f0fb;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--parchment); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px); pointer-events: none; z-index: 0; }
+
+    nav { position: relative; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 3rem; height: 64px; background: var(--parchment); border-bottom: 1px solid var(--border); }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 540px; line-height: 1.7; }
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.25rem; }
+
+    /* material row */
+    .mat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .mat-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .mat-row select { flex: 1; min-width: 180px; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; }
+
+    /* fluid info pill */
+    .fluid-pill { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: var(--blue-pale); border: 1px solid rgba(28,79,130,0.2); border-radius: 8px; padding: 8px 14px; margin-bottom: 14px; font-size: 13px; color: var(--blue); }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; transition: border-color 0.2s; min-width: 0; }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select { border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px; font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment); outline: none; cursor: pointer; }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; }
+
+    /* results */
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+    .result-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 26px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+    .result-card .rsub { font-size: 12px; color: var(--ink-mid); margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+
+    /* formula */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 15px; color: var(--ink); display: flex; flex-direction: column; gap: 6px; padding: 10px 0; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .result-card .rvalue { font-size: 20px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Thermal Engineering</p>
+    <h1 class="page-title">Fluid Power Calculator</h1>
+    <p class="page-subtitle">Calculate the thermal power carried by a flowing fluid given flow rate and temperature change — P = ṁ · Cp · ΔT.</p>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+
+    <div class="mat-row">
+      <label>Fluid</label>
+      <select id="fluid-select" onchange="calc()">
+        <option value="water">Water</option>
+        <option value="iso220">ISO 220 (gear oil)</option>
+        <option value="iso320">ISO 320 (gear oil)</option>
+        <option value="therminol66">Therminol 66 (thermal oil)</option>
+      </select>
+    </div>
+
+    <div class="fluid-pill" id="fluid-pill"></div>
+
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Flow rate</label>
+        <div class="field-row">
+          <input type="number" id="inp-flow" value="50" min="0.001" step="0.1" oninput="calc()" />
+          <select id="unit-flow" onchange="calc()">
+            <option value="gpm">gal/min</option>
+            <option value="lpm">L/min</option>
+            <option value="m3s">m³/s</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Inlet temperature (T₁)</label>
+        <div class="field-row">
+          <input type="number" id="inp-T1" value="60" step="1" oninput="calc()" />
+          <select id="unit-T" onchange="calc()">
+            <option value="C">°C</option>
+            <option value="F">°F</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Outlet temperature (T₂)</label>
+        <div class="field-row">
+          <input type="number" id="inp-T2" value="80" step="1" oninput="calc()" />
+        </div>
+        <span class="field-note">Same unit as inlet temperature</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card primary">
+      <p class="rlabel">Thermal power</p>
+      <p class="rvalue" id="res-kw">—</p>
+      <p class="runit">kW</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Thermal power</p>
+      <p class="rvalue" id="res-hp">—</p>
+      <p class="runit">hp</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Thermal power</p>
+      <p class="rvalue" id="res-btu">—</p>
+      <p class="runit">BTU/hr</p>
+    </div>
+  </div>
+
+  <div class="results-grid" style="grid-template-columns: 1fr 1fr 1fr; margin-bottom: 1.5rem;">
+    <div class="result-card">
+      <p class="rlabel">Mass flow rate (ṁ)</p>
+      <p class="rvalue" id="res-mdot">—</p>
+      <p class="runit">kg/s</p>
+      <p class="rsub" id="res-mdot-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Specific heat (Cp)</p>
+      <p class="rvalue" id="res-cp">—</p>
+      <p class="runit">kJ/(kg·K)</p>
+      <p class="rsub" id="res-cp-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Temperature rise (ΔT)</p>
+      <p class="rvalue" id="res-dt">—</p>
+      <p class="runit" id="res-dt-unit">°C</p>
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Thermal Power — Flowing Fluid</p>
+    <div class="formula-block">
+      <span>P = ṁ · Cp · ΔT</span>
+      <span>ṁ (kg/s) = flow rate (m³/s) × density (kg/m³)</span>
+      <span>Cp and ρ evaluated at mean temperature (T₁ + T₂) / 2</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>P</strong> = thermal power (kW)</span>
+      <span class="fvar"><strong>ṁ</strong> = mass flow rate (kg/s)</span>
+      <span class="fvar"><strong>Cp</strong> = specific heat capacity (kJ/kg·K)</span>
+      <span class="fvar"><strong>ΔT</strong> = T₂ − T₁ (K or °C)</span>
+      <span class="fvar"><strong>ρ</strong> = fluid density at mean temp (kg/m³)</span>
+      <span class="fvar">Water: Cp ≈ 4.186 kJ/kg·K, ρ ≈ 1000 kg/m³</span>
+      <span class="fvar">ISO oils: Walther / ASTM D1250 temperature-dependent fits</span>
+      <span class="fvar">Therminol 66: Solutia datasheet polynomial fits</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Fluid property functions ──
+// All return { cp (kJ/kg·K), rho (kg/m³) } at given mean temp °C
+
+function propsWater(Tm) {
+  // Simple polynomial fits, valid ~0–100°C
+  const cp  = 4.186; // essentially constant in this range
+  const rho = 1000 - 0.003 * Math.pow(Tm - 4, 2); // peaks at 4°C
+  return { cp, rho, cpNote: 'Cp = 4.186 kJ/kg·K', rhoNote: 'ρ = ' + rho.toFixed(1) + ' kg/m³' };
+}
+
+function propsISO220(Tm) {
+  // Mineral oil correlation (same as flow_through_pipe)
+  const cp  = 1.67 + 0.0034 * Tm;
+  const rho = 882 - 0.65 * (Tm - 15); // rho15 = 882 for ISO 220
+  return { cp, rho, cpNote: 'Cp = ' + cp.toFixed(3) + ' kJ/kg·K (mineral oil correlation)', rhoNote: 'ρ = ' + rho.toFixed(1) + ' kg/m³ (ASTM D1250)' };
+}
+
+function propsISO320(Tm) {
+  const cp  = 1.67 + 0.0034 * Tm;
+  const rho = 886 - 0.65 * (Tm - 15); // rho15 = 886 for ISO 320
+  return { cp, rho, cpNote: 'Cp = ' + cp.toFixed(3) + ' kJ/kg·K (mineral oil correlation)', rhoNote: 'ρ = ' + rho.toFixed(1) + ' kg/m³ (ASTM D1250)' };
+}
+
+function propsTherminol66(Tm) {
+  // Solutia datasheet fits
+  const cp  = 1.498 + 0.00349 * Tm;
+  const rho = 1010 - 0.596 * (Tm - 15);
+  return { cp, rho, cpNote: 'Cp = ' + cp.toFixed(3) + ' kJ/kg·K (Solutia fit)', rhoNote: 'ρ = ' + rho.toFixed(1) + ' kg/m³ (Solutia fit)' };
+}
+
+function getProps(key, Tm) {
+  if (key === 'water')       return propsWater(Tm);
+  if (key === 'iso220')      return propsISO220(Tm);
+  if (key === 'iso320')      return propsISO320(Tm);
+  if (key === 'therminol66') return propsTherminol66(Tm);
+}
+
+// ── Unit conversions ──
+// Flow rate to m³/s
+function toM3s(val, unit) {
+  if (unit === 'gpm') return val * 6.30902e-5;
+  if (unit === 'lpm') return val / 60000;
+  return val; // m³/s
+}
+
+function toDeltaC(T1, T2, unit) {
+  return unit === 'F' ? (T2 - T1) * 5 / 9 : (T2 - T1);
+}
+
+function toMeanC(T1, T2, unit) {
+  const mean = (T1 + T2) / 2;
+  return unit === 'F' ? (mean - 32) * 5 / 9 : mean;
+}
+
+function fmt(v, dec) {
+  if (!isFinite(v)) return '—';
+  if (Math.abs(v) >= 1e6)  return (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 10000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (Math.abs(v) >= 100)  return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(v) >= 1)    return v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  return v.toPrecision(3);
+}
+
+function calc() {
+  const key    = document.getElementById('fluid-select').value;
+  const flow   = parseFloat(document.getElementById('inp-flow').value) || 0;
+  const T1     = parseFloat(document.getElementById('inp-T1').value)   || 0;
+  const T2     = parseFloat(document.getElementById('inp-T2').value)   || 0;
+  const Tunit  = document.getElementById('unit-T').value;
+  const funit  = document.getElementById('unit-flow').value;
+
+  const Tm_C   = toMeanC(T1, T2, Tunit);
+  const dT_K   = toDeltaC(T1, T2, Tunit);
+  const Q_m3s  = toM3s(flow, funit);
+  const props  = getProps(key, Tm_C);
+
+  // Update fluid info pill
+  document.getElementById('fluid-pill').textContent =
+    props.cpNote + '  |  ' + props.rhoNote + '  |  at mean temp ' + Tm_C.toFixed(1) + '°C';
+
+  if (!flow || !dT_K || !Q_m3s) return;
+
+  const mdot_kgs = Q_m3s * props.rho;          // kg/s
+  const P_kW     = mdot_kgs * props.cp * dT_K; // kW
+
+  document.getElementById('res-kw').textContent    = fmt(P_kW);
+  document.getElementById('res-hp').textContent    = fmt(P_kW / 0.745699);
+  document.getElementById('res-btu').textContent   = fmt(P_kW * 3412.14);
+  document.getElementById('res-mdot').textContent  = fmt(mdot_kgs, 4);
+  document.getElementById('res-mdot-sub').textContent =
+    fmt(mdot_kgs * 2.20462, 3) + ' lb/s  |  ' + fmt(mdot_kgs * 3600, 1) + ' kg/hr';
+  document.getElementById('res-cp').textContent    = props.cp.toFixed(3);
+  document.getElementById('res-cp-sub').textContent = 'at ' + Tm_C.toFixed(1) + '°C mean';
+  document.getElementById('res-dt').textContent    = fmt(Math.abs(dT_K), 2);
+  document.getElementById('res-dt-unit').textContent = Tunit === 'F' ? '°F (as °C equivalent)' : '°C';
+}
+
+['unit-flow', 'unit-T'].forEach(id => document.getElementById(id).addEventListener('change', calc));
+calc();
+</script>
+</body>
+</html>

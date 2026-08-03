@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bolt Torque Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --parchment: #f5eedf; --parchment-dark: #ede3cc; --parchment-deeper: #d9cdb0;
+      --ink: #2a2218; --ink-mid: #5a4e38; --ink-faint: #9a8e78;
+      --gold: #8a6d2f; --gold-light: #c9a84c; --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25); --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27; --green-pale: #e8f2e7;
+      --amber: #7a5a1a; --amber-pale: #fdf3dc;
+      --red: #7a2a2a; --red-pale: #f5e8e8;
+      --blue: #1c4f82; --blue-pale: #e6f0fb;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--parchment); color: var(--ink); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+    body::before { content: ''; position: fixed; inset: 0; background-image: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px); pointer-events: none; z-index: 0; }
+
+    nav { position: relative; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 3rem; height: 64px; background: var(--parchment); border-bottom: 1px solid var(--border); }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 560px; line-height: 1.7; }
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+    .sub-label { font-size: 11px; font-weight: 500; letter-spacing: 0.10em; text-transform: uppercase; color: var(--ink-mid); margin: 1rem 0 10px; padding-top: 1rem; border-top: 0.5px solid var(--border); }
+    .sub-label.first { border-top: none; padding-top: 0; margin-top: 0; }
+
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .inputs-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; transition: border-color 0.2s; min-width: 0; }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select { border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px; font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment); outline: none; cursor: pointer; }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; }
+
+    /* bolt preset row */
+    .preset-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .preset-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .preset-row select { flex: 1; min-width: 140px; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; }
+
+    /* mu presets */
+    .mu-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+    .mu-btn { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-family: inherit; font-size: 11px; color: var(--ink-mid); cursor: pointer; transition: all 0.15s; }
+    .mu-btn:hover, .mu-btn.active { background: var(--gold-pale); border-color: var(--border-strong); color: var(--gold); }
+
+    /* results */
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+    .result-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 24px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+    .result-card .rsub { font-size: 12px; color: var(--ink-mid); margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+
+    /* preload gauge */
+    .preload-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; margin-bottom: 1.5rem; }
+    .preload-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+    .preload-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .preload-pct { font-size: 28px; font-weight: 500; color: var(--ink); }
+    .preload-pct-label { font-size: 12px; color: var(--ink-faint); }
+    .gauge-track { height: 12px; background: var(--parchment-deeper); border-radius: 6px; overflow: hidden; margin-bottom: 8px; }
+    .gauge-fill { height: 100%; border-radius: 6px; transition: width 0.3s ease, background 0.3s; }
+    .gauge-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-faint); margin-bottom: 10px; }
+    .preload-meta { display: flex; flex-wrap: wrap; gap: 6px 20px; font-size: 12px; color: var(--ink-mid); }
+    .preload-meta span strong { color: var(--ink); }
+    .sf-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .badge-green  { background: var(--green-pale); color: var(--green); }
+    .badge-amber  { background: var(--amber-pale); color: var(--amber); }
+    .badge-red    { background: var(--red-pale);   color: var(--red); }
+
+    /* preload table */
+    .table-wrap { border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 540px; }
+    thead th { background: var(--parchment-deeper); font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ink-mid); text-align: right; padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    thead th:first-child { text-align: left; }
+    tbody td { padding: 9px 12px; border-bottom: 0.5px solid var(--border); text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-size: 12px; }
+    tbody td:first-child { text-align: left; font-weight: 500; color: var(--ink-mid); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--gold-pale); }
+    tbody tr.active-row td { background: var(--blue-pale); color: var(--blue); font-weight: 500; }
+    tbody tr.active-row td:first-child { color: var(--blue); }
+    .pct-bar { display: inline-flex; align-items: center; gap: 6px; }
+    .mini-bar { display: inline-block; height: 6px; border-radius: 3px; vertical-align: middle; }
+
+    /* formula */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 14px; color: var(--ink); display: flex; flex-direction: column; gap: 6px; padding: 10px 0; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid, .inputs-grid-3 { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .result-card .rvalue { font-size: 20px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Bolt Torque Calculator</h1>
+    <p class="page-subtitle">Calculate bolt preload force from applied torque using the power screw equation — and compare against proof strength for common imperial and metric bolt grades.</p>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+
+    <p class="sub-label first">Bolt selection</p>
+    <div class="preset-row">
+      <label>System</label>
+      <select id="bolt-system" onchange="onSystemChange()">
+        <option value="imperial">Imperial (UNC / UNF)</option>
+        <option value="metric">Metric</option>
+        <option value="custom">Custom</option>
+      </select>
+      <select id="bolt-thread" onchange="onBoltPreset()" style="flex:2;">
+        <option value="">— select a bolt —</option>
+      </select>
+    </div>
+
+    <div class="inputs-grid-3">
+      <div class="field">
+        <label>Nominal diameter (D)</label>
+        <div class="field-row">
+          <input type="number" id="inp-D" value="1.0" min="0.01" step="0.001" oninput="calc()" />
+          <select id="unit-D" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Thread pitch (p)</label>
+        <div class="field-row">
+          <input type="number" id="inp-p" value="0.05" min="0.0001" step="0.0001" oninput="calc()" />
+          <select id="unit-p" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+        <span class="field-note" id="tpi-note">= 20 TPI</span>
+      </div>
+      <div class="field">
+        <label>Coeff. of friction (µ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-mu" value="0.15" min="0.01" max="0.5" step="0.01" oninput="calc()" />
+        </div>
+        <div class="mu-presets">
+          <button class="mu-btn" onclick="setMu(0.10)">0.10 lubricated</button>
+          <button class="mu-btn active" onclick="setMu(0.15)">0.15 dry steel</button>
+          <button class="mu-btn" onclick="setMu(0.20)">0.20 rough</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="sub-label">Applied torque</p>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Torque (T)</label>
+        <div class="field-row">
+          <input type="number" id="inp-T" value="37.5" min="0" step="0.1" oninput="calc()" />
+          <select id="unit-T" onchange="calc()">
+            <option value="inlb">in·lb</option>
+            <option value="ftlb">ft·lb</option>
+            <option value="nm">N·m</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <p class="sub-label">Grade / material (for preload %)</p>
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Grade preset</label>
+        <select id="grade-select" onchange="onGradeChange()">
+          <optgroup label="Imperial SAE">
+            <option value="sae5">SAE Grade 5 — Sp 85 ksi</option>
+            <option value="sae8">SAE Grade 8 — Sp 120 ksi</option>
+            <option value="sae2">SAE Grade 2 — Sp 55 ksi</option>
+          </optgroup>
+          <optgroup label="Metric">
+            <option value="88">8.8 — Sp 600 MPa</option>
+            <option value="109">10.9 — Sp 830 MPa</option>
+            <option value="129">12.9 — Sp 970 MPa</option>
+          </optgroup>
+          <option value="custom_grade">Custom proof strength</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Proof strength (Sp)</label>
+        <div class="field-row">
+          <input type="number" id="inp-Sp" value="85000" min="1" step="100" oninput="calc()" />
+          <select id="unit-Sp" onchange="calc()">
+            <option value="psi">psi</option>
+            <option value="ksi">ksi</option>
+            <option value="mpa">MPa</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Tensile stress area (Aₜ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-At" value="0.6060" min="0.0001" step="0.0001" oninput="calc()" />
+          <select id="unit-At" onchange="calc()">
+            <option value="in2">in²</option>
+            <option value="mm2">mm²</option>
+          </select>
+        </div>
+        <span class="field-note" id="at-note">From ASME B1.1 thread tables</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIMARY RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card primary">
+      <p class="rlabel">Preload force (F)</p>
+      <p class="rvalue" id="res-F-lbs">—</p>
+      <p class="runit">lbs</p>
+      <p class="rsub" id="res-F-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Bolt stress (σ)</p>
+      <p class="rvalue" id="res-stress">—</p>
+      <p class="runit">psi</p>
+      <p class="rsub" id="res-stress-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Proof load (F_proof)</p>
+      <p class="rvalue" id="res-Fp">—</p>
+      <p class="runit">lbs</p>
+      <p class="rsub" id="res-Fp-sub"></p>
+    </div>
+  </div>
+
+  <!-- PRELOAD GAUGE -->
+  <div class="preload-card" id="preload-card">
+    <div class="preload-header">
+      <span class="preload-title">Preload as % of proof load</span>
+      <div>
+        <span class="preload-pct" id="gauge-pct">—</span>
+        <span class="preload-pct-label">%</span>
+        &nbsp;
+        <span class="sf-badge" id="gauge-badge"></span>
+      </div>
+    </div>
+    <div class="gauge-track">
+      <div class="gauge-fill" id="gauge-fill" style="width:0%"></div>
+    </div>
+    <div class="gauge-labels">
+      <span>0%</span>
+      <span>Typical target: 75–90%</span>
+      <span>100% proof load</span>
+    </div>
+    <div class="preload-meta" id="preload-meta"></div>
+  </div>
+
+  <!-- BOLT TABLE — all grades at this torque -->
+  <p class="section-label">All grades at this torque — % of proof load</p>
+  <div class="table-wrap">
+    <table id="grade-table">
+      <thead>
+        <tr>
+          <th>Grade</th>
+          <th>Proof strength</th>
+          <th>Proof load</th>
+          <th>Preload</th>
+          <th>% of proof</th>
+        </tr>
+      </thead>
+      <tbody id="grade-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Power Screw Torque-Force Equation (Machinery's Handbook)</p>
+    <div class="formula-block">
+      <span>F = 2π · T / (p + 2π · µ · r)</span>
+      <span>σ = F / Aₜ &nbsp;&nbsp;[bolt tensile stress]</span>
+      <span>F_proof = Sp · Aₜ &nbsp;&nbsp;[proof load]</span>
+      <span>Preload % = F / F_proof × 100</span>
+      <span>Aₜ (in²) = 0.7854 · (D − 0.9743/n)² &nbsp;&nbsp;[UNC/UNF stress area]</span>
+      <span>Aₜ (mm²) = 0.7854 · (D − 0.9382·p)² &nbsp;&nbsp;[metric stress area]</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>T</strong> = applied torque</span>
+      <span class="fvar"><strong>p</strong> = thread pitch (in or mm)</span>
+      <span class="fvar"><strong>µ</strong> = coefficient of friction (thread + bearing face)</span>
+      <span class="fvar"><strong>r</strong> = D/2 = nominal radius</span>
+      <span class="fvar"><strong>Aₜ</strong> = tensile stress area</span>
+      <span class="fvar"><strong>Sp</strong> = proof strength (material-dependent)</span>
+      <span class="fvar">Typical µ: 0.10 lubricated, 0.15 dry steel, 0.20 rough/corroded</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Bolt database ──
+const imperialBolts = [
+  { name:'1/4-20 UNC',   D:0.25,   p:1/20,   At:0.0318  },
+  { name:'1/4-28 UNF',   D:0.25,   p:1/28,   At:0.0364  },
+  { name:'5/16-18 UNC',  D:0.3125, p:1/18,   At:0.0524  },
+  { name:'5/16-24 UNF',  D:0.3125, p:1/24,   At:0.0580  },
+  { name:'3/8-16 UNC',   D:0.375,  p:1/16,   At:0.0775  },
+  { name:'3/8-24 UNF',   D:0.375,  p:1/24,   At:0.0878  },
+  { name:'7/16-14 UNC',  D:0.4375, p:1/14,   At:0.1063  },
+  { name:'7/16-20 UNF',  D:0.4375, p:1/20,   At:0.1187  },
+  { name:'1/2-13 UNC',   D:0.5,    p:1/13,   At:0.1419  },
+  { name:'1/2-20 UNF',   D:0.5,    p:1/20,   At:0.1599  },
+  { name:'9/16-12 UNC',  D:0.5625, p:1/12,   At:0.1820  },
+  { name:'9/16-18 UNF',  D:0.5625, p:1/18,   At:0.2030  },
+  { name:'5/8-11 UNC',   D:0.625,  p:1/11,   At:0.2260  },
+  { name:'5/8-18 UNF',   D:0.625,  p:1/18,   At:0.2560  },
+  { name:'3/4-10 UNC',   D:0.75,   p:1/10,   At:0.3340  },
+  { name:'3/4-16 UNF',   D:0.75,   p:1/16,   At:0.3730  },
+  { name:'7/8-9 UNC',    D:0.875,  p:1/9,    At:0.4620  },
+  { name:'7/8-14 UNF',   D:0.875,  p:1/14,   At:0.5090  },
+  { name:'1-8 UNC',      D:1.0,    p:1/8,    At:0.6060  },
+  { name:'1-12 UNF',     D:1.0,    p:1/12,   At:0.6630  },
+  { name:'1-1/4-7 UNC',  D:1.25,   p:1/7,    At:0.9690  },
+  { name:'1-1/2-6 UNC',  D:1.5,    p:1/6,    At:1.4050  },
+];
+
+// Metric bolts — pitch in mm, At in mm²
+const metricBolts = [
+  { name:'M6×1.0',    D:6,   p:1.0,  At:20.1  },
+  { name:'M8×1.25',   D:8,   p:1.25, At:36.6  },
+  { name:'M8×1.0 f',  D:8,   p:1.0,  At:39.2  },
+  { name:'M10×1.5',   D:10,  p:1.5,  At:58.0  },
+  { name:'M10×1.25 f',D:10,  p:1.25, At:61.2  },
+  { name:'M12×1.75',  D:12,  p:1.75, At:84.3  },
+  { name:'M12×1.25 f',D:12,  p:1.25, At:92.1  },
+  { name:'M14×2.0',   D:14,  p:2.0,  At:115   },
+  { name:'M16×2.0',   D:16,  p:2.0,  At:157   },
+  { name:'M20×2.5',   D:20,  p:2.5,  At:245   },
+  { name:'M24×3.0',   D:24,  p:3.0,  At:353   },
+  { name:'M30×3.5',   D:30,  p:3.5,  At:561   },
+  { name:'M36×4.0',   D:36,  p:4.0,  At:817   },
+];
+
+// Grades: { label, Sp_psi, At_note }
+const grades = [
+  { key:'sae2', label:'SAE Grade 2',  Sp_psi:55000  },
+  { key:'sae5', label:'SAE Grade 5',  Sp_psi:85000  },
+  { key:'sae8', label:'SAE Grade 8',  Sp_psi:120000 },
+  { key:'88',   label:'Metric 8.8',   Sp_psi:87022  }, // 600 MPa
+  { key:'109',  label:'Metric 10.9',  Sp_psi:120382 }, // 830 MPa
+  { key:'129',  label:'Metric 12.9',  Sp_psi:140754 }, // 970 MPa
+];
+
+const gradeSpPsi = { sae2:55000, sae5:85000, sae8:120000, '88':87022, '109':120382, '129':140754, custom_grade:null };
+
+// ── Unit converters ──
+const toInLb  = { inlb:1, ftlb:12, nm:8.85075 };
+const toIn    = { in:1, mm:0.0393701 };
+const toIn2   = { in2:1, mm2:0.00155 };
+const toSpPsi = { psi:1, ksi:1000, mpa:145.038 };
+
+function fmt(v, dec) {
+  if (!isFinite(v) || v === null) return '—';
+  if (Math.abs(v) >= 1e6)  return (v/1e6).toFixed(2) + 'M';
+  if (Math.abs(v) >= 10000) return v.toLocaleString(undefined,{maximumFractionDigits:0});
+  if (Math.abs(v) >= 100)  return v.toLocaleString(undefined,{maximumFractionDigits:1});
+  return v.toLocaleString(undefined,{maximumFractionDigits: dec ?? 3});
+}
+
+function barColor(pct) {
+  if (pct > 100) return '#a33';
+  if (pct > 90)  return '#c9a84c';
+  if (pct > 50)  return '#2d5a27';
+  return '#6b9b6b';
+}
+
+// ── Populate bolt dropdown ──
+function onSystemChange() {
+  const system = document.getElementById('bolt-system').value;
+  const sel    = document.getElementById('bolt-thread');
+  sel.innerHTML = '<option value="">— select a bolt —</option>';
+  if (system === 'imperial') {
+    imperialBolts.forEach((b, i) => {
+      sel.innerHTML += `<option value="imp_${i}">${b.name}</option>`;
+    });
+  } else if (system === 'metric') {
+    metricBolts.forEach((b, i) => {
+      sel.innerHTML += `<option value="met_${i}">${b.name}</option>`;
+    });
+  }
+}
+
+function onBoltPreset() {
+  const val = document.getElementById('bolt-thread').value;
+  if (!val) return;
+  const [sys, idx] = val.split('_');
+  const bolt = sys === 'imp' ? imperialBolts[+idx] : metricBolts[+idx];
+  const isMetric = sys === 'met';
+
+  if (isMetric) {
+    document.getElementById('inp-D').value  = bolt.D;
+    document.getElementById('unit-D').value = 'mm';
+    document.getElementById('inp-p').value  = bolt.p;
+    document.getElementById('unit-p').value = 'mm';
+    document.getElementById('inp-At').value = bolt.At;
+    document.getElementById('unit-At').value = 'mm2';
+    document.getElementById('tpi-note').textContent = bolt.p + ' mm pitch';
+  } else {
+    document.getElementById('inp-D').value  = bolt.D;
+    document.getElementById('unit-D').value = 'in';
+    document.getElementById('inp-p').value  = bolt.p.toFixed(5);
+    document.getElementById('unit-p').value = 'in';
+    document.getElementById('inp-At').value = bolt.At;
+    document.getElementById('unit-At').value = 'in2';
+    const tpi = Math.round(1/bolt.p);
+    document.getElementById('tpi-note').textContent = tpi + ' TPI';
+  }
+  calc();
+}
+
+function onGradeChange() {
+  const key = document.getElementById('grade-select').value;
+  const Sp  = gradeSpPsi[key];
+  if (Sp) {
+    document.getElementById('inp-Sp').value  = Sp;
+    document.getElementById('unit-Sp').value = 'psi';
+  }
+  calc();
+}
+
+function setMu(val) {
+  document.getElementById('inp-mu').value = val;
+  document.querySelectorAll('.mu-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  calc();
+}
+
+// ── Main calculation ──
+function calc() {
+  const T_inlb = (parseFloat(document.getElementById('inp-T').value)  || 0) * toInLb[document.getElementById('unit-T').value];
+  const D_in   = (parseFloat(document.getElementById('inp-D').value)  || 0) * toIn[document.getElementById('unit-D').value];
+  const p_in   = (parseFloat(document.getElementById('inp-p').value)  || 0) * toIn[document.getElementById('unit-p').value];
+  const mu     =  parseFloat(document.getElementById('inp-mu').value) || 0.15;
+  const Sp_psi = (parseFloat(document.getElementById('inp-Sp').value) || 0) * toSpPsi[document.getElementById('unit-Sp').value];
+  const At_in2 = (parseFloat(document.getElementById('inp-At').value) || 0) * toIn2[document.getElementById('unit-At').value];
+
+  // Update pitch note
+  if (document.getElementById('unit-p').value === 'in' && p_in > 0) {
+    document.getElementById('tpi-note').textContent = Math.round(1/p_in) + ' TPI';
+  } else if (p_in > 0) {
+    document.getElementById('tpi-note').textContent = (p_in * 25.4).toFixed(3) + ' mm pitch';
+  }
+
+  if (!T_inlb || !D_in || !p_in || !mu) return;
+
+  const r     = D_in / 2;
+  // Machinery's Handbook power screw equation
+  const F_lbs = (2 * Math.PI * T_inlb) / (p_in + 2 * Math.PI * mu * r);
+  const F_kN  = F_lbs * 0.00444822;
+  const sigma_psi = At_in2 > 0 ? F_lbs / At_in2 : null;
+  const Fp_lbs    = (Sp_psi > 0 && At_in2 > 0) ? Sp_psi * At_in2 : null;
+  const pct       = (Fp_lbs > 0) ? (F_lbs / Fp_lbs) * 100 : null;
+
+  // Result cards
+  document.getElementById('res-F-lbs').textContent = fmt(F_lbs, 0);
+  document.getElementById('res-F-sub').textContent = fmt(F_kN, 3) + ' kN  |  ' + fmt(F_lbs/2000, 3) + ' tons';
+
+  if (sigma_psi !== null) {
+    document.getElementById('res-stress').textContent = fmt(sigma_psi, 0);
+    document.getElementById('res-stress-sub').textContent = fmt(sigma_psi / 145.038, 1) + ' MPa';
+  }
+
+  if (Fp_lbs !== null) {
+    document.getElementById('res-Fp').textContent = fmt(Fp_lbs, 0);
+    document.getElementById('res-Fp-sub').textContent = fmt(Fp_lbs * 0.00444822, 2) + ' kN';
+  }
+
+  // Gauge
+  if (pct !== null) {
+    document.getElementById('gauge-pct').textContent = pct.toFixed(1);
+    const fill = document.getElementById('gauge-fill');
+    fill.style.width  = Math.min(pct, 100) + '%';
+    fill.style.background = barColor(pct);
+
+    const badge  = document.getElementById('gauge-badge');
+    if (pct > 100) {
+      badge.textContent = 'Exceeds proof load'; badge.className = 'sf-badge badge-red';
+    } else if (pct > 90) {
+      badge.textContent = 'High — near yield';  badge.className = 'sf-badge badge-amber';
+    } else if (pct >= 60) {
+      badge.textContent = 'Good preload range'; badge.className = 'sf-badge badge-green';
+    } else {
+      badge.textContent = 'Low preload';        badge.className = 'sf-badge badge-amber';
+    }
+
+    document.getElementById('preload-meta').innerHTML =
+      '<span>Preload: <strong>' + fmt(F_lbs,0) + ' lbs</strong></span>' +
+      '<span>Proof load: <strong>' + fmt(Fp_lbs,0) + ' lbs</strong></span>' +
+      '<span>Bolt stress: <strong>' + fmt(sigma_psi,0) + ' psi</strong></span>' +
+      '<span>Proof strength: <strong>' + fmt(Sp_psi,0) + ' psi</strong></span>';
+  }
+
+  // Grade comparison table
+  const tbody = document.getElementById('grade-tbody');
+  tbody.innerHTML = '';
+  const activeKey = document.getElementById('grade-select').value;
+  grades.forEach(g => {
+    if (!At_in2) return;
+    const Fp    = g.Sp_psi * At_in2;
+    const gpct  = (F_lbs / Fp) * 100;
+    const barW  = Math.min(gpct, 100).toFixed(1);
+    const bClr  = barColor(gpct);
+    const tr    = document.createElement('tr');
+    if (g.key === activeKey) tr.classList.add('active-row');
+    tr.innerHTML = `
+      <td>${g.label}</td>
+      <td>${g.key.startsWith('sae') ? (g.Sp_psi/1000).toFixed(0)+' ksi' : (g.Sp_psi/145.038).toFixed(0)+' MPa'}</td>
+      <td>${fmt(Fp,0)} lbs</td>
+      <td>${fmt(F_lbs,0)} lbs</td>
+      <td><span class="pct-bar">
+        <span class="mini-bar" style="width:${barW}px;max-width:80px;background:${bClr};"></span>
+        ${gpct.toFixed(1)}%
+      </span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Init ──
+function onSystemChange() {
+  const system = document.getElementById('bolt-system').value;
+  const sel    = document.getElementById('bolt-thread');
+  sel.innerHTML = '<option value="">— select a bolt —</option>';
+  if (system === 'imperial') {
+    imperialBolts.forEach((b, i) => sel.innerHTML += `<option value="imp_${i}">${b.name}</option>`);
+  } else if (system === 'metric') {
+    metricBolts.forEach((b, i) => sel.innerHTML += `<option value="met_${i}">${b.name}</option>`);
+  }
+  calc();
+}
+
+['unit-T','unit-D','unit-p','unit-Sp','unit-At'].forEach(id =>
+  document.getElementById(id).addEventListener('change', calc));
+
+onSystemChange();
+calc();
+</script>
+</body>
+</html>

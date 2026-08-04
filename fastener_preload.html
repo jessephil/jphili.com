@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fastener Preload Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --parchment:#f5eedf;--parchment-dark:#ede3cc;--parchment-deeper:#d9cdb0;
+      --ink:#2a2218;--ink-mid:#5a4e38;--ink-faint:#9a8e78;
+      --gold:#8a6d2f;--gold-light:#c9a84c;--gold-pale:#f0e4c0;
+      --border:rgba(138,109,47,0.25);--border-strong:rgba(138,109,47,0.5);
+      --green:#2d5a27;--green-pale:#e8f2e7;
+      --amber:#7a5a1a;--amber-pale:#fdf3dc;
+      --red:#7a2a2a;--red-pale:#f5e8e8;
+      --blue:#1c4f82;--blue-pale:#e6f0fb;
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--parchment);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px);pointer-events:none;z-index:0;}
+    nav{position:relative;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:64px;background:var(--parchment);border-bottom:1px solid var(--border);}
+    .nav-ornament{display:flex;align-items:center;gap:12px;}
+    .nav-rule{width:32px;height:1px;background:var(--gold);opacity:0.6;}
+    .nav-name{font-family:'DM Serif Display',serif;font-size:15px;color:var(--ink);text-decoration:none;letter-spacing:0.04em;}
+    .nav-back{font-size:12px;color:var(--ink-mid);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s;}
+    .nav-back:hover{color:var(--gold);}
+    .nav-back svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+    .page{position:relative;z-index:1;max-width:940px;margin:0 auto;padding:3rem 3rem 5rem;}
+    .page-header{margin-bottom:2rem;}
+    .page-eyebrow{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+    .page-title{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:8px;}
+    .page-subtitle{font-size:14px;color:var(--ink-mid);font-style:italic;max-width:580px;line-height:1.7;}
+    .section-label{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+    .inputs-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.5rem 1.75rem;margin-bottom:1.5rem;}
+    .sub-label{font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink-mid);margin:1rem 0 10px;padding-top:1rem;border-top:0.5px solid var(--border);}
+    .sub-label.first{border-top:none;padding-top:0;margin-top:0;}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+    .field{display:flex;flex-direction:column;gap:6px;}
+    .field label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);}
+    .field-row{display:flex;gap:6px;}
+    .field input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;transition:border-color 0.2s;min-width:0;}
+    .field input:focus{border-color:var(--border-strong);}
+    .field select{border:1px solid var(--border);border-radius:8px;padding:9px 8px;font-family:inherit;font-size:13px;color:var(--ink-mid);background:var(--parchment);outline:none;cursor:pointer;}
+    .field-note{font-size:11px;color:var(--ink-faint);font-style:italic;}
+    .preset-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+    .preset-row label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);white-space:nowrap;}
+    .preset-row select{flex:1;min-width:140px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;}
+    .quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+    .qbtn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-family:inherit;font-size:11px;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;}
+    .qbtn:hover,.qbtn.active{background:var(--gold-pale);border-color:var(--border-strong);color:var(--gold);}
+    /* mode toggle */
+    .mode-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--parchment-dark);margin-bottom:1.5rem;}
+    .mode-btn{flex:1;padding:11px 16px;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-mid);background:transparent;border:none;cursor:pointer;transition:background 0.15s,color 0.15s;text-align:center;}
+    .mode-btn.active{background:var(--ink);color:var(--parchment);}
+    .mode-btn:not(.active):hover{background:var(--parchment-deeper);}
+    /* results */
+    .rg3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;}
+    .rg2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px;}
+    .result-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;}
+    .result-card.primary{background:var(--gold-pale);border-color:var(--border-strong);}
+    .result-card .rlabel{font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:4px;}
+    .result-card.primary .rlabel{color:var(--gold);}
+    .result-card .rvalue{font-size:24px;font-weight:500;color:var(--ink);line-height:1.1;}
+    .result-card .runit{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+    .result-card .rsub{font-size:12px;color:var(--ink-mid);margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);}
+    /* gauge */
+    .gauge-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.75rem;margin-bottom:1.5rem;}
+    .gauge-header{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+    .gauge-title{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);}
+    .gauge-pct-wrap{display:flex;align-items:baseline;gap:6px;}
+    .gauge-pct{font-size:28px;font-weight:500;color:var(--ink);}
+    .gauge-pct-label{font-size:12px;color:var(--ink-faint);}
+    .gauge-track{height:12px;background:var(--parchment-deeper);border-radius:6px;overflow:hidden;margin-bottom:8px;}
+    .gauge-fill{height:100%;border-radius:6px;transition:width 0.3s,background 0.3s;}
+    .gauge-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-faint);margin-bottom:10px;}
+    .sf-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;}
+    .badge-green{background:var(--green-pale);color:var(--green);}
+    .badge-amber{background:var(--amber-pale);color:var(--amber);}
+    .badge-red{background:var(--red-pale);color:var(--red);}
+    /* torque table */
+    .table-wrap{border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:1.5rem;overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:480px;}
+    thead th{background:var(--parchment-deeper);font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-mid);text-align:right;padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+    thead th:first-child{text-align:left;}
+    tbody td{padding:9px 12px;border-bottom:0.5px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-size:12px;}
+    tbody td:first-child{text-align:left;font-weight:500;color:var(--ink-mid);}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:hover td{background:var(--gold-pale);}
+    tbody tr.active-row td{background:var(--blue-pale);color:var(--blue);font-weight:500;}
+    tbody tr.active-row td:first-child{color:var(--blue);}
+    /* formula */
+    .formula-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.75rem;}
+    .formula-title{font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:10px;}
+    .formula-block{font-family:'Georgia',serif;font-size:14px;color:var(--ink);display:flex;flex-direction:column;gap:6px;padding:10px 0;}
+    .formula-vars{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);}
+    .fvar{font-size:12px;color:var(--ink-mid);}
+    .fvar strong{color:var(--ink);font-weight:500;}
+    footer{position:relative;z-index:1;border-top:1px solid var(--border);background:var(--parchment-deeper);padding:2rem 3rem;display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+    .footer-name{color:var(--ink-mid);}
+    .footer-year{color:var(--ink-faint);font-style:italic;}
+    @media(max-width:600px){
+      nav{padding:0 1.25rem;}
+      .page{padding:2rem 1.25rem 4rem;}
+      .g2,.g3{grid-template-columns:1fr;}
+      .rg3{grid-template-columns:1fr 1fr;}
+      .rg2{grid-template-columns:1fr;}
+      .result-card .rvalue{font-size:20px;}
+      footer{padding:2rem 1.25rem;flex-direction:column;gap:6px;}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background:linear-gradient(90deg,var(--gold),transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Fastener Preload Calculator</h1>
+    <p class="page-subtitle">Calculate bolt preload and required torque for standard fasteners using the VDI 2230 torque equation — which accounts for both thread friction and bearing face friction.</p>
+  </div>
+
+  <!-- MODE -->
+  <div class="mode-tabs">
+    <button class="mode-btn active" onclick="switchMode('torque2force')">Torque → Preload force</button>
+    <button class="mode-btn" onclick="switchMode('force2torque')">Target preload → Required torque</button>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+
+    <p class="sub-label first">Fastener</p>
+    <div class="preset-row">
+      <label>System</label>
+      <select id="bolt-system" onchange="onSystemChange()">
+        <option value="imperial">Imperial (UNC/UNF)</option>
+        <option value="metric">Metric</option>
+        <option value="shcs_imp">SHCS Imperial</option>
+        <option value="shcs_met">SHCS Metric</option>
+        <option value="custom">Custom</option>
+      </select>
+      <select id="bolt-thread" onchange="onBoltPreset()" style="flex:2;">
+        <option value="">— select a fastener —</option>
+      </select>
+    </div>
+
+    <div class="g3">
+      <div class="field">
+        <label>Nominal diameter (D)</label>
+        <div class="field-row">
+          <input type="number" id="inp-D" value="0.5" min="0.001" step="0.001" oninput="calc()"/>
+          <select id="unit-D" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Thread pitch (p)</label>
+        <div class="field-row">
+          <input type="number" id="inp-p" value="0.07692" min="0.0001" step="0.0001" oninput="calc()"/>
+          <select id="unit-p" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+        <span class="field-note" id="tpi-note">13 TPI</span>
+      </div>
+      <div class="field">
+        <label>Tensile stress area (Aₜ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-At" value="0.1419" min="0.00001" step="0.0001" oninput="calc()"/>
+          <select id="unit-At" onchange="calc()">
+            <option value="in2">in²</option>
+            <option value="mm2">mm²</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="g3">
+      <div class="field">
+        <label>Thread friction (µₜ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-mut" value="0.15" min="0.01" max="0.5" step="0.01" oninput="calc()"/>
+        </div>
+        <div class="quick-btns">
+          <button class="qbtn" onclick="setVal('inp-mut',0.10,this)">0.10 lube</button>
+          <button class="qbtn active" onclick="setVal('inp-mut',0.15,this)">0.15 dry</button>
+          <button class="qbtn" onclick="setVal('inp-mut',0.20,this)">0.20 rough</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bearing friction (µᵦ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-mub" value="0.15" min="0.01" max="0.5" step="0.01" oninput="calc()"/>
+        </div>
+        <div class="quick-btns">
+          <button class="qbtn" onclick="setVal('inp-mub',0.10,this)">0.10 lube</button>
+          <button class="qbtn active" onclick="setVal('inp-mub',0.15,this)">0.15 dry</button>
+          <button class="qbtn" onclick="setVal('inp-mub',0.20,this)">0.20 rough</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Bearing face OD (Dₕ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-Dh" value="0.75" min="0.001" step="0.001" oninput="calc()"/>
+          <select id="unit-Dh" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+        <span class="field-note">Washer or head bearing OD</span>
+      </div>
+    </div>
+
+    <p class="sub-label">Grade / material</p>
+    <div class="g3">
+      <div class="field">
+        <label>Grade preset</label>
+        <select id="grade-select" onchange="onGradeChange()">
+          <optgroup label="Imperial SAE">
+            <option value="55000">SAE Grade 2 — Sp 55 ksi</option>
+            <option value="85000" selected>SAE Grade 5 — Sp 85 ksi</option>
+            <option value="120000">SAE Grade 8 — Sp 120 ksi</option>
+          </optgroup>
+          <optgroup label="Metric">
+            <option value="87022">8.8 — Sp 600 MPa</option>
+            <option value="120382">10.9 — Sp 830 MPa</option>
+            <option value="140754">12.9 — Sp 970 MPa</option>
+          </optgroup>
+          <optgroup label="SHCS (Alloy Steel)">
+            <option value="140000">SHCS Alloy — Sp 140 ksi</option>
+            <option value="174000">SHCS SS 18-8 — Sp 174 ksi</option>
+          </optgroup>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Proof strength (Sp)</label>
+        <div class="field-row">
+          <input type="number" id="inp-Sp" value="85000" min="1" step="100" oninput="calc()"/>
+          <select id="unit-Sp" onchange="calc()">
+            <option value="psi">psi</option>
+            <option value="ksi">ksi</option>
+            <option value="mpa">MPa</option>
+          </select>
+        </div>
+      </div>
+      <div class="field" id="target-pct-field">
+        <label>Target preload (%)</label>
+        <div class="field-row">
+          <input type="number" id="inp-pct" value="75" min="1" max="100" step="1" oninput="calc()"/>
+        </div>
+        <span class="field-note">% of proof load (typically 75–90%)</span>
+      </div>
+    </div>
+
+    <!-- Mode-specific input -->
+    <div id="torque-input-row" class="g2">
+      <div class="field">
+        <label>Applied torque (T)</label>
+        <div class="field-row">
+          <input type="number" id="inp-T" value="60" min="0" step="0.1" oninput="calc()"/>
+          <select id="unit-T" onchange="calc()">
+            <option value="inlb">in·lb</option>
+            <option value="ftlb">ft·lb</option>
+            <option value="nm">N·m</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="rg3" id="results-row-1">
+    <div class="result-card primary">
+      <p class="rlabel" id="primary-label">Preload force (F)</p>
+      <p class="rvalue" id="res-primary">—</p>
+      <p class="runit" id="res-primary-unit">lbs</p>
+      <p class="rsub" id="res-primary-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel" id="secondary-label">Applied torque (T)</p>
+      <p class="rvalue" id="res-secondary">—</p>
+      <p class="runit" id="res-secondary-unit">in·lb</p>
+      <p class="rsub" id="res-secondary-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Nut factor (K)</p>
+      <p class="rvalue" id="res-K">—</p>
+      <p class="runit">T = K·D·F</p>
+      <p class="rsub" id="res-K-sub"></p>
+    </div>
+  </div>
+  <div class="rg3">
+    <div class="result-card">
+      <p class="rlabel">Bolt stress (σ)</p>
+      <p class="rvalue" id="res-stress">—</p>
+      <p class="runit">psi</p>
+      <p class="rsub" id="res-stress-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Proof load (F_proof)</p>
+      <p class="rvalue" id="res-Fp">—</p>
+      <p class="runit">lbs</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Thread torque component</p>
+      <p class="rvalue" id="res-Tt">—</p>
+      <p class="runit">in·lb</p>
+      <p class="rsub" id="res-Tb"></p>
+    </div>
+  </div>
+
+  <!-- PRELOAD GAUGE -->
+  <div class="gauge-card">
+    <div class="gauge-header">
+      <span class="gauge-title">Preload as % of proof load</span>
+      <div class="gauge-pct-wrap">
+        <span class="gauge-pct" id="gauge-pct">—</span>
+        <span class="gauge-pct-label">%</span>
+        &nbsp;<span class="sf-badge" id="gauge-badge"></span>
+      </div>
+    </div>
+    <div class="gauge-track"><div class="gauge-fill" id="gauge-fill" style="width:0%"></div></div>
+    <div class="gauge-labels"><span>0%</span><span>Target: 75–90%</span><span>100% proof</span></div>
+  </div>
+
+  <!-- TORQUE SPEC TABLE (all grades) -->
+  <p class="section-label">Recommended torque by grade at this fastener size</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Grade</th>
+          <th>Proof strength</th>
+          <th>Proof load</th>
+          <th>T @ 75% (in·lb)</th>
+          <th>T @ 85% (in·lb)</th>
+          <th>T @ 90% (in·lb)</th>
+        </tr>
+      </thead>
+      <tbody id="grade-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">VDI 2230 / Shigley Full Torque Equation</p>
+    <div class="formula-block">
+      <span>T = F · [ p/(2π) + µₜ · rₜ + µᵦ · rᵦ ]</span>
+      <span>rₜ = (D − 0.6495·p) / 2 &nbsp;&nbsp;[mean thread radius, 60° thread]</span>
+      <span>rᵦ = Dₕ / 2 &nbsp;&nbsp;[effective bearing radius ≈ washer/head OD / 2]</span>
+      <span>K = T / (F · D) &nbsp;&nbsp;[nut factor — validates T = K·D·F]</span>
+      <span>F_proof = Sp · Aₜ &nbsp;&nbsp;|&nbsp;&nbsp; σ = F / Aₜ</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>µₜ</strong> = thread friction coefficient</span>
+      <span class="fvar"><strong>µᵦ</strong> = bearing face friction coefficient</span>
+      <span class="fvar"><strong>rₜ</strong> = mean thread radius (in)</span>
+      <span class="fvar"><strong>rᵦ</strong> = effective bearing radius (in)</span>
+      <span class="fvar"><strong>K</strong> = nut factor (typically 0.15–0.22)</span>
+      <span class="fvar"><strong>Sp</strong> = proof strength</span>
+      <span class="fvar"><strong>Aₜ</strong> = tensile stress area</span>
+    </div>
+  </div>
+</div>
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+const impBolts=[
+  {name:'1/4-20 UNC',D:0.25,p:1/20,At:0.0318,Dh:0.438},{name:'1/4-28 UNF',D:0.25,p:1/28,At:0.0364,Dh:0.438},
+  {name:'5/16-18 UNC',D:0.3125,p:1/18,At:0.0524,Dh:0.500},{name:'5/16-24 UNF',D:0.3125,p:1/24,At:0.0580,Dh:0.500},
+  {name:'3/8-16 UNC',D:0.375,p:1/16,At:0.0775,Dh:0.562},{name:'3/8-24 UNF',D:0.375,p:1/24,At:0.0878,Dh:0.562},
+  {name:'7/16-14 UNC',D:0.4375,p:1/14,At:0.1063,Dh:0.625},{name:'7/16-20 UNF',D:0.4375,p:1/20,At:0.1187,Dh:0.625},
+  {name:'1/2-13 UNC',D:0.5,p:1/13,At:0.1419,Dh:0.750},{name:'1/2-20 UNF',D:0.5,p:1/20,At:0.1599,Dh:0.750},
+  {name:'9/16-12 UNC',D:0.5625,p:1/12,At:0.1820,Dh:0.875},{name:'5/8-11 UNC',D:0.625,p:1/11,At:0.2260,Dh:0.938},
+  {name:'3/4-10 UNC',D:0.75,p:1/10,At:0.3340,Dh:1.125},{name:'7/8-9 UNC',D:0.875,p:1/9,At:0.4620,Dh:1.313},
+  {name:'1-8 UNC',D:1.0,p:1/8,At:0.6060,Dh:1.500},{name:'1-1/4-7 UNC',D:1.25,p:1/7,At:0.9690,Dh:1.875},
+  {name:'1-1/2-6 UNC',D:1.5,p:1/6,At:1.4050,Dh:2.250},
+];
+// SHCS imperial — Dh is socket OD (approx head OD * 0.9 for effective bearing)
+const shcsImp=[
+  {name:'#10-32 SHCS',D:0.190,p:1/32,At:0.0200,Dh:0.312},
+  {name:'1/4-20 SHCS',D:0.25,p:1/20,At:0.0318,Dh:0.375},
+  {name:'5/16-18 SHCS',D:0.3125,p:1/18,At:0.0524,Dh:0.500},
+  {name:'3/8-16 SHCS',D:0.375,p:1/16,At:0.0775,Dh:0.563},
+  {name:'7/16-14 SHCS',D:0.4375,p:1/14,At:0.1063,Dh:0.625},
+  {name:'1/2-13 SHCS',D:0.5,p:1/13,At:0.1419,Dh:0.750},
+  {name:'5/8-11 SHCS',D:0.625,p:1/11,At:0.2260,Dh:0.938},
+  {name:'3/4-10 SHCS',D:0.75,p:1/10,At:0.3340,Dh:1.125},
+  {name:'1-8 SHCS',D:1.0,p:1/8,At:0.6060,Dh:1.500},
+];
+const metBolts=[
+  {name:'M6×1.0',D:6,p:1.0,At:20.1,Dh:11},{name:'M8×1.25',D:8,p:1.25,At:36.6,Dh:14},
+  {name:'M10×1.5',D:10,p:1.5,At:58.0,Dh:17},{name:'M12×1.75',D:12,p:1.75,At:84.3,Dh:19},
+  {name:'M14×2.0',D:14,p:2.0,At:115,Dh:22},{name:'M16×2.0',D:16,p:2.0,At:157,Dh:24},
+  {name:'M20×2.5',D:20,p:2.5,At:245,Dh:30},{name:'M24×3.0',D:24,p:3.0,At:353,Dh:36},
+  {name:'M30×3.5',D:30,p:3.5,At:561,Dh:45},{name:'M36×4.0',D:36,p:4.0,At:817,Dh:54},
+];
+const shcsMet=[
+  {name:'M3×0.5 SHCS',D:3,p:0.5,At:5.03,Dh:5.5},{name:'M4×0.7 SHCS',D:4,p:0.7,At:8.78,Dh:7},
+  {name:'M5×0.8 SHCS',D:5,p:0.8,At:14.2,Dh:8.5},{name:'M6×1.0 SHCS',D:6,p:1.0,At:20.1,Dh:10},
+  {name:'M8×1.25 SHCS',D:8,p:1.25,At:36.6,Dh:13},{name:'M10×1.5 SHCS',D:10,p:1.5,At:58.0,Dh:16},
+  {name:'M12×1.75 SHCS',D:12,p:1.75,At:84.3,Dh:18},{name:'M16×2.0 SHCS',D:16,p:2.0,At:157,Dh:24},
+  {name:'M20×2.5 SHCS',D:20,p:2.5,At:245,Dh:30},{name:'M24×3.0 SHCS',D:24,p:3.0,At:353,Dh:36},
+];
+
+const grades=[
+  {key:'sae2',label:'SAE Grade 2',Sp_psi:55000},
+  {key:'sae5',label:'SAE Grade 5',Sp_psi:85000},
+  {key:'sae8',label:'SAE Grade 8',Sp_psi:120000},
+  {key:'88',label:'Metric 8.8',Sp_psi:87022},
+  {key:'109',label:'Metric 10.9',Sp_psi:120382},
+  {key:'129',label:'Metric 12.9',Sp_psi:140754},
+  {key:'shcs',label:'SHCS Alloy',Sp_psi:140000},
+];
+
+const toInLb={inlb:1,ftlb:12,nm:8.85075};
+const toIn={in:1,mm:0.0393701};
+const toIn2={in2:1,mm2:0.00155};
+const toSpPsi={psi:1,ksi:1000,mpa:145.038};
+
+let mode='torque2force';
+
+function fmt(v,dec){
+  if(!isFinite(v)||v===null)return'—';
+  if(Math.abs(v)>=1e6)return(v/1e6).toFixed(2)+'M';
+  if(Math.abs(v)>=10000)return v.toLocaleString(undefined,{maximumFractionDigits:0});
+  if(Math.abs(v)>=100)return v.toLocaleString(undefined,{maximumFractionDigits:1});
+  return v.toLocaleString(undefined,{maximumFractionDigits:dec??3});
+}
+
+function barColor(p){
+  if(p>100)return'#a33';
+  if(p>90)return'#c9a84c';
+  if(p>=60)return'#2d5a27';
+  return'#6b9b6b';
+}
+
+function switchMode(m){
+  mode=m;
+  document.querySelectorAll('.mode-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&m==='torque2force')||(i===1&&m==='force2torque')));
+  document.getElementById('torque-input-row').style.display=m==='torque2force'?'grid':'none';
+  document.getElementById('target-pct-field').style.display=m==='force2torque'?'flex':'none';
+  if(m==='torque2force'){
+    document.getElementById('primary-label').textContent='Preload force (F)';
+    document.getElementById('res-primary-unit').textContent='lbs';
+    document.getElementById('secondary-label').textContent='Applied torque';
+    document.getElementById('res-secondary-unit').textContent='in·lb';
+  } else {
+    document.getElementById('primary-label').textContent='Required torque (T)';
+    document.getElementById('res-primary-unit').textContent='in·lb';
+    document.getElementById('secondary-label').textContent='Target preload (F)';
+    document.getElementById('res-secondary-unit').textContent='lbs';
+  }
+  calc();
+}
+
+function torqueFromForce(F_lbs,D_in,p_in,mut,mub,Dh_in){
+  const rt=((D_in-0.6495*p_in)/2);
+  const rb=Dh_in/2;
+  return F_lbs*(p_in/(2*Math.PI)+mut*rt+mub*rb);
+}
+
+function forceFromTorque(T_inlb,D_in,p_in,mut,mub,Dh_in){
+  const rt=((D_in-0.6495*p_in)/2);
+  const rb=Dh_in/2;
+  return T_inlb/(p_in/(2*Math.PI)+mut*rt+mub*rb);
+}
+
+function calc(){
+  const D_in  =(parseFloat(document.getElementById('inp-D').value)||0)*toIn[document.getElementById('unit-D').value];
+  const p_in  =(parseFloat(document.getElementById('inp-p').value)||0)*toIn[document.getElementById('unit-p').value];
+  const At_in2=(parseFloat(document.getElementById('inp-At').value)||0)*toIn2[document.getElementById('unit-At').value];
+  const mut   = parseFloat(document.getElementById('inp-mut').value)||0.15;
+  const mub   = parseFloat(document.getElementById('inp-mub').value)||0.15;
+  const Dh_in =(parseFloat(document.getElementById('inp-Dh').value)||0)*toIn[document.getElementById('unit-Dh').value];
+  const Sp_psi=(parseFloat(document.getElementById('inp-Sp').value)||0)*toSpPsi[document.getElementById('unit-Sp').value];
+
+  // update TPI note
+  if(p_in>0){
+    if(document.getElementById('unit-p').value==='in')
+      document.getElementById('tpi-note').textContent=Math.round(1/p_in)+' TPI';
+    else
+      document.getElementById('tpi-note').textContent=(p_in*25.4).toFixed(3)+' mm pitch';
+  }
+
+  if(!D_in||!p_in||!Dh_in)return;
+
+  let F_lbs,T_inlb;
+  if(mode==='torque2force'){
+    T_inlb=(parseFloat(document.getElementById('inp-T').value)||0)*toInLb[document.getElementById('unit-T').value];
+    F_lbs=forceFromTorque(T_inlb,D_in,p_in,mut,mub,Dh_in);
+  } else {
+    const pct=(parseFloat(document.getElementById('inp-pct').value)||75)/100;
+    const Fp=Sp_psi*At_in2;
+    F_lbs=Fp*pct;
+    T_inlb=torqueFromForce(F_lbs,D_in,p_in,mut,mub,Dh_in);
+  }
+
+  const sigma=At_in2>0?F_lbs/At_in2:null;
+  const Fp=Sp_psi>0&&At_in2>0?Sp_psi*At_in2:null;
+  const pct=Fp>0?(F_lbs/Fp)*100:null;
+  const K=T_inlb>0&&F_lbs>0&&D_in>0?T_inlb/(F_lbs*D_in):null;
+
+  // thread and bearing torque breakdown
+  const rt=(D_in-0.6495*p_in)/2;
+  const rb=Dh_in/2;
+  const Tt=F_lbs*(p_in/(2*Math.PI)+mut*rt);
+  const Tb=F_lbs*mub*rb;
+
+  if(mode==='torque2force'){
+    document.getElementById('res-primary').textContent=fmt(F_lbs,0);
+    document.getElementById('res-primary-sub').textContent=fmt(F_lbs*0.00444822,2)+' kN  |  '+fmt(F_lbs/2000,3)+' tons';
+    document.getElementById('res-secondary').textContent=fmt(T_inlb,1);
+    document.getElementById('res-secondary-sub').textContent=fmt(T_inlb/12,2)+' ft·lb  |  '+fmt(T_inlb*0.112985,2)+' N·m';
+  } else {
+    document.getElementById('res-primary').textContent=fmt(T_inlb,1);
+    document.getElementById('res-primary-sub').textContent=fmt(T_inlb/12,2)+' ft·lb  |  '+fmt(T_inlb*0.112985,2)+' N·m';
+    document.getElementById('res-secondary').textContent=fmt(F_lbs,0);
+    document.getElementById('res-secondary-sub').textContent=fmt(F_lbs*0.00444822,2)+' kN';
+  }
+
+  if(K!==null){document.getElementById('res-K').textContent=K.toFixed(4);document.getElementById('res-K-sub').textContent='Typical K: 0.15–0.22';}
+  if(sigma!==null){document.getElementById('res-stress').textContent=fmt(sigma,0);document.getElementById('res-stress-sub').textContent=fmt(sigma/145.038,1)+' MPa';}
+  if(Fp!==null)document.getElementById('res-Fp').textContent=fmt(Fp,0);
+  document.getElementById('res-Tt').textContent=fmt(Tt,1);
+  document.getElementById('res-Tb').textContent='Bearing face: '+fmt(Tb,1)+' in·lb ('+fmt(Tb/T_inlb*100,0)+'%)';
+
+  if(pct!==null){
+    document.getElementById('gauge-pct').textContent=pct.toFixed(1);
+    const fill=document.getElementById('gauge-fill');
+    fill.style.width=Math.min(pct,100)+'%';
+    fill.style.background=barColor(pct);
+    const badge=document.getElementById('gauge-badge');
+    if(pct>100){badge.textContent='Exceeds proof load';badge.className='sf-badge badge-red';}
+    else if(pct>90){badge.textContent='High — near yield';badge.className='sf-badge badge-amber';}
+    else if(pct>=60){badge.textContent='Good preload range';badge.className='sf-badge badge-green';}
+    else{badge.textContent='Low preload';badge.className='sf-badge badge-amber';}
+  }
+
+  // Grade table
+  const tbody=document.getElementById('grade-tbody');
+  tbody.innerHTML='';
+  grades.forEach(g=>{
+    if(!At_in2)return;
+    const Fp_g=g.Sp_psi*At_in2;
+    const t75=torqueFromForce(Fp_g*0.75,D_in,p_in,mut,mub,Dh_in);
+    const t85=torqueFromForce(Fp_g*0.85,D_in,p_in,mut,mub,Dh_in);
+    const t90=torqueFromForce(Fp_g*0.90,D_in,p_in,mut,mub,Dh_in);
+    const SpLabel=g.key.startsWith('sae')||g.key==='shcs'?(g.Sp_psi/1000).toFixed(0)+' ksi':(g.Sp_psi/145.038).toFixed(0)+' MPa';
+    const tr=document.createElement('tr');
+    const activeKey=document.getElementById('grade-select').value;
+    if(g.Sp_psi===parseInt(activeKey)||g.key===activeKey)tr.classList.add('active-row');
+    tr.innerHTML=`<td>${g.label}</td><td>${SpLabel}</td><td>${fmt(Fp_g,0)} lbs</td><td>${fmt(t75,1)}</td><td>${fmt(t85,1)}</td><td>${fmt(t90,1)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function setVal(id,val,btn){
+  document.getElementById(id).value=val;
+  btn.closest('.field').querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  calc();
+}
+
+function onSystemChange(){
+  const sys=document.getElementById('bolt-system').value;
+  const sel=document.getElementById('bolt-thread');
+  sel.innerHTML='<option value="">— select a fastener —</option>';
+  const map={imperial:impBolts,metric:metBolts,shcs_imp:shcsImp,shcs_met:shcsMet};
+  const list=map[sys]||[];
+  list.forEach((b,i)=>sel.innerHTML+=`<option value="${sys}_${i}">${b.name}</option>`);
+}
+
+function onBoltPreset(){
+  const val=document.getElementById('bolt-thread').value;
+  if(!val)return;
+  const parts=val.split('_');
+  const idx=parseInt(parts[parts.length-1]);
+  const sys=parts.slice(0,-1).join('_');
+  const map={imperial:impBolts,metric:metBolts,shcs_imp:shcsImp,shcs_met:shcsMet};
+  const bolt=map[sys][idx];
+  const isMetric=sys==='metric'||sys==='shcs_met';
+  const dUnit=isMetric?'mm':'in';
+  document.getElementById('inp-D').value=bolt.D;
+  document.getElementById('unit-D').value=dUnit;
+  document.getElementById('inp-p').value=isMetric?bolt.p:bolt.p.toFixed(5);
+  document.getElementById('unit-p').value=dUnit;
+  document.getElementById('inp-At').value=bolt.At;
+  document.getElementById('unit-At').value=isMetric?'mm2':'in2';
+  document.getElementById('inp-Dh').value=bolt.Dh;
+  document.getElementById('unit-Dh').value=dUnit;
+  if(sys==='shcs_imp'||sys==='shcs_met'){
+    document.getElementById('grade-select').value='140000';
+    document.getElementById('inp-Sp').value=140000;
+    document.getElementById('unit-Sp').value='psi';
+  }
+  calc();
+}
+
+function onGradeChange(){
+  const val=document.getElementById('grade-select').value;
+  if(val&&val!=='custom'){
+    document.getElementById('inp-Sp').value=val;
+    document.getElementById('unit-Sp').value='psi';
+  }
+  calc();
+}
+
+['unit-T','unit-D','unit-p','unit-At','unit-Dh','unit-Sp'].forEach(id=>
+  document.getElementById(id).addEventListener('change',calc));
+
+onSystemChange();
+switchMode('torque2force');
+calc();
+</script>
+</body>
+</html>

@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Power Screw Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --parchment:#f5eedf;--parchment-dark:#ede3cc;--parchment-deeper:#d9cdb0;
+      --ink:#2a2218;--ink-mid:#5a4e38;--ink-faint:#9a8e78;
+      --gold:#8a6d2f;--gold-light:#c9a84c;--gold-pale:#f0e4c0;
+      --border:rgba(138,109,47,0.25);--border-strong:rgba(138,109,47,0.5);
+      --green:#2d5a27;--green-pale:#e8f2e7;
+      --amber:#7a5a1a;--amber-pale:#fdf3dc;
+      --red:#7a2a2a;--red-pale:#f5e8e8;
+      --blue:#1c4f82;--blue-pale:#e6f0fb;
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--parchment);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px);pointer-events:none;z-index:0;}
+    nav{position:relative;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:64px;background:var(--parchment);border-bottom:1px solid var(--border);}
+    .nav-ornament{display:flex;align-items:center;gap:12px;}
+    .nav-rule{width:32px;height:1px;background:var(--gold);opacity:0.6;}
+    .nav-name{font-family:'DM Serif Display',serif;font-size:15px;color:var(--ink);text-decoration:none;letter-spacing:0.04em;}
+    .nav-back{font-size:12px;color:var(--ink-mid);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s;}
+    .nav-back:hover{color:var(--gold);}
+    .nav-back svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+    .page{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:3rem 3rem 5rem;}
+    .page-header{margin-bottom:2rem;}
+    .page-eyebrow{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+    .page-title{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:8px;}
+    .page-subtitle{font-size:14px;color:var(--ink-mid);font-style:italic;max-width:580px;line-height:1.7;}
+    .section-label{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+    .inputs-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.5rem 1.75rem;margin-bottom:1.5rem;}
+    .sub-label{font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink-mid);margin:1rem 0 10px;padding-top:1rem;border-top:0.5px solid var(--border);}
+    .sub-label.first{border-top:none;padding-top:0;margin-top:0;}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+    .field{display:flex;flex-direction:column;gap:6px;}
+    .field label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);}
+    .field-row{display:flex;gap:6px;}
+    .field input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;transition:border-color 0.2s;min-width:0;}
+    .field input:focus{border-color:var(--border-strong);}
+    .field select{border:1px solid var(--border);border-radius:8px;padding:9px 8px;font-family:inherit;font-size:13px;color:var(--ink-mid);background:var(--parchment);outline:none;cursor:pointer;}
+    .field-note{font-size:11px;color:var(--ink-faint);font-style:italic;}
+    .preset-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+    .preset-row label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);white-space:nowrap;}
+    .preset-row select{flex:1;min-width:180px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;}
+    .quick-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+    .qbtn{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-family:inherit;font-size:11px;color:var(--ink-mid);cursor:pointer;transition:all 0.15s;}
+    .qbtn:hover,.qbtn.active{background:var(--gold-pale);border-color:var(--border-strong);color:var(--gold);}
+    /* mode tabs */
+    .mode-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--parchment-dark);margin-bottom:1.5rem;}
+    .mode-btn{flex:1;padding:11px 16px;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-mid);background:transparent;border:none;cursor:pointer;transition:background 0.15s,color 0.15s;text-align:center;}
+    .mode-btn.active{background:var(--ink);color:var(--parchment);}
+    .mode-btn:not(.active):hover{background:var(--parchment-deeper);}
+    /* results */
+    .rg3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;}
+    .rg2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px;}
+    .result-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;}
+    .result-card.primary{background:var(--gold-pale);border-color:var(--border-strong);}
+    .result-card.info{background:var(--blue-pale);border-color:rgba(28,79,130,0.2);}
+    .result-card .rlabel{font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:4px;}
+    .result-card.primary .rlabel{color:var(--gold);}
+    .result-card.info .rlabel{color:var(--blue);}
+    .result-card .rvalue{font-size:24px;font-weight:500;color:var(--ink);line-height:1.1;}
+    .result-card .runit{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+    .result-card .rsub{font-size:12px;color:var(--ink-mid);margin-top:6px;padding-top:6px;border-top:0.5px solid var(--border);}
+    /* self-lock banner */
+    .lock-banner{border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+    .lock-banner.locked{background:var(--green-pale);border:1px solid rgba(45,90,39,0.25);color:var(--green);}
+    .lock-banner.not-locked{background:var(--red-pale);border:1px solid rgba(122,42,42,0.25);color:var(--red);}
+    .lock-icon{font-size:20px;}
+    .lock-text strong{display:block;font-weight:500;margin-bottom:2px;}
+    .lock-text span{font-size:12px;opacity:0.8;}
+    /* ACME table */
+    .table-wrap{border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:1.5rem;overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:480px;}
+    thead th{background:var(--parchment-deeper);font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-mid);text-align:right;padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+    thead th:first-child{text-align:left;}
+    tbody td{padding:9px 12px;border-bottom:0.5px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-size:12px;}
+    tbody td:first-child{text-align:left;font-weight:500;color:var(--ink-mid);}
+    tbody tr:last-child td{border-bottom:none;}
+    tbody tr:hover td{background:var(--gold-pale);}
+    tbody tr.active-row td{background:var(--blue-pale);color:var(--blue);font-weight:500;}
+    /* formula */
+    .formula-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.75rem;}
+    .formula-title{font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:10px;}
+    .formula-block{font-family:'Georgia',serif;font-size:14px;color:var(--ink);display:flex;flex-direction:column;gap:6px;padding:10px 0;}
+    .formula-vars{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);}
+    .fvar{font-size:12px;color:var(--ink-mid);}
+    .fvar strong{color:var(--ink);font-weight:500;}
+    footer{position:relative;z-index:1;border-top:1px solid var(--border);background:var(--parchment-deeper);padding:2rem 3rem;display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+    .footer-name{color:var(--ink-mid);}
+    .footer-year{color:var(--ink-faint);font-style:italic;}
+    @media(max-width:600px){
+      nav{padding:0 1.25rem;}
+      .page{padding:2rem 1.25rem 4rem;}
+      .g2,.g3{grid-template-columns:1fr;}
+      .rg3{grid-template-columns:1fr 1fr;}
+      .rg2{grid-template-columns:1fr;}
+      .result-card .rvalue{font-size:20px;}
+      footer{padding:2rem 1.25rem;flex-direction:column;gap:6px;}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background:linear-gradient(90deg,var(--gold),transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Power Screw Calculator</h1>
+    <p class="page-subtitle">Axial force, efficiency, and self-locking analysis for ACME, square, and large-thread power screws — jacks, clamps, presses, and lead screws.</p>
+  </div>
+
+  <div class="mode-tabs">
+    <button class="mode-btn active" onclick="switchMode('torque2force')">Torque → Axial force</button>
+    <button class="mode-btn" onclick="switchMode('force2torque')">Axial force → Required torque</button>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <p class="sub-label first">Thread geometry</p>
+    <div class="preset-row">
+      <label>ACME preset</label>
+      <select id="acme-preset" onchange="onAcmePreset()">
+        <option value="">— select an ACME thread —</option>
+        <option value="0.5|10|0.5">1/2-10 ACME</option>
+        <option value="0.625|8|0.625">5/8-8 ACME</option>
+        <option value="0.75|6|0.75">3/4-6 ACME</option>
+        <option value="1.0|5|1.0">1-5 ACME</option>
+        <option value="1.25|5|1.25">1-1/4-5 ACME</option>
+        <option value="1.5|4|1.5">1-1/2-4 ACME</option>
+        <option value="1.75|4|1.75">1-3/4-4 ACME</option>
+        <option value="2.0|4|2.0">2-4 ACME</option>
+        <option value="2.5|3|2.5">2-1/2-3 ACME</option>
+        <option value="3.0|2|3.0">3-2 ACME</option>
+        <option value="custom">Custom / Square / Other</option>
+      </select>
+    </div>
+
+    <div class="g3">
+      <div class="field">
+        <label>Major diameter (D)</label>
+        <div class="field-row">
+          <input type="number" id="inp-D" value="1.0" min="0.01" step="0.001" oninput="calc()"/>
+          <select id="unit-D" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Thread pitch (p)</label>
+        <div class="field-row">
+          <input type="number" id="inp-p" value="0.2" min="0.0001" step="0.001" oninput="calc()"/>
+          <select id="unit-p" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+        <span class="field-note" id="tpi-note">5 TPI</span>
+      </div>
+      <div class="field">
+        <label>Thread half-angle (α)</label>
+        <div class="field-row">
+          <input type="number" id="inp-alpha" value="14.5" min="0" max="45" step="0.5" oninput="calc()"/>
+          <span style="padding:9px 8px;font-size:13px;color:var(--ink-faint);">deg</span>
+        </div>
+        <div class="quick-btns">
+          <button class="qbtn" onclick="setVal('inp-alpha',0,this)">0° Square</button>
+          <button class="qbtn active" onclick="setVal('inp-alpha',14.5,this)">14.5° ACME</button>
+          <button class="qbtn" onclick="setVal('inp-alpha',30,this)">30° V-thread</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="g2">
+      <div class="field">
+        <label>Starts (lead multiplier)</label>
+        <div class="field-row">
+          <input type="number" id="inp-starts" value="1" min="1" max="10" step="1" oninput="calc()"/>
+        </div>
+        <span class="field-note">Multi-start: lead = starts × pitch</span>
+      </div>
+      <div class="field">
+        <label>Coefficient of friction (µ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-mu" value="0.15" min="0.01" max="0.5" step="0.01" oninput="calc()"/>
+        </div>
+        <div class="quick-btns">
+          <button class="qbtn" onclick="setVal('inp-mu',0.08,this)">0.08 PTFE/bronze</button>
+          <button class="qbtn active" onclick="setVal('inp-mu',0.15,this)">0.15 dry steel</button>
+          <button class="qbtn" onclick="setVal('inp-mu',0.20,this)">0.20 rough</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="sub-label">Load / torque</p>
+    <div class="g2" id="torque-row">
+      <div class="field">
+        <label>Applied torque (T)</label>
+        <div class="field-row">
+          <input type="number" id="inp-T" value="500" min="0" step="1" oninput="calc()"/>
+          <select id="unit-T" onchange="calc()">
+            <option value="inlb">in·lb</option>
+            <option value="ftlb">ft·lb</option>
+            <option value="nm">N·m</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="g2" id="force-row" style="display:none;">
+      <div class="field">
+        <label>Axial load (F)</label>
+        <div class="field-row">
+          <input type="number" id="inp-F" value="10000" min="0" step="100" oninput="calc()"/>
+          <select id="unit-F" onchange="calc()">
+            <option value="lbs">lbs</option>
+            <option value="kn">kN</option>
+            <option value="n">N</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELF-LOCK BANNER -->
+  <div class="lock-banner" id="lock-banner">
+    <span class="lock-icon" id="lock-icon">🔒</span>
+    <div class="lock-text">
+      <strong id="lock-title">Self-locking</strong>
+      <span id="lock-detail"></span>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="rg3">
+    <div class="result-card primary">
+      <p class="rlabel" id="primary-label">Axial force (F)</p>
+      <p class="rvalue" id="res-primary">—</p>
+      <p class="runit" id="res-primary-unit">lbs</p>
+      <p class="rsub" id="res-primary-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel" id="secondary-label">Applied torque</p>
+      <p class="rvalue" id="res-secondary">—</p>
+      <p class="runit" id="res-secondary-unit">in·lb</p>
+      <p class="rsub" id="res-secondary-sub"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Mechanical efficiency (η)</p>
+      <p class="rvalue" id="res-eta">—</p>
+      <p class="runit">%</p>
+      <p class="rsub" id="res-eta-sub"></p>
+    </div>
+  </div>
+  <div class="rg3">
+    <div class="result-card info">
+      <p class="rlabel">Lead angle (λ)</p>
+      <p class="rvalue" id="res-lambda">—</p>
+      <p class="runit">degrees</p>
+      <p class="rsub" id="res-lambda-sub"></p>
+    </div>
+    <div class="result-card info">
+      <p class="rlabel">Self-lock angle (φ)</p>
+      <p class="rvalue" id="res-phi">—</p>
+      <p class="runit">degrees</p>
+      <p class="rsub">Self-locks when λ &lt; φ</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Back-drive torque</p>
+      <p class="rvalue" id="res-Tback">—</p>
+      <p class="runit">in·lb</p>
+      <p class="rsub" id="res-Tback-sub"></p>
+    </div>
+  </div>
+
+  <!-- ACME STANDARD TABLE -->
+  <p class="section-label" style="margin-top:1.5rem;">Standard ACME threads — lead angle & self-lock (µ = current input)</p>
+  <div class="table-wrap">
+    <table id="acme-table">
+      <thead>
+        <tr>
+          <th>Thread</th>
+          <th>TPI</th>
+          <th>Lead (in)</th>
+          <th>dm (in)</th>
+          <th>Lead angle λ</th>
+          <th>φ (friction angle)</th>
+          <th>Self-locking?</th>
+          <th>η (raising)</th>
+        </tr>
+      </thead>
+      <tbody id="acme-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Power Screw Equations (Shigley / Machinery's Handbook)</p>
+    <div class="formula-block">
+      <span>Raising: T_r = F·dm/2 · (l + π·µ'·dm) / (π·dm − µ'·l)</span>
+      <span>Lowering: T_l = F·dm/2 · (π·µ'·dm − l) / (π·dm + µ'·l)</span>
+      <span>µ' = µ / cos(α) &nbsp;&nbsp;[modified friction for V/ACME thread]</span>
+      <span>dm = D − p/2 &nbsp;&nbsp;[mean thread diameter]</span>
+      <span>l = starts × p &nbsp;&nbsp;[lead]</span>
+      <span>λ = arctan(l / π·dm) &nbsp;&nbsp;[lead angle]</span>
+      <span>φ = arctan(µ') &nbsp;&nbsp;[friction angle]</span>
+      <span>Self-locking: λ &lt; φ &nbsp;&nbsp;(i.e. µ &gt; tan λ · cos α)</span>
+      <span>η = F·l / (2π·T_r) &nbsp;&nbsp;[raising efficiency]</span>
+      <span>Back-drive torque = T_l (positive = requires torque to lower; negative = self-locking)</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>α</strong> = thread half-angle (0° square, 14.5° ACME, 30° V-thread)</span>
+      <span class="fvar"><strong>dm</strong> = mean thread diameter</span>
+      <span class="fvar"><strong>l</strong> = lead (= pitch × starts)</span>
+      <span class="fvar"><strong>µ'</strong> = modified friction coefficient</span>
+      <span class="fvar"><strong>λ</strong> = lead angle</span>
+      <span class="fvar"><strong>φ</strong> = friction angle</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+const acmeThreads=[
+  {name:'1/2-10',D:0.5,tpi:10},{name:'5/8-8',D:0.625,tpi:8},{name:'3/4-6',D:0.75,tpi:6},
+  {name:'1-5',D:1.0,tpi:5},{name:'1-1/4-5',D:1.25,tpi:5},{name:'1-1/2-4',D:1.5,tpi:4},
+  {name:'1-3/4-4',D:1.75,tpi:4},{name:'2-4',D:2.0,tpi:4},{name:'2-1/2-3',D:2.5,tpi:3},{name:'3-2',D:3.0,tpi:2},
+];
+
+const toInLb={inlb:1,ftlb:12,nm:8.85075};
+const toLbs={lbs:1,kn:224.809,n:0.224809};
+const toIn={in:1,mm:0.0393701};
+
+let mode='torque2force';
+
+function fmt(v,dec){
+  if(!isFinite(v)||v===null)return'—';
+  if(Math.abs(v)>=1e6)return(v/1e6).toFixed(2)+'M';
+  if(Math.abs(v)>=10000)return v.toLocaleString(undefined,{maximumFractionDigits:0});
+  if(Math.abs(v)>=100)return v.toLocaleString(undefined,{maximumFractionDigits:1});
+  return v.toLocaleString(undefined,{maximumFractionDigits:dec??3});
+}
+
+function switchMode(m){
+  mode=m;
+  document.querySelectorAll('.mode-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&m==='torque2force')||(i===1&&m==='force2torque')));
+  document.getElementById('torque-row').style.display=m==='torque2force'?'grid':'none';
+  document.getElementById('force-row').style.display=m==='force2torque'?'grid':'none';
+  if(m==='torque2force'){
+    document.getElementById('primary-label').textContent='Axial force (F)';
+    document.getElementById('res-primary-unit').textContent='lbs';
+    document.getElementById('secondary-label').textContent='Applied torque';
+    document.getElementById('res-secondary-unit').textContent='in·lb';
+  } else {
+    document.getElementById('primary-label').textContent='Required torque (raising)';
+    document.getElementById('res-primary-unit').textContent='in·lb';
+    document.getElementById('secondary-label').textContent='Axial load';
+    document.getElementById('res-secondary-unit').textContent='lbs';
+  }
+  calc();
+}
+
+function calcPowerScrew(F_lbs,D_in,p_in,alpha_deg,starts,mu){
+  const l   = p_in*starts;
+  const dm  = D_in-p_in/2;
+  const alpha=alpha_deg*Math.PI/180;
+  const mup = mu/Math.cos(alpha);           // modified friction
+  const lambda=Math.atan(l/(Math.PI*dm));   // lead angle
+  const phi   =Math.atan(mup);              // friction angle
+
+  // raising torque (screw moves load up)
+  const Tr=F_lbs*dm/2*(l+Math.PI*mup*dm)/(Math.PI*dm-mup*l);
+  // lowering torque (positive = need torque to lower; negative = self-locking)
+  const Tl=F_lbs*dm/2*(Math.PI*mup*dm-l)/(Math.PI*dm+mup*l);
+  // efficiency (raising)
+  const eta=F_lbs*l/(2*Math.PI*Tr);
+  const selfLock=lambda<phi;
+  return{Tr,Tl,eta,lambda,phi,selfLock,l,dm,mup};
+}
+
+function calc(){
+  const D_in  =(parseFloat(document.getElementById('inp-D').value)||0)*toIn[document.getElementById('unit-D').value];
+  const p_in  =(parseFloat(document.getElementById('inp-p').value)||0)*toIn[document.getElementById('unit-p').value];
+  const alpha = parseFloat(document.getElementById('inp-alpha').value)||0;
+  const starts= parseInt(document.getElementById('inp-starts').value)||1;
+  const mu    = parseFloat(document.getElementById('inp-mu').value)||0.15;
+
+  if(!D_in||!p_in)return;
+
+  // update TPI note
+  if(document.getElementById('unit-p').value==='in'&&p_in>0)
+    document.getElementById('tpi-note').textContent=Math.round(1/p_in)+' TPI';
+  else
+    document.getElementById('tpi-note').textContent=(p_in*25.4).toFixed(3)+' mm pitch';
+
+  let F_lbs,T_inlb;
+  if(mode==='torque2force'){
+    T_inlb=(parseFloat(document.getElementById('inp-T').value)||0)*toInLb[document.getElementById('unit-T').value];
+    const{Tr,Tl,eta,lambda,phi,selfLock,l,dm,mup}=calcPowerScrew(1,D_in,p_in,alpha,starts,mu);
+    // F = T / (dm/2 * (l + pi*mu'*dm)/(pi*dm - mu'*l))
+    const denom=dm/2*(l+Math.PI*mup*dm)/(Math.PI*dm-mup*l);
+    F_lbs=T_inlb/denom;
+    const r=calcPowerScrew(F_lbs,D_in,p_in,alpha,starts,mu);
+    showResults(F_lbs,T_inlb,r);
+  } else {
+    F_lbs=(parseFloat(document.getElementById('inp-F').value)||0)*toLbs[document.getElementById('unit-F').value];
+    const r=calcPowerScrew(F_lbs,D_in,p_in,alpha,starts,mu);
+    T_inlb=r.Tr;
+    showResults(F_lbs,T_inlb,r);
+  }
+
+  buildAcmeTable(alpha,starts,mu);
+}
+
+function showResults(F_lbs,T_inlb,r){
+  if(mode==='torque2force'){
+    document.getElementById('res-primary').textContent=fmt(F_lbs,0);
+    document.getElementById('res-primary-sub').textContent=fmt(F_lbs*0.00444822,2)+' kN  |  '+fmt(F_lbs/2000,2)+' tons';
+    document.getElementById('res-secondary').textContent=fmt(T_inlb,1);
+    document.getElementById('res-secondary-sub').textContent=fmt(T_inlb/12,2)+' ft·lb  |  '+fmt(T_inlb*0.112985,2)+' N·m';
+  } else {
+    document.getElementById('res-primary').textContent=fmt(T_inlb,1);
+    document.getElementById('res-primary-sub').textContent=fmt(T_inlb/12,2)+' ft·lb  |  '+fmt(T_inlb*0.112985,2)+' N·m';
+    document.getElementById('res-secondary').textContent=fmt(F_lbs,0);
+    document.getElementById('res-secondary-sub').textContent=fmt(F_lbs*0.00444822,2)+' kN';
+  }
+  document.getElementById('res-eta').textContent=fmt(r.eta*100,1);
+  document.getElementById('res-eta-sub').textContent='Ideal (frictionless): 50% max for self-locking';
+  document.getElementById('res-lambda').textContent=fmt(r.lambda*180/Math.PI,2);
+  document.getElementById('res-lambda-sub').textContent='Lead: '+fmt(r.l,4)+' in  |  dm: '+fmt(r.dm,4)+' in';
+  document.getElementById('res-phi').textContent=fmt(r.phi*180/Math.PI,2);
+  const Tback=r.selfLock?null:Math.abs(r.Tl);
+  document.getElementById('res-Tback').textContent=r.selfLock?'N/A':fmt(Tback,1);
+  document.getElementById('res-Tback-sub').textContent=r.selfLock?'Thread is self-locking':fmt(Tback/12,2)+' ft·lb  |  '+fmt(Tback*0.112985,2)+' N·m';
+
+  // banner
+  const banner=document.getElementById('lock-banner');
+  if(r.selfLock){
+    banner.className='lock-banner locked';
+    document.getElementById('lock-icon').textContent='🔒';
+    document.getElementById('lock-title').textContent='Self-locking thread';
+    document.getElementById('lock-detail').textContent=
+      'Lead angle λ = '+fmt(r.lambda*180/Math.PI,2)+'° < friction angle φ = '+fmt(r.phi*180/Math.PI,2)+'°. Load will not back-drive the screw.';
+  } else {
+    banner.className='lock-banner not-locked';
+    document.getElementById('lock-icon').textContent='⚠';
+    document.getElementById('lock-title').textContent='Not self-locking — load will back-drive';
+    document.getElementById('lock-detail').textContent=
+      'Lead angle λ = '+fmt(r.lambda*180/Math.PI,2)+'° > friction angle φ = '+fmt(r.phi*180/Math.PI,2)+'°. A brake or locking nut is required to hold load.';
+  }
+}
+
+function buildAcmeTable(alpha,starts,mu){
+  const activeD=parseFloat(document.getElementById('inp-D').value)||0;
+  const activeP=parseFloat(document.getElementById('inp-p').value)||0;
+  const tbody=document.getElementById('acme-tbody');
+  tbody.innerHTML='';
+  acmeThreads.forEach(t=>{
+    const p_in=1/t.tpi;
+    const r=calcPowerScrew(1,t.D,p_in,alpha,starts,mu);
+    const tr=document.createElement('tr');
+    const isActive=Math.abs(t.D-activeD*toIn[document.getElementById('unit-D').value])<0.001&&
+                   Math.abs(p_in-activeP*toIn[document.getElementById('unit-p').value])<0.001;
+    if(isActive)tr.classList.add('active-row');
+    tr.innerHTML=`
+      <td>${t.name} ACME</td>
+      <td>${t.tpi}</td>
+      <td>${fmt(r.l,4)}</td>
+      <td>${fmt(r.dm,4)}</td>
+      <td>${fmt(r.lambda*180/Math.PI,2)}°</td>
+      <td>${fmt(r.phi*180/Math.PI,2)}°</td>
+      <td style="color:${r.selfLock?'var(--green)':'var(--red)'}">${r.selfLock?'Yes ✓':'No ✗'}</td>
+      <td>${fmt(r.eta*100,1)}%</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function onAcmePreset(){
+  const val=document.getElementById('acme-preset').value;
+  if(!val||val==='custom')return;
+  const[D,tpi]=val.split('|').map(Number);
+  document.getElementById('inp-D').value=D;
+  document.getElementById('unit-D').value='in';
+  document.getElementById('inp-p').value=(1/tpi).toFixed(5);
+  document.getElementById('unit-p').value='in';
+  document.getElementById('inp-alpha').value=14.5;
+  document.querySelectorAll('#inp-alpha ~ .quick-btns .qbtn').forEach(b=>b.classList.remove('active'));
+  calc();
+}
+
+function setVal(id,val,btn){
+  document.getElementById(id).value=val;
+  btn.closest('.field').querySelectorAll('.qbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  calc();
+}
+
+['unit-T','unit-D','unit-p','unit-F'].forEach(id=>
+  document.getElementById(id).addEventListener('change',calc));
+
+switchMode('torque2force');
+calc();
+</script>
+</body>
+</html>

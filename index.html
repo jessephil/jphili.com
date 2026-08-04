@@ -407,6 +407,405 @@
         </span>
       </a>
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jesse Philippi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Cormorant+SC:wght@300;400;500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --forest: #2d4a2a;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'EB Garamond', Georgia, serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 18px;
+      line-height: 1.7;
+    }
+
+    /* Subtle texture overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-ornament {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-rule {
+      width: 32px;
+      height: 1px;
+      background: var(--gold);
+      opacity: 0.6;
+    }
+
+    .nav-name {
+      font-family: 'Cormorant SC', serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .nav-links { display: flex; gap: 2.5rem; }
+    .nav-links a {
+      font-family: 'Cormorant SC', serif;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--ink-mid);
+      text-decoration: none;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+
+
+
+    /* TOOLS SECTION */
+    .tools {
+      position: relative;
+      z-index: 1;
+      padding: 4rem 3rem 6rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .tools-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .tools-eyebrow {
+      font-family: 'Cormorant SC', serif;
+      font-size: 11px;
+      font-weight: 300;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+    }
+
+    .tools-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 36px;
+      font-weight: 400;
+      color: var(--ink);
+      letter-spacing: 0.02em;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-top: 2.5rem;
+    }
+
+    .tool-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      padding: 2rem 1.75rem;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative;
+      transition: border-color 0.25s, background 0.25s, transform 0.2s;
+    }
+
+    /* Corner accents */
+    .tool-card::before,
+    .tool-card::after {
+      content: '';
+      position: absolute;
+      width: 12px; height: 12px;
+      border-color: var(--gold-light);
+      border-style: solid;
+      opacity: 0.7;
+      transition: opacity 0.25s;
+    }
+    .tool-card::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+    .tool-card::after  { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+
+    .tool-card:hover {
+      border-color: var(--border-strong);
+      background: var(--gold-pale);
+      transform: translateY(-3px);
+    }
+    .tool-card:hover::before,
+    .tool-card:hover::after { opacity: 1; }
+
+    .tool-category {
+      font-family: 'Cormorant SC', serif;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .tool-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+    }
+
+    .tool-desc {
+      font-size: 15px;
+      color: var(--ink-mid);
+      line-height: 1.7;
+      flex: 1;
+    }
+
+    .tool-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Cormorant SC', serif;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-top: 4px;
+      transition: gap 0.2s;
+    }
+    .tool-card:hover .tool-link { gap: 12px; }
+    .tool-link svg {
+      width: 12px; height: 12px;
+      stroke: currentColor; fill: none;
+      stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    }
+
+    /* FOOTER */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2.5rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-name {
+      font-family: 'Cormorant SC', serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      color: var(--ink-mid);
+    }
+    .footer-year {
+      font-family: 'EB Garamond', serif;
+      font-size: 13px;
+      color: var(--ink-faint);
+      font-style: italic;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .nav-links { gap: 1.5rem; }
+      .tools { padding: 3rem 1.25rem 4rem; }
+      footer { padding: 2rem 1.5rem; flex-direction: column; gap: 6px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-ornament">
+      <div class="nav-rule"></div>
+      <a class="nav-name" href="#">Jesse Philippi</a>
+      <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+    </div>
+    <div class="nav-links">
+      <a href="#tools">Works</a>
+      <a href="mailto:your@email.com">Contact</a>
+    </div>
+  </nav>
+
+  <section class="tools" id="tools">
+    <div class="tools-header">
+      <p class="tools-eyebrow">Portfolio of Works</p>
+      <h2 class="tools-title">Engineering Tools</h2>
+    </div>
+
+    <div class="tools-grid">
+
+      <a class="tool-card" href="thermal_expansion_calculator.html">
+        <span class="tool-category">Structural Engineering</span>
+        <p class="tool-title">Thermal Expansion Calculator</p>
+        <p class="tool-desc">Compute thermal elongation, strain, and induced stress for constrained members across eight common engineering materials.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="energy_conversions.html">
+        <span class="tool-category">Energy Reference</span>
+        <p class="tool-title">Energy Conversions</p>
+        <p class="tool-desc">A comparative reference of energy quantities — from a kg of battery to world energy use — expressed in kWh, MJ, or BTU.</p>
+        <span class="tool-link">
+          Open reference
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="flow_through_pipe.html">
+        <span class="tool-category">Fluid Mechanics</span>
+        <p class="tool-title">Flow Through Pipe</p>
+        <p class="tool-desc">Hagen-Poiseuille calculator for laminar pipe flow — computes volumetric flow rate, mean velocity, and Reynolds number with fluid presets.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="hoop_stress.html">
+        <span class="tool-category">Pressure Vessel Design</span>
+        <p class="tool-title">Hoop Stress</p>
+        <p class="tool-desc">Lamé equations for stress distribution through a thick-walled cylinder — tangential, radial, longitudinal, and Von Mises stress with safety factor.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="conduction_flat_plate.html">
+        <span class="tool-category">Heat Transfer</span>
+        <p class="tool-title">Conduction — Flat Plate</p>
+        <p class="tool-desc">Fourier's Law for steady-state conduction — computes heat transfer rate, thermal resistance, and heat flux across 28 common engineering materials.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="bearing_L10_life.html">
+        <span class="tool-category">Mechanical Design</span>
+        <p class="tool-title">Bearing L10 Life</p>
+        <p class="tool-desc">ISO 281 bearing life calculations — compute expected L10 life from a known dynamic load rating, or find the required rating for a target service life.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="heat_transfer_cylinder.html">
+        <span class="tool-category">Heat Transfer</span>
+        <p class="tool-title">Conduction — Cylinder</p>
+        <p class="tool-desc">Radial conduction through a hollow cylinder — computes heat transfer rate, thermal resistance, and inner wall heat flux across 28 engineering materials.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="shaft_stress.html">
+        <span class="tool-category">Mechanical Design</span>
+        <p class="tool-title">Shaft Stress — Torsion</p>
+        <p class="tool-desc">Torsional shear stress for solid and hollow shafts — computes applied stress from power and speed, max allowable torque, and keyway stress concentration effects.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="torque_calculator.html">
+        <span class="tool-category">Mechanical Design</span>
+        <p class="tool-title">Torque Calculator</p>
+        <p class="tool-desc">Convert between power, speed, and torque — power + speed to torque, or torque + speed to power, across hp, kW, in·lb, ft·lb, and N·m.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="heat_up_calculator.html">
+        <span class="tool-category">Thermal Engineering</span>
+        <p class="tool-title">Heat-Up Calculator</p>
+        <p class="tool-desc">Find required power to heat a mass in a target time, or find required time given available power — for water, Therminol 66, ISO 220, steel, and aluminum.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="acceleration_calculator.html">
+        <span class="tool-category">Vehicle Engineering</span>
+        <p class="tool-title">Acceleration Calculator</p>
+        <p class="tool-desc">Compute wheel force and acceleration in each gear from engine torque, gear ratios, differential ratio, tire size, and vehicle weight.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="fluid_power_calculator.html">
+        <span class="tool-category">Thermal Engineering</span>
+        <p class="tool-title">Fluid Power Calculator</p>
+        <p class="tool-desc">Calculate thermal power from flow rate and temperature change for water, ISO 220, ISO 320, and Therminol 66 — results in kW, hp, and BTU/hr.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
       <a class="tool-card" href="bolt_torque_calculator.html">
         <span class="tool-category">Mechanical Design</span>
         <p class="tool-title">Bolt Torque Calculator</p>
@@ -416,6 +815,39 @@
           <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
         </span>
       </a>
+
+      <a class="tool-card" href="fastener_preload.html">
+        <span class="tool-category">Mechanical Design</span>
+        <p class="tool-title">Fastener Preload</p>
+        <p class="tool-desc">VDI 2230 torque-preload for standard bolts and SHCS — accounts for both thread and bearing face friction, with torque specs by grade at 75/85/90% proof load.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <a class="tool-card" href="power_screw_calculator.html">
+        <span class="tool-category">Mechanical Design</span>
+        <p class="tool-title">Power Screw Calculator</p>
+        <p class="tool-desc">Axial force, efficiency, and self-locking analysis for ACME, square, and large-thread power screws — jacks, clamps, presses, and lead screws.</p>
+        <span class="tool-link">
+          Open calculator
+          <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </span>
+      </a>
+
+      <!-- Add more tool cards here as you build them -->
+
+    </div>
+  </section>
+
+  <footer>
+    <span class="footer-name">Jesse Philippi</span>
+    <span class="footer-year">&copy; 2026</span>
+  </footer>
+
+</body>
+</html>
       
       <!-- Add more tool cards here as you build them -->
 

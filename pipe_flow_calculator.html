@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pipe Flow Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --parchment:#f5eedf;--parchment-dark:#ede3cc;--parchment-deeper:#d9cdb0;
+      --ink:#2a2218;--ink-mid:#5a4e38;--ink-faint:#9a8e78;
+      --gold:#8a6d2f;--gold-light:#c9a84c;--gold-pale:#f0e4c0;
+      --border:rgba(138,109,47,0.25);--border-strong:rgba(138,109,47,0.5);
+      --green:#2d5a27;--green-pale:#e8f2e7;
+      --amber:#7a5a1a;--amber-pale:#fdf3dc;
+      --red:#7a2a2a;--red-pale:#f5e8e8;
+      --blue:#1c4f82;--blue-pale:#e6f0fb;
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--parchment);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px);pointer-events:none;z-index:0;}
+    nav{position:relative;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:64px;background:var(--parchment);border-bottom:1px solid var(--border);}
+    .nav-ornament{display:flex;align-items:center;gap:12px;}
+    .nav-rule{width:32px;height:1px;background:var(--gold);opacity:0.6;}
+    .nav-name{font-family:'DM Serif Display',serif;font-size:15px;color:var(--ink);text-decoration:none;letter-spacing:0.04em;}
+    .nav-back{font-size:12px;color:var(--ink-mid);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s;}
+    .nav-back:hover{color:var(--gold);}
+    .nav-back svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+    .page{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:3rem 3rem 5rem;}
+    .page-header{margin-bottom:2rem;}
+    .page-eyebrow{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+    .page-title{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:8px;}
+    .page-subtitle{font-size:14px;color:var(--ink-mid);font-style:italic;max-width:580px;line-height:1.7;}
+    .section-label{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+    .inputs-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.5rem 1.75rem;margin-bottom:1.5rem;}
+    .sub-label{font-size:11px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:var(--ink-mid);margin:1rem 0 10px;padding-top:1rem;border-top:0.5px solid var(--border);}
+    .sub-label.first{border-top:none;padding-top:0;margin-top:0;}
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+    .field{display:flex;flex-direction:column;gap:6px;}
+    .field label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);}
+    .field-row{display:flex;gap:6px;}
+    .field input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;transition:border-color 0.2s;min-width:0;}
+    .field input:focus{border-color:var(--border-strong);}
+    .field select{border:1px solid var(--border);border-radius:8px;padding:9px 8px;font-family:inherit;font-size:13px;color:var(--ink-mid);background:var(--parchment);outline:none;cursor:pointer;}
+    .field-note{font-size:11px;color:var(--ink-faint);font-style:italic;}
+    .preset-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+    .preset-row label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);white-space:nowrap;}
+    .preset-row select{flex:1;min-width:160px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;}
+    /* mode tabs */
+    .mode-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--parchment-dark);margin-bottom:1.5rem;}
+    .mode-btn{flex:1;padding:11px 16px;font-family:inherit;font-size:13px;font-weight:500;color:var(--ink-mid);background:transparent;border:none;cursor:pointer;transition:background 0.15s,color 0.15s;text-align:center;}
+    .mode-btn.active{background:var(--ink);color:var(--parchment);}
+    .mode-btn:not(.active):hover{background:var(--parchment-deeper);}
+    /* ISO panel */
+    .iso-panel{background:var(--blue-pale);border:1px solid rgba(28,79,130,0.2);border-radius:10px;padding:1rem 1.25rem;margin-bottom:14px;display:none;}
+    .iso-panel.visible{display:block;}
+    .iso-panel-title{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--blue);margin-bottom:10px;}
+    .iso-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .iso-row label{font-size:11px;font-weight:500;color:var(--ink-mid);letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;}
+    .iso-row select,.iso-row input{border:1px solid rgba(28,79,130,0.25);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13px;color:var(--ink);background:#fff;outline:none;}
+    .iso-row input{width:90px;}
+    .iso-result{margin-top:10px;font-size:13px;color:var(--blue);display:flex;flex-wrap:wrap;gap:6px 20px;}
+    .iso-result span{background:rgba(28,79,130,0.08);border-radius:6px;padding:3px 10px;}
+    /* results panels */
+    .results-panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.5rem;}
+    .result-panel{border-radius:12px;border:1px solid var(--border);overflow:hidden;}
+    .panel-header{padding:10px 14px;font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;}
+    .panel-header.laminar{background:var(--green-pale);color:var(--green);border-bottom:1px solid rgba(45,90,39,0.2);}
+    .panel-header.turbulent{background:var(--blue-pale);color:var(--blue);border-bottom:1px solid rgba(28,79,130,0.2);}
+    .panel-header.invalid{background:var(--parchment-deeper);color:var(--ink-faint);border-bottom:1px solid var(--border);}
+    .validity-badge{font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;}
+    .valid-badge{background:rgba(255,255,255,0.6);}
+    .invalid-badge{background:rgba(0,0,0,0.08);}
+    .panel-body{background:var(--parchment-dark);padding:1rem 1.25rem;display:flex;flex-direction:column;gap:10px;}
+    .prow{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+    .prow-label{font-size:12px;color:var(--ink-faint);}
+    .prow-val{font-size:18px;font-weight:500;color:var(--ink);white-space:nowrap;}
+    .prow-unit{font-size:11px;color:var(--ink-faint);}
+    .prow-sub{font-size:11px;color:var(--ink-mid);margin-top:-6px;}
+    .pdivider{height:0.5px;background:var(--border);}
+    .panel-dim{opacity:0.5;}
+    /* Re display */
+    .re-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:20px;flex-wrap:wrap;}
+    .re-val{font-size:28px;font-weight:500;color:var(--ink);}
+    .re-label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:4px;}
+    .re-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;}
+    .re-laminar{background:var(--green-pale);color:var(--green);}
+    .re-transitional{background:var(--amber-pale);color:var(--amber);}
+    .re-turbulent{background:var(--blue-pale);color:var(--blue);}
+    .re-meta{font-size:12px;color:var(--ink-mid);}
+    /* Moody canvas */
+    .moody-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.75rem;margin-bottom:1.5rem;}
+    .moody-title{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:12px;}
+    canvas#moody{width:100%;height:320px;border-radius:6px;}
+    /* formula */
+    .formula-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.75rem;}
+    .formula-title{font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:10px;}
+    .formula-block{font-family:'Georgia',serif;font-size:14px;color:var(--ink);display:flex;flex-direction:column;gap:6px;padding:10px 0;}
+    .formula-vars{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);}
+    .fvar{font-size:12px;color:var(--ink-mid);}
+    .fvar strong{color:var(--ink);font-weight:500;}
+    footer{position:relative;z-index:1;border-top:1px solid var(--border);background:var(--parchment-deeper);padding:2rem 3rem;display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+    .footer-name{color:var(--ink-mid);}
+    .footer-year{color:var(--ink-faint);font-style:italic;}
+    @media(max-width:680px){
+      nav{padding:0 1.25rem;}
+      .page{padding:2rem 1.25rem 4rem;}
+      .g2,.g3{grid-template-columns:1fr;}
+      .results-panels{grid-template-columns:1fr;}
+      footer{padding:2rem 1.25rem;flex-direction:column;gap:6px;}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background:linear-gradient(90deg,var(--gold),transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Fluid Mechanics</p>
+    <h1 class="page-title">Pipe Flow Calculator</h1>
+    <p class="page-subtitle">Full-range pipe flow analysis — Hagen-Poiseuille for laminar flow and Darcy-Weisbach with Colebrook-White friction factor for turbulent flow. Both regimes shown simultaneously.</p>
+  </div>
+
+  <!-- MODE -->
+  <div class="mode-tabs">
+    <button class="mode-btn active" onclick="switchMode('dP2Q')">Pressure drop → Flow rate</button>
+    <button class="mode-btn" onclick="switchMode('Q2dP')">Flow rate → Pressure drop</button>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+
+    <!-- Fluid -->
+    <p class="sub-label first">Fluid</p>
+    <div class="preset-row">
+      <label>Fluid preset</label>
+      <select id="fluid-preset" onchange="applyFluidPreset()">
+        <option value="">— select a fluid —</option>
+        <optgroup label="ISO Gear / Hydraulic Oils (Walther / ASTM D1250)">
+          <option value="iso32">ISO 32</option>
+          <option value="iso46">ISO 46 — AGMA 1</option>
+          <option value="iso68">ISO 68 — AGMA 2</option>
+          <option value="iso100">ISO 100 — AGMA 3</option>
+          <option value="iso150">ISO 150 — AGMA 4</option>
+          <option value="iso220">ISO 220 — AGMA 5</option>
+          <option value="iso320">ISO 320 — AGMA 6</option>
+          <option value="iso460">ISO 460 — AGMA 7</option>
+          <option value="iso680">ISO 680 — AGMA 8</option>
+        </optgroup>
+        <optgroup label="SAE Crankcase Oils">
+          <option value="sae5w30">SAE 5W-30</option>
+          <option value="sae10w40">SAE 10W-40</option>
+          <option value="sae15w40">SAE 15W-40</option>
+          <option value="sae20w50">SAE 20W-50</option>
+        </optgroup>
+        <optgroup label="SAE Gear Oils">
+          <option value="saeg75w90">SAE 75W-90</option>
+          <option value="saeg80w90">SAE 80W-90</option>
+          <option value="saeg85w140">SAE 85W-140</option>
+        </optgroup>
+        <optgroup label="Thermal Oil">
+          <option value="therminol66">Therminol 66</option>
+        </optgroup>
+        <optgroup label="Other (fixed properties)">
+          <option value="water_20">Water (20°C)</option>
+          <option value="water_60">Water (60°C)</option>
+          <option value="diesel">Diesel fuel</option>
+          <option value="gasoline">Gasoline</option>
+          <option value="glycerin">Glycerin (25°C)</option>
+        </optgroup>
+        <option value="custom">Custom</option>
+      </select>
+    </div>
+
+    <!-- ISO temp panel -->
+    <div class="iso-panel" id="iso-panel">
+      <p class="iso-panel-title" id="iso-panel-title">ISO Oil — viscosity at temperature</p>
+      <div class="iso-row">
+        <label>Temperature</label>
+        <input type="number" id="iso-temp" value="40" step="1" min="-20" max="300" oninput="applyIsoViscosity()"/>
+        <select id="iso-temp-unit" onchange="applyIsoViscosity()">
+          <option value="C">°C</option>
+          <option value="F">°F</option>
+        </select>
+      </div>
+      <div class="iso-result" id="iso-result"></div>
+    </div>
+
+    <div class="g3">
+      <div class="field">
+        <label>Dynamic viscosity (µ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-mu" value="46" min="0.0001" step="0.1" oninput="calc()"/>
+          <select id="unit-mu" onchange="calc()">
+            <option value="cp">cP</option>
+            <option value="pas">Pa·s</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Fluid density (ρ)</label>
+        <div class="field-row">
+          <input type="number" id="inp-rho" value="0.8700" min="0.0001" step="0.0001" oninput="calc()"/>
+          <select id="unit-rho" onchange="calc()">
+            <option value="gcm3">g/cm³</option>
+            <option value="kgm3">kg/m³</option>
+            <option value="lbin3">lb/in³</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pipe -->
+    <p class="sub-label">Pipe</p>
+    <div class="g3">
+      <div class="field">
+        <label>Inner diameter (d)</label>
+        <div class="field-row">
+          <input type="number" id="inp-d" value="0.5" min="0.0001" step="0.01" oninput="calc()"/>
+          <select id="unit-d" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Pipe length (L)</label>
+        <div class="field-row">
+          <input type="number" id="inp-L" value="96" min="0.0001" step="0.1" oninput="calc()"/>
+          <select id="unit-L" onchange="calc()">
+            <option value="in">in</option>
+            <option value="ft">ft</option>
+            <option value="m">m</option>
+            <option value="mm">mm</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Roughness (ε)</label>
+        <div class="field-row">
+          <input type="number" id="inp-eps" value="0.0018" min="0" step="0.0001" oninput="calc()"/>
+          <select id="unit-eps" onchange="calc()">
+            <option value="mm">mm</option>
+            <option value="in">in</option>
+          </select>
+        </div>
+        <select id="roughness-preset" onchange="applyRoughness()" style="margin-top:4px;border:1px solid var(--border);border-radius:8px;padding:7px 8px;font-family:inherit;font-size:12px;color:var(--ink-mid);background:var(--parchment);outline:none;cursor:pointer;">
+          <option value="">— roughness preset —</option>
+          <option value="0.0015">Drawn tubing / copper — 0.0015 mm</option>
+          <option value="0.046">Commercial steel / wrought iron — 0.046 mm</option>
+          <option value="0.15">Asphalted cast iron — 0.15 mm</option>
+          <option value="0.26">Galvanized iron — 0.26 mm</option>
+          <option value="0.46">Cast iron — 0.46 mm</option>
+          <option value="0.9">Wood stave — 0.9 mm</option>
+          <option value="3.0">Concrete (smooth) — 3.0 mm</option>
+          <option value="0.003">PVC / smooth plastic — 0.003 mm</option>
+          <option value="0.001">Glass / drawn brass — 0.001 mm</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Primary input: dP or Q -->
+    <p class="sub-label" id="primary-input-label">Pressure drop</p>
+    <div class="g2" id="dP-row">
+      <div class="field">
+        <label>Pressure drop (ΔP)</label>
+        <div class="field-row">
+          <input type="number" id="inp-dP" value="20" min="0" step="0.1" oninput="calc()"/>
+          <select id="unit-dP" onchange="calc()">
+            <option value="psi">psi</option>
+            <option value="bar">bar</option>
+            <option value="kpa">kPa</option>
+            <option value="mpa">MPa</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="g2" id="Q-row" style="display:none;">
+      <div class="field">
+        <label>Flow rate (Q)</label>
+        <div class="field-row">
+          <input type="number" id="inp-Q" value="1" min="0.0001" step="0.01" oninput="calc()"/>
+          <select id="unit-Q" onchange="calc()">
+            <option value="gpm">gal/min</option>
+            <option value="lpm">L/min</option>
+            <option value="m3s">m³/s</option>
+            <option value="in3s">in³/s</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REYNOLDS NUMBER -->
+  <div class="re-card">
+    <div>
+      <p class="re-label">Reynolds number (Re)</p>
+      <div style="display:flex;align-items:baseline;gap:10px;">
+        <span class="re-val" id="re-val">—</span>
+        <span class="re-badge" id="re-badge"></span>
+      </div>
+    </div>
+    <div class="re-meta" id="re-meta"></div>
+  </div>
+
+  <!-- DUAL RESULTS -->
+  <p class="section-label">Results — both regimes</p>
+  <div class="results-panels">
+
+    <!-- LAMINAR panel -->
+    <div class="result-panel">
+      <div class="panel-header laminar" id="lam-header">
+        <span>Hagen-Poiseuille (Laminar)</span>
+        <span class="validity-badge valid-badge" id="lam-badge">Re &lt; 2,300</span>
+      </div>
+      <div class="panel-body" id="lam-body">
+        <div class="prow">
+          <span class="prow-label" id="lam-primary-label">Flow rate (Q)</span>
+          <span><span class="prow-val" id="lam-primary">—</span> <span class="prow-unit" id="lam-primary-unit">gpm</span></span>
+        </div>
+        <div class="prow-sub" id="lam-primary-sub"></div>
+        <div class="pdivider"></div>
+        <div class="prow"><span class="prow-label">Velocity (V)</span><span><span class="prow-val" id="lam-V">—</span> <span class="prow-unit">ft/s</span></span></div>
+        <div class="prow-sub" id="lam-V-sub"></div>
+        <div class="prow"><span class="prow-label">Hydraulic power</span><span><span class="prow-val" id="lam-P">—</span> <span class="prow-unit">kW</span></span></div>
+        <div class="prow-sub" id="lam-P-sub"></div>
+      </div>
+    </div>
+
+    <!-- TURBULENT panel -->
+    <div class="result-panel">
+      <div class="panel-header turbulent" id="turb-header">
+        <span>Darcy-Weisbach (Turbulent)</span>
+        <span class="validity-badge valid-badge" id="turb-badge">Re &gt; 4,000</span>
+      </div>
+      <div class="panel-body" id="turb-body">
+        <div class="prow">
+          <span class="prow-label" id="turb-primary-label">Flow rate (Q)</span>
+          <span><span class="prow-val" id="turb-primary">—</span> <span class="prow-unit" id="turb-primary-unit">gpm</span></span>
+        </div>
+        <div class="prow-sub" id="turb-primary-sub"></div>
+        <div class="pdivider"></div>
+        <div class="prow"><span class="prow-label">Velocity (V)</span><span><span class="prow-val" id="turb-V">—</span> <span class="prow-unit">ft/s</span></span></div>
+        <div class="prow-sub" id="turb-V-sub"></div>
+        <div class="prow"><span class="prow-label">Friction factor (f)</span><span><span class="prow-val" id="turb-f">—</span></span></div>
+        <div class="prow-sub" id="turb-f-sub"></div>
+        <div class="prow"><span class="prow-label">Hydraulic power</span><span><span class="prow-val" id="turb-P">—</span> <span class="prow-unit">kW</span></span></div>
+        <div class="prow-sub" id="turb-P-sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOODY DIAGRAM -->
+  <div class="moody-card">
+    <p class="moody-title">Moody diagram — operating point shown</p>
+    <canvas id="moody"></canvas>
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Governing equations</p>
+    <div class="formula-block">
+      <span>Laminar (Re &lt; 2,300): Q = π·d⁴·ΔP / (128·µ·L) &nbsp;&nbsp;[Hagen-Poiseuille]</span>
+      <span>Turbulent: ΔP = f·(L/d)·(ρV²/2) &nbsp;&nbsp;[Darcy-Weisbach]</span>
+      <span>Colebrook-White: 1/√f = −2·log(ε/(3.7d) + 2.51/(Re·√f)) &nbsp;&nbsp;[iterated]</span>
+      <span>Swamee-Jain (explicit): f ≈ 0.25 / [log(ε/(3.7d) + 5.74/Re⁰·⁹)]²</span>
+      <span>Re = ρ·V·d / µ &nbsp;&nbsp;|&nbsp;&nbsp; V = Q / A &nbsp;&nbsp;|&nbsp;&nbsp; P = Q·ΔP</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>ε</strong> = absolute pipe roughness</span>
+      <span class="fvar"><strong>ε/d</strong> = relative roughness</span>
+      <span class="fvar"><strong>f</strong> = Darcy friction factor (4× Fanning)</span>
+      <span class="fvar">Transitional 2,300 &lt; Re &lt; 4,000 — neither equation is reliable</span>
+      <span class="fvar">For ΔP→Q turbulent: iterative solution using Colebrook-White</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Fluid data (same as flow_through_pipe.html) ──
+const walterFluids={
+  iso32:{name:'ISO 32',A:10.075074,B:3.964652,rho15:860},
+  iso46:{name:'ISO 46',A:9.233240,B:3.610415,rho15:865},
+  iso68:{name:'ISO 68',A:9.111467,B:3.544970,rho15:870},
+  iso100:{name:'ISO 100',A:9.252591,B:3.586455,rho15:875},
+  iso150:{name:'ISO 150',A:8.874131,B:3.420231,rho15:878},
+  iso220:{name:'ISO 220',A:8.587627,B:3.292677,rho15:882},
+  iso320:{name:'ISO 320',A:8.588014,B:3.281181,rho15:886},
+  iso460:{name:'ISO 460',A:8.589600,B:3.271222,rho15:889},
+  iso680:{name:'ISO 680',A:8.501066,B:3.225010,rho15:892},
+  sae5w30:{name:'SAE 5W-30',A:8.656100,B:3.324100,rho15:858},
+  sae10w40:{name:'SAE 10W-40',A:8.920000,B:3.426000,rho15:865},
+  sae15w40:{name:'SAE 15W-40',A:9.010000,B:3.458000,rho15:868},
+  sae20w50:{name:'SAE 20W-50',A:9.180000,B:3.520000,rho15:872},
+  saeg75w90:{name:'SAE 75W-90',A:8.760000,B:3.330000,rho15:875},
+  saeg80w90:{name:'SAE 80W-90',A:9.310000,B:3.555000,rho15:882},
+  saeg85w140:{name:'SAE 85W-140',A:9.820000,B:3.740000,rho15:895},
+};
+function waltherKV(f,Tc){const Tk=Tc+273.15;return Math.pow(10,Math.pow(10,f.A-f.B*Math.log10(Tk)))-0.7;}
+function astmRho(f,Tc){return f.rho15-0.65*(Tc-15);}
+function therminol66Visc(Tc){return Math.exp(22.214-5560.0/(Tc+273.15));}
+function therminol66Rho(Tc){return 1010-0.596*(Tc-15);}
+
+const fixedFluids={
+  water_20:{cp_kgm3:1.002,rho_kgm3:998.2},
+  water_60:{cp_kgm3:0.467,rho_kgm3:983.2},
+  diesel:{cp_kgm3:3.0,rho_kgm3:832},
+  gasoline:{cp_kgm3:0.6,rho_kgm3:720},
+  glycerin:{cp_kgm3:950,rho_kgm3:1261},
+};
+
+let currentFluidKey=null,currentFluidType=null;
+
+// ── Unit converters ──
+const toM={in:0.0254,mm:0.001,cm:0.01,ft:0.3048,m:1};
+const toPa={psi:6894.76,bar:1e5,kpa:1e3,mpa:1e6};
+const toPas={cp:0.001,pas:1};
+const toKgm3={gcm3:1000,kgm3:1,lbin3:27679.9};
+const toM3s={gpm:6.30902e-5,lpm:1/60000,m3s:1,in3s:1.63871e-5};
+const toEpsM={mm:0.001,in:0.0254};
+
+let mode='dP2Q';
+let lastRe=null,lastQ_m3s=null,lastF=null,lastRelRough=null;
+
+function switchMode(m){
+  mode=m;
+  document.querySelectorAll('.mode-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&m==='dP2Q')||(i===1&&m==='Q2dP')));
+  document.getElementById('dP-row').style.display=m==='dP2Q'?'grid':'none';
+  document.getElementById('Q-row').style.display=m==='Q2dP'?'grid':'none';
+  document.getElementById('primary-input-label').textContent=m==='dP2Q'?'Pressure drop':'Flow rate';
+  const pl=m==='dP2Q'?'Flow rate (Q)':'Pressure drop (ΔP)';
+  ['lam-primary-label','turb-primary-label'].forEach(id=>document.getElementById(id).textContent=pl);
+  const pu=m==='dP2Q'?'gpm':'psi';
+  ['lam-primary-unit','turb-primary-unit'].forEach(id=>document.getElementById(id).textContent=pu);
+  calc();
+}
+
+// ── Colebrook-White iteration ──
+function colebrook(Re,relRough){
+  // Swamee-Jain explicit starting point
+  let f=0.25/Math.pow(Math.log10(relRough/3.7+5.74/Math.pow(Re,0.9)),2);
+  for(let i=0;i<50;i++){
+    const rhs=-2*Math.log10(relRough/3.7+2.51/(Re*Math.sqrt(f)));
+    const fNew=1/(rhs*rhs);
+    if(Math.abs(fNew-f)<1e-10)break;
+    f=fNew;
+  }
+  return f;
+}
+
+// turbulent: ΔP→Q iterative (Darcy-Weisbach inverted)
+// ΔP = f*(L/d)*(rho*V^2/2), V=Q/A, solve for Q
+// Re depends on V which depends on Q → iterate
+function turbDeltaP2Q(dP_Pa,d_m,L_m,mu_pas,rho,eps_m){
+  const A=Math.PI*d_m*d_m/4;
+  const relRough=eps_m/d_m;
+  // start with guess from Hagen-Poiseuille
+  let Q=Math.PI*Math.pow(d_m,4)*dP_Pa/(128*mu_pas*L_m);
+  for(let i=0;i<100;i++){
+    const V=Q/A;
+    const Re=rho*V*d_m/mu_pas;
+    if(Re<1)break;
+    const f=colebrook(Math.max(Re,4000),relRough);
+    const Qnew=A*Math.sqrt(2*dP_Pa*d_m/(f*L_m*rho));
+    if(Math.abs(Qnew-Q)/Q<1e-8)break;
+    Q=0.5*Q+0.5*Qnew; // damped update
+  }
+  return Q;
+}
+
+function fmt(v,dec){
+  if(!isFinite(v)||v===null)return'—';
+  if(Math.abs(v)>=1e6)return(v/1e6).toFixed(2)+'M';
+  if(Math.abs(v)>=10000)return v.toLocaleString(undefined,{maximumFractionDigits:0});
+  if(Math.abs(v)>=100)return v.toLocaleString(undefined,{maximumFractionDigits:1});
+  if(Math.abs(v)>=1)return v.toLocaleString(undefined,{maximumFractionDigits:dec??3});
+  return v.toPrecision(3);
+}
+
+function calc(){
+  const d_m  =(parseFloat(document.getElementById('inp-d').value)||0)*toM[document.getElementById('unit-d').value];
+  const L_m  =(parseFloat(document.getElementById('inp-L').value)||0)*toM[document.getElementById('unit-L').value];
+  const mu_pa=(parseFloat(document.getElementById('inp-mu').value)||0)*toPas[document.getElementById('unit-mu').value];
+  const rho  =(parseFloat(document.getElementById('inp-rho').value)||0)*toKgm3[document.getElementById('unit-rho').value];
+  const eps_m=(parseFloat(document.getElementById('inp-eps').value)||0)*toEpsM[document.getElementById('unit-eps').value];
+
+  if(!d_m||!L_m||!mu_pa||!rho)return;
+
+  const A=Math.PI*d_m*d_m/4;
+  const relRough=eps_m/d_m;
+
+  let dP_Pa,Q_lam,Q_turb,dP_lam,dP_turb;
+
+  if(mode==='dP2Q'){
+    dP_Pa=(parseFloat(document.getElementById('inp-dP').value)||0)*toPa[document.getElementById('unit-dP').value];
+    if(!dP_Pa)return;
+    // Laminar
+    Q_lam=Math.PI*Math.pow(d_m,4)*dP_Pa/(128*mu_pa*L_m);
+    // Turbulent (iterative)
+    Q_turb=turbDeltaP2Q(dP_Pa,d_m,L_m,mu_pa,rho,eps_m);
+  } else {
+    const Q_m3s=(parseFloat(document.getElementById('inp-Q').value)||0)*toM3s[document.getElementById('unit-Q').value];
+    if(!Q_m3s)return;
+    Q_lam=Q_turb=Q_m3s;
+    // Laminar ΔP
+    dP_lam=128*mu_pa*L_m*Q_m3s/(Math.PI*Math.pow(d_m,4));
+    // Turbulent ΔP
+    const V=Q_m3s/A;
+    const Re=rho*V*d_m/mu_pa;
+    const f=colebrook(Math.max(Re,4000),relRough);
+    dP_turb=f*(L_m/d_m)*(rho*V*V/2);
+  }
+
+  // For Re calculation, use turbulent Q if dP→Q mode (more realistic for high Re)
+  const V_turb=Q_turb/A;
+  const Re=rho*V_turb*d_m/mu_pa;
+  const V_lam=Q_lam/A;
+  const Re_lam=rho*V_lam*d_m/mu_pa;
+
+  // Friction factor
+  const f_turb=Re>100?colebrook(Math.max(Re,4000),relRough):0;
+  const f_lam=Re_lam>0?64/Re_lam:0;
+
+  lastRe=Re; lastQ_m3s=Q_turb; lastF=f_turb; lastRelRough=relRough;
+
+  // Re display — use whichever is more relevant
+  const ReDisplay=mode==='dP2Q'?Re:Re;
+  updateRe(ReDisplay);
+
+  // Populate panels
+  if(mode==='dP2Q'){
+    setPanel('lam',Q_lam,dP_Pa,V_lam,f_lam,Re_lam,'Q');
+    setPanel('turb',Q_turb,dP_Pa,V_turb,f_turb,Re,'Q');
+    updateValidity(Re_lam,Re);
+  } else {
+    setPanel('lam',null,dP_lam,V_lam,f_lam,Re_lam,'dP');
+    setPanel('turb',null,dP_turb,V_turb,f_turb,Re,'dP');
+    updateValidity(Re,Re);
+  }
+
+  drawMoody(Re,f_turb,relRough);
+}
+
+function setPanel(id,Q_m3s,dP_Pa,V_ms,f,Re,showMode){
+  const P_kW=Q_m3s!==null?Q_m3s*dP_Pa/1000:V_ms*(Math.PI*
+    (parseFloat(document.getElementById('inp-d').value)||0)*
+    (parseFloat(document.getElementById('inp-d').value)||0)/4*
+    toM[document.getElementById('unit-d').value]*
+    toM[document.getElementById('unit-d').value])*dP_Pa/1000;
+
+  if(showMode==='Q'&&Q_m3s!==null){
+    document.getElementById(id+'-primary').textContent=fmt(Q_m3s*15850.3);
+    document.getElementById(id+'-primary-sub').textContent=
+      fmt(Q_m3s*60000,2)+' L/min  |  '+fmt(Q_m3s*61023.7,2)+' in³/s';
+    document.getElementById(id+'-primary-unit').textContent='gpm';
+  } else if(showMode==='dP'&&dP_Pa!==undefined){
+    document.getElementById(id+'-primary').textContent=fmt(dP_Pa/6894.76);
+    document.getElementById(id+'-primary-sub').textContent=
+      fmt(dP_Pa/1e5,4)+' bar  |  '+fmt(dP_Pa/1e3,2)+' kPa';
+    document.getElementById(id+'-primary-unit').textContent='psi';
+  }
+
+  document.getElementById(id+'-V').textContent=fmt(V_ms*3.28084);
+  document.getElementById(id+'-V-sub').textContent=fmt(V_ms,3)+' m/s';
+
+  if(id==='turb'){
+    document.getElementById('turb-f').textContent=f.toFixed(4);
+    document.getElementById('turb-f-sub').textContent=
+      'ε/d = '+(lastRelRough?lastRelRough.toExponential(3):'—')+'  |  Colebrook-White iterated';
+  }
+
+  if(Q_m3s!==null){
+    const Pkw=Q_m3s*dP_Pa/1000;
+    document.getElementById(id+'-P').textContent=fmt(Pkw);
+    document.getElementById(id+'-P-sub').textContent=fmt(Pkw/0.745699,2)+' hp  |  '+fmt(Pkw*3412.14,0)+' BTU/hr';
+  }
+}
+
+function updateRe(Re){
+  document.getElementById('re-val').textContent=Re.toLocaleString(undefined,{maximumFractionDigits:0});
+  const badge=document.getElementById('re-badge');
+  const meta=document.getElementById('re-meta');
+  if(Re<2300){
+    badge.className='re-badge re-laminar';badge.textContent='Laminar';
+    meta.textContent='Hagen-Poiseuille is valid. Darcy-Weisbach result shown for reference.';
+  } else if(Re<4000){
+    badge.className='re-badge re-transitional';badge.textContent='Transitional';
+    meta.textContent='Neither equation is fully reliable in the transitional regime (2,300–4,000).';
+  } else {
+    badge.className='re-badge re-turbulent';badge.textContent='Turbulent';
+    meta.textContent='Darcy-Weisbach + Colebrook-White is valid. H-P result shown for reference.';
+  }
+}
+
+function updateValidity(Re_lam,Re_turb){
+  const lamValid=Re_lam<2300;
+  const turbValid=Re_turb>4000;
+  const lamH=document.getElementById('lam-header');
+  const turbH=document.getElementById('turb-header');
+  const lamB=document.getElementById('lam-badge');
+  const turbB=document.getElementById('turb-badge');
+  lamH.className='panel-header '+(lamValid?'laminar':'invalid');
+  turbH.className='panel-header '+(turbValid?'turbulent':'invalid');
+  lamB.textContent=lamValid?'✓ Valid for Re < 2,300':'⚠ Re > 2,300 — use turbulent';
+  turbB.textContent=turbValid?'✓ Valid for Re > 4,000':'⚠ Re < 4,000 — use laminar';
+  document.getElementById('lam-body').className='panel-body'+(lamValid?'':' panel-dim');
+  document.getElementById('turb-body').className='panel-body'+(turbValid?'':' panel-dim');
+}
+
+// ── Moody diagram ──
+function drawMoody(Re,f_op,relRough_op){
+  const canvas=document.getElementById('moody');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth,H=320;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+
+  const PAD={top:20,right:20,bottom:40,left:55};
+  const cW=W-PAD.left-PAD.right, cH=H-PAD.top-PAD.bottom;
+
+  // log scales
+  const ReMin=600,ReMax=1e8,fMin=0.007,fMax=0.1;
+  const xScale=Re=>PAD.left+cW*(Math.log10(Re)-Math.log10(ReMin))/(Math.log10(ReMax)-Math.log10(ReMin));
+  const yScale=f=>PAD.top+cH*(Math.log10(fMax)-Math.log10(f))/(Math.log10(fMax)-Math.log10(fMin));
+
+  // Background
+  ctx.fillStyle='#ede3cc';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.strokeStyle='rgba(138,109,47,0.15)'; ctx.lineWidth=0.5;
+  [1e3,1e4,1e5,1e6,1e7,1e8].forEach(r=>{
+    const x=xScale(r);
+    ctx.beginPath();ctx.moveTo(x,PAD.top);ctx.lineTo(x,PAD.top+cH);ctx.stroke();
+  });
+  [0.008,0.01,0.015,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1].forEach(fv=>{
+    const y=yScale(fv);
+    if(y>=PAD.top&&y<=PAD.top+cH){
+      ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();
+    }
+  });
+
+  // Laminar line f=64/Re
+  ctx.strokeStyle='#2d5a27'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  let started=false;
+  for(let Re=600;Re<=3000;Re*=1.02){
+    const fv=64/Re;
+    const x=xScale(Re),y=yScale(fv);
+    if(fv>=fMin&&fv<=fMax){
+      if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+    }
+  }
+  ctx.stroke();
+
+  // Turbulent curves for various roughnesses
+  const roughnesses=[0,1e-6,1e-5,5e-5,1e-4,5e-4,1e-3,5e-3,0.01,0.05];
+  const colors=['#5a9b8a','#6b9b7a','#7a8b6a','#8b7b5a','#9b6b4a','#ab5b3a','#bb4b2a','#cb3b1a','#db2b0a','#8a6d2f'];
+  roughnesses.forEach((eps,ci)=>{
+    ctx.strokeStyle=colors[ci]+'88'; ctx.lineWidth=1;
+    ctx.beginPath(); started=false;
+    for(let Re=4000;Re<=1e8;Re*=1.05){
+      const fv=eps===0?colebrook(Re,1e-9):colebrook(Re,eps);
+      const x=xScale(Re),y=yScale(fv);
+      if(fv>=fMin&&fv<=fMax&&x>=PAD.left&&x<=PAD.left+cW){
+        if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);
+      }
+    }
+    ctx.stroke();
+  });
+
+  // Transitional zone shading
+  ctx.fillStyle='rgba(122,90,26,0.08)';
+  ctx.fillRect(xScale(2300),PAD.top,xScale(4000)-xScale(2300),cH);
+
+  // Operating point
+  if(isFinite(Re)&&isFinite(f_op)&&Re>100){
+    const x=xScale(Re),y=yScale(f_op);
+    if(x>=PAD.left&&x<=PAD.left+cW&&y>=PAD.top&&y<=PAD.top+cH){
+      ctx.beginPath();ctx.arc(x,y,7,0,2*Math.PI);
+      ctx.fillStyle='#c9a84c';ctx.fill();
+      ctx.strokeStyle='#8a6d2f';ctx.lineWidth=2;ctx.stroke();
+    }
+  }
+
+  // Axes labels
+  ctx.fillStyle='#5a4e38'; ctx.font='11px DM Sans,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Reynolds number (Re)',PAD.left+cW/2,H-6);
+  [1e3,1e4,1e5,1e6,1e7,1e8].forEach(r=>{
+    ctx.fillText(r>=1e6?(r/1e6)+'M':r>=1e3?(r/1e3)+'k':r,xScale(r),PAD.top+cH+14);
+  });
+  ctx.save();ctx.translate(13,PAD.top+cH/2);ctx.rotate(-Math.PI/2);
+  ctx.fillText('Darcy friction factor (f)',0,0);ctx.restore();
+  ctx.textAlign='right';
+  [0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1].forEach(fv=>{
+    const y=yScale(fv);
+    if(y>=PAD.top&&y<=PAD.top+cH)ctx.fillText(fv.toFixed(2),PAD.left-4,y+4);
+  });
+  // Legend
+  ctx.textAlign='left';ctx.font='10px DM Sans,sans-serif';
+  ctx.fillStyle='#2d5a27';ctx.fillText('— Laminar (64/Re)',PAD.left+4,PAD.top+12);
+  ctx.fillStyle='#c9a84c';ctx.beginPath();ctx.arc(PAD.left+85,PAD.top+8,5,0,2*Math.PI);ctx.fill();
+  ctx.fillStyle='#5a4e38';ctx.fillText(' Operating point',PAD.left+90,PAD.top+12);
+}
+
+// ── Fluid presets (same Walther/ASTM logic as flow_through_pipe) ──
+function applyFluidPreset(){
+  const key=document.getElementById('fluid-preset').value;
+  const panel=document.getElementById('iso-panel');
+  if(key in walterFluids){
+    currentFluidKey=key;currentFluidType='walther';
+    panel.classList.add('visible');
+    document.getElementById('iso-panel-title').textContent=walterFluids[key].name+' — viscosity at temperature';
+    applyIsoViscosity();
+  } else if(key==='therminol66'){
+    currentFluidKey=key;currentFluidType='therminol66';
+    panel.classList.add('visible');
+    document.getElementById('iso-panel-title').textContent='Therminol 66 — viscosity at temperature';
+    applyIsoViscosity();
+  } else {
+    currentFluidKey=null;currentFluidType='fixed';
+    panel.classList.remove('visible');
+    document.getElementById('iso-result').innerHTML='';
+    const f=fixedFluids[key];
+    if(f){
+      document.getElementById('inp-mu').value=f.cp_kgm3;
+      document.getElementById('unit-mu').value='cp';
+      document.getElementById('inp-rho').value=f.rho_kgm3;
+      document.getElementById('unit-rho').value='kgm3';
+    }
+    calc();
+  }
+}
+
+function applyIsoViscosity(){
+  if(!currentFluidKey)return;
+  let tempC=parseFloat(document.getElementById('iso-temp').value)||40;
+  if(document.getElementById('iso-temp-unit').value==='F')tempC=(tempC-32)*5/9;
+  let rho,kv,mu_cp,method;
+  if(currentFluidType==='walther'){
+    const fl=walterFluids[currentFluidKey];
+    rho=astmRho(fl,tempC);kv=waltherKV(fl,tempC);mu_cp=kv*rho/1000;method='ASTM D1250';
+  } else {
+    mu_cp=therminol66Visc(tempC);rho=therminol66Rho(tempC);kv=mu_cp/rho*1000;method='Solutia datasheet';
+  }
+  document.getElementById('iso-result').innerHTML=
+    '<span>ν = '+kv.toFixed(2)+' cSt</span>'+
+    '<span>µ = '+mu_cp.toFixed(2)+' cP</span>'+
+    '<span>ρ = '+rho.toFixed(1)+' kg/m³ ('+method+')</span>';
+  document.getElementById('inp-mu').value=mu_cp.toFixed(4);
+  document.getElementById('unit-mu').value='cp';
+  document.getElementById('inp-rho').value=(rho/1000).toFixed(4);
+  document.getElementById('unit-rho').value='gcm3';
+  calc();
+}
+
+function applyRoughness(){
+  const val=document.getElementById('roughness-preset').value;
+  if(!val)return;
+  document.getElementById('inp-eps').value=parseFloat(val);
+  document.getElementById('unit-eps').value='mm';
+  calc();
+}
+
+['unit-d','unit-L','unit-mu','unit-rho','unit-eps','unit-dP','unit-Q','iso-temp-unit'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('change',id.startsWith('iso')?applyIsoViscosity:calc);
+});
+
+window.addEventListener('resize',()=>{if(lastRe)drawMoody(lastRe,lastF,lastRelRough);});
+
+switchMode('dP2Q');
+calc();
+</script>
+</body>
+</html>

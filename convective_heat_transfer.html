@@ -188,7 +188,7 @@
   <div class="page-header">
     <p class="page-eyebrow">Heat Transfer</p>
     <h1 class="page-title">Convective Heat Transfer Coefficient</h1>
-    <p class="page-subtitle">Internal pipe flow calculator for water and Therminol 66 — computes Reynolds number, Prandtl number, and Nusselt number (Gnielinski correlation) to solve for the convective film coefficient (h) at a given average bulk temperature.</p>
+    <p class="page-subtitle">Internal pipe flow heat transfer calculator for water and Therminol 66 — computes Reynolds number, Prandtl number, and Nusselt number (Gnielinski correlation) to solve for the convective film coefficient (h) at a given average bulk temperature.</p>
   </div>
 
   <p class="section-label">Inputs</p>
@@ -268,6 +268,29 @@
         </div>
         <span class="field-note">Enables the Sieder-Tate viscosity-ratio correction (µ/µ_wall)^0.14 — heating vs. cooling is captured automatically through this ratio.</span>
       </div>
+
+      <div class="field">
+        <label>Pipe roughness</label>
+        <select id="inp-rough" onchange="onRoughChange()">
+          <option value="0">Hydraulically smooth (Petukhov)</option>
+          <option value="0.0015">Drawn tubing / glass / copper (ε ≈ 0.0015 mm)</option>
+          <option value="0.0015">PVC / plastic pipe (ε ≈ 0.0015 mm)</option>
+          <option value="0.045">Commercial steel / wrought iron (ε ≈ 0.045 mm)</option>
+          <option value="0.15">Galvanized steel (ε ≈ 0.15 mm)</option>
+          <option value="0.26">Cast iron (ε ≈ 0.26 mm)</option>
+          <option value="1.0">Concrete (ε ≈ 0.3–3 mm, 1.0 typical)</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <div class="field-row" id="rough-custom-row" style="display:none; margin-top:2px;">
+          <input type="number" id="inp-rough-custom" placeholder="ε" min="0" step="0.001" oninput="calc()" />
+          <select id="unit-rough">
+            <option value="mm">mm</option>
+            <option value="um">µm</option>
+            <option value="in">in</option>
+          </select>
+        </div>
+        <span class="field-note">Switches from Petukhov's smooth-tube friction factor to Colebrook–Haaland once Re ≥ 2,300. Ignored in laminar flow.</span>
+      </div>
     </div>
   </div>
 
@@ -300,6 +323,9 @@
       <p class="rlabel">Nusselt number (Nu)</p>
       <p class="rvalue" id="res-Nu">—</p>
       <p class="runit" id="res-Nu-note">dimensionless</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span>Friction factor (f)</span><span id="res-f">—</span></div>
+      </div>
     </div>
 
     <div class="result-card primary">
@@ -320,7 +346,8 @@
     <div class="formula-block">
       <span>Re = ρ V d / µ &nbsp;&nbsp;&nbsp; Pr = cₚ µ / k</span>
       <span>Re &lt; 2,300 (laminar): Nu = 3.66 (const. T_wall) or 4.36 (const. q")</span>
-      <span>Re ≥ 2,300 (Gnielinski): f = (0.79·ln(Re) − 1.64)⁻²</span>
+      <span>Re ≥ 2,300, smooth: f = (0.79·ln(Re) − 1.64)⁻² &nbsp;&nbsp;[Petukhov]</span>
+      <span>Re ≥ 2,300, rough: 1/√f = −1.8·log₁₀[(ε/D / 3.7)^1.11 + 6.9/Re] &nbsp;&nbsp;[Colebrook–Haaland]</span>
       <span>Nu = (f/8)(Re − 1000)Pr &nbsp;/&nbsp; [1 + 12.7(f/8)^0.5 (Pr^(2/3) − 1)]</span>
       <span>Nu_corrected = Nu · (µ / µ_wall)^0.14 &nbsp;&nbsp;[Sieder-Tate viscosity ratio, if T_wall given]</span>
       <span>h = Nu · k / d</span>
@@ -333,11 +360,12 @@
       <span class="fvar"><strong>h</strong> = convective film coefficient</span>
       <span class="fvar"><strong>ρ, µ, k, cₚ</strong> = fluid density, dynamic viscosity, thermal conductivity, specific heat at T</span>
       <span class="fvar"><strong>µ_wall</strong> = fluid viscosity evaluated at T_wall</span>
+      <span class="fvar"><strong>ε/D</strong> = relative pipe roughness</span>
       <span class="fvar"><strong>d</strong> = pipe inner diameter</span>
       <span class="fvar"><strong>V</strong> = mean flow velocity</span>
     </div>
     <p class="source-note">
-      Gnielinski correlation valid ~3,000 ≤ Re ≤ 5×10⁶, 0.5 ≤ Pr ≤ 2,000, fully developed flow. Bulk properties (ρ, k, cₚ, Pr) are always evaluated at the average temperature; if a wall temperature is entered, only the viscosity ratio (µ/µ_wall)^0.14 is applied as a Sieder-Tate correction to Nu — this is a mild, empirical correction meant for cases with a substantial wall-to-bulk ΔT, not a full property re-evaluation.
+      Gnielinski correlation valid ~3,000 ≤ Re ≤ 5×10⁶, 0.5 ≤ Pr ≤ 2,000, fully developed flow. Bulk properties (ρ, k, cₚ, Pr) are always evaluated at the average temperature; if a wall temperature is entered, only the viscosity ratio (µ/µ_wall)^0.14 is applied as a Sieder-Tate correction to Nu — this is a mild, empirical correction meant for cases with a substantial wall-to-bulk ΔT, not a full property re-evaluation. Friction factor defaults to Petukhov's smooth-tube correlation; selecting a pipe material switches to the Colebrook–Haaland explicit approximation (typically within ~1.5% of the implicit Colebrook equation, valid for 4,000 ≤ Re ≤ 10⁸ and ε/D ≤ 0.05).
       Water properties fit (4th–6th order regression, T = 0–300 °C) to Cengel &amp; Ghajar, <em>Heat and Mass Transfer</em>, Table A-3 (saturated liquid). Therminol 66 properties fit (4th–6th order regression, T = −3–340 °C) to the Eastman Therminol 66 heat transfer fluid technical data sheet (SI liquid properties table).
     </p>
   </div>
@@ -396,6 +424,14 @@ function fmt(v, sig) {
   return v.toExponential(3);
 }
 
+const roughToM = { mm: 0.001, um: 1e-6, in: 0.0254 };
+
+function onRoughChange() {
+  document.getElementById('rough-custom-row').style.display =
+    document.getElementById('inp-rough').value === 'custom' ? 'flex' : 'none';
+  calc();
+}
+
 function applyFluid() {
   const key = document.getElementById('fluid-preset').value;
   const panel = document.getElementById('props-panel');
@@ -424,6 +460,7 @@ function calc() {
     resultIds.forEach(id => document.getElementById(id).textContent = '—');
     document.getElementById('props-result').innerHTML = '';
     document.getElementById('res-Nu-note').textContent = 'dimensionless';
+    document.getElementById('res-f').textContent = '—';
     badge.textContent = '';
     warnRegime.classList.remove('visible');
     warnRange.classList.remove('visible');
@@ -451,13 +488,32 @@ function calc() {
 
   const Re = (props.rho * V_ms * d_m) / props.mu;
 
-  let Nu, regime;
+  // Pipe roughness -> friction factor
+  const roughSel = document.getElementById('inp-rough').value;
+  let epsM = 0;
+  if (roughSel === 'custom') {
+    const val = parseFloat(document.getElementById('inp-rough-custom').value) || 0;
+    epsM = val * roughToM[document.getElementById('unit-rough').value];
+  } else {
+    epsM = parseFloat(roughSel) * 0.001; // preset values entered in mm
+  }
+  const relRough = epsM / d_m;
+
+  let Nu, regime, f;
   if (Re < 2300) {
     Nu = parseFloat(document.getElementById('inp-bc').value);
     regime = 'laminar';
     warnRegime.classList.remove('visible');
+    f = 64 / Re; // laminar friction factor, informational only (not used in Nu)
   } else {
-    const f = Math.pow(0.79 * Math.log(Re) - 1.64, -2);
+    if (epsM > 0) {
+      // Colebrook-Haaland explicit approximation (rough pipe)
+      const term = Math.pow(relRough / 3.7, 1.11) + 6.9 / Re;
+      f = Math.pow(-1.8 * Math.log10(term), -2);
+    } else {
+      // Petukhov smooth-tube correlation
+      f = Math.pow(0.79 * Math.log(Re) - 1.64, -2);
+    }
     Nu = (f / 8) * (Re - 1000) * Pr / (1 + 12.7 * Math.sqrt(f / 8) * (Math.pow(Pr, 2 / 3) - 1));
     if (Re < 3000) {
       regime = 'transient';
@@ -467,6 +523,7 @@ function calc() {
       warnRegime.classList.remove('visible');
     }
   }
+  document.getElementById('res-f').textContent = fmt(f, 4) + (epsM > 0 && Re >= 2300 ? ' (ε/D = ' + fmt(relRough, 3) + ')' : '');
 
   // Sieder-Tate viscosity-ratio correction, applied when a wall temperature is given
   const Tw_in = parseFloat(document.getElementById('inp-Tw').value);
@@ -494,7 +551,7 @@ function calc() {
   badge.className = 're-badge ' + regime;
 }
 
-['unit-T','unit-d','unit-V'].forEach(id =>
+['unit-T','unit-d','unit-V','unit-Tw','unit-rough'].forEach(id =>
   document.getElementById(id).addEventListener('change', calc));
 
 calc();

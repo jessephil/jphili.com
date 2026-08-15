@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Convective Heat Transfer Coefficient</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+      --blue: #1c4f82;
+      --blue-pale: #e6f0fb;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 580px; line-height: 1.7; }
+
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    /* ── INPUTS ── */
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+      font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px;
+      font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; cursor: pointer;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 2px; }
+
+    /* fluid preset row */
+    .fluid-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .fluid-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .fluid-row select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-family: inherit; font-size: 13px; color: var(--ink); background: var(--parchment); outline: none; flex: 1; min-width: 160px; }
+
+    /* properties panel */
+    .props-panel {
+      background: var(--blue-pale);
+      border: 1px solid rgba(28,79,130,0.2);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 14px;
+      display: none;
+    }
+    .props-panel.visible { display: block; }
+    .props-panel-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue); margin-bottom: 10px; }
+    .props-result {
+      font-size: 13px;
+      color: var(--blue);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+    }
+    .props-result span { background: rgba(28,79,130,0.08); border-radius: 6px; padding: 3px 10px; }
+
+    /* ── RESULTS ── */
+    .results-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+
+    .result-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+    .flow-sub { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+    .flow-sub-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-mid); }
+    .flow-sub-row span:last-child { color: var(--ink-faint); }
+
+    .re-badge { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+    .re-badge.laminar   { background: var(--green-pale); color: var(--green); }
+    .re-badge.transient { background: var(--amber-pale); color: var(--amber); }
+    .re-badge.turbulent { background: var(--red-pale);   color: var(--red);   }
+
+    .warning-banner { background: var(--amber-pale); border: 1px solid rgba(122,90,26,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--amber); margin-bottom: 12px; display: none; }
+    .warning-banner.visible { display: block; }
+
+    /* ── FORMULA ── */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; margin-top: 1.5rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 15px; color: var(--ink); padding: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    .source-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); line-height: 1.6; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .result-card .rvalue { font-size: 17px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Heat Transfer</p>
+    <h1 class="page-title">Convective Heat Transfer Coefficient</h1>
+    <p class="page-subtitle">Internal pipe flow calculator for water and Therminol 66 — computes Reynolds number, Prandtl number, and Nusselt number (Gnielinski correlation) to solve for the convective film coefficient (h) at a given average bulk temperature.</p>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+
+    <!-- Fluid preset -->
+    <div class="fluid-row">
+      <label>Fluid</label>
+      <select id="fluid-preset" onchange="applyFluid()">
+        <option value="">— select a fluid —</option>
+        <option value="water">Water</option>
+        <option value="therminol66">Therminol 66</option>
+      </select>
+    </div>
+
+    <!-- Computed fluid properties -->
+    <div class="props-panel" id="props-panel">
+      <p class="props-panel-title" id="props-panel-title">Fluid properties at average temperature</p>
+      <div class="props-result" id="props-result"></div>
+    </div>
+
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Average fluid temperature (T)</label>
+        <div class="field-row">
+          <input type="number" id="inp-T" value="60" step="1" oninput="calc()" />
+          <select id="unit-T" onchange="calc()">
+            <option value="C">°C</option>
+            <option value="F">°F</option>
+          </select>
+        </div>
+        <span class="field-note">Bulk mean of inlet/outlet temperature — properties are evaluated at this single point.</span>
+      </div>
+
+      <div class="field">
+        <label>Pipe inner diameter (d)</label>
+        <div class="field-row">
+          <input type="number" id="inp-d" value="0.5" min="0.0001" step="0.01" oninput="calc()" />
+          <select id="unit-d" onchange="calc()">
+            <option value="in">in</option>
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Mean flow velocity (V)</label>
+        <div class="field-row">
+          <input type="number" id="inp-V" value="5" min="0.0001" step="0.1" oninput="calc()" />
+          <select id="unit-V" onchange="calc()">
+            <option value="fps">ft/s</option>
+            <option value="ms">m/s</option>
+            <option value="ins">in/s</option>
+          </select>
+        </div>
+        <span class="field-note">From the flow-through-pipe calculator: V = Q / A.</span>
+      </div>
+
+      <div class="field">
+        <label>Laminar boundary condition</label>
+        <select id="inp-bc" onchange="calc()">
+          <option value="3.66">Constant wall temperature — Nu = 3.66</option>
+          <option value="4.36">Constant heat flux — Nu = 4.36</option>
+        </select>
+        <span class="field-note">Only used when Re &lt; 2,300. Ignored once flow is transitional/turbulent.</span>
+      </div>
+
+      <div class="field">
+        <label>Wall temperature (T_wall) — optional</label>
+        <div class="field-row">
+          <input type="number" id="inp-Tw" value="" step="1" placeholder="leave blank to skip" oninput="calc()" />
+          <select id="unit-Tw" onchange="calc()">
+            <option value="C">°C</option>
+            <option value="F">°F</option>
+          </select>
+        </div>
+        <span class="field-note">Enables the Sieder-Tate viscosity-ratio correction (µ/µ_wall)^0.14 — heating vs. cooling is captured automatically through this ratio.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- WARNINGS -->
+  <div class="warning-banner" id="warning-regime">
+    ⚠ Reynolds number is in the transitional band (2,300–3,000). The Gnielinski correlation is formally valid for Re ≥ 3,000; the result below is shown for reference only.
+  </div>
+  <div class="warning-banner" id="warning-range">
+    ⚠ Average temperature is outside the fitted property range — results are extrapolated and less reliable.
+  </div>
+
+  <!-- RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+
+    <div class="result-card">
+      <p class="rlabel">Reynolds number (Re)</p>
+      <p class="rvalue" id="res-Re">—</p>
+      <p class="runit">dimensionless</p>
+      <span class="re-badge" id="res-Re-badge"></span>
+    </div>
+
+    <div class="result-card">
+      <p class="rlabel">Prandtl number (Pr)</p>
+      <p class="rvalue" id="res-Pr">—</p>
+      <p class="runit">dimensionless</p>
+    </div>
+
+    <div class="result-card">
+      <p class="rlabel">Nusselt number (Nu)</p>
+      <p class="rvalue" id="res-Nu">—</p>
+      <p class="runit" id="res-Nu-note">dimensionless</p>
+    </div>
+
+    <div class="result-card primary">
+      <p class="rlabel">Film coefficient (h)</p>
+      <p class="rvalue" id="res-h-Wm2K">—</p>
+      <p class="runit">W/(m²·K)</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span id="res-h-kWm2K">—</span><span>kW/(m²·K)</span></div>
+        <div class="flow-sub-row"><span id="res-h-Btu">—</span><span>Btu/(hr·ft²·°F)</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Gnielinski Correlation &amp; Related Equations</p>
+    <div class="formula-block">
+      <span>Re = ρ V d / µ &nbsp;&nbsp;&nbsp; Pr = cₚ µ / k</span>
+      <span>Re &lt; 2,300 (laminar): Nu = 3.66 (const. T_wall) or 4.36 (const. q")</span>
+      <span>Re ≥ 2,300 (Gnielinski): f = (0.79·ln(Re) − 1.64)⁻²</span>
+      <span>Nu = (f/8)(Re − 1000)Pr &nbsp;/&nbsp; [1 + 12.7(f/8)^0.5 (Pr^(2/3) − 1)]</span>
+      <span>Nu_corrected = Nu · (µ / µ_wall)^0.14 &nbsp;&nbsp;[Sieder-Tate viscosity ratio, if T_wall given]</span>
+      <span>h = Nu · k / d</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>Re</strong> = Reynolds number</span>
+      <span class="fvar"><strong>Pr</strong> = Prandtl number</span>
+      <span class="fvar"><strong>Nu</strong> = Nusselt number</span>
+      <span class="fvar"><strong>f</strong> = Darcy friction factor (Petukhov)</span>
+      <span class="fvar"><strong>h</strong> = convective film coefficient</span>
+      <span class="fvar"><strong>ρ, µ, k, cₚ</strong> = fluid density, dynamic viscosity, thermal conductivity, specific heat at T</span>
+      <span class="fvar"><strong>µ_wall</strong> = fluid viscosity evaluated at T_wall</span>
+      <span class="fvar"><strong>d</strong> = pipe inner diameter</span>
+      <span class="fvar"><strong>V</strong> = mean flow velocity</span>
+    </div>
+    <p class="source-note">
+      Gnielinski correlation valid ~3,000 ≤ Re ≤ 5×10⁶, 0.5 ≤ Pr ≤ 2,000, fully developed flow. Bulk properties (ρ, k, cₚ, Pr) are always evaluated at the average temperature; if a wall temperature is entered, only the viscosity ratio (µ/µ_wall)^0.14 is applied as a Sieder-Tate correction to Nu — this is a mild, empirical correction meant for cases with a substantial wall-to-bulk ΔT, not a full property re-evaluation.
+      Water properties fit (4th–6th order regression, T = 0–300 °C) to Cengel &amp; Ghajar, <em>Heat and Mass Transfer</em>, Table A-3 (saturated liquid). Therminol 66 properties fit (4th–6th order regression, T = −3–340 °C) to the Eastman Therminol 66 heat transfer fluid technical data sheet (SI liquid properties table).
+    </p>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Unit conversions ──
+const toM  = { in: 0.0254, mm: 0.001, cm: 0.01, m: 1 };
+const toMS = { fps: 0.3048, ms: 1, ins: 0.0254 };
+
+// ── polynomial evaluation, coeffs = [highest power ... constant] ──
+function polyval(coeffs, x) {
+  let y = 0;
+  for (const c of coeffs) y = y * x + c;
+  return y;
+}
+
+// ── Water — fit to Cengel & Ghajar Table A-3 (saturated liquid, 0.01–300°C) ──
+const waterFit = {
+  range: [0.01, 300],
+  rho:   [-3.056574e-08, 1.728909e-05, -5.611053e-03, -3.270090e-03, 1.000189e+03],   // kg/m3
+  cp:    [6.845243e-07, -2.888885e-04, 5.147336e-02, -2.918121e+00, 4.222680e+03],    // J/kg-K
+  k:     [-5.454053e-11, 3.890052e-08, -1.466563e-05, 2.336002e-03, 5.585442e-01],    // W/m-K
+  lnmu:  [1.377025e-14, -1.518873e-11, 6.781501e-09, -1.644918e-06, 2.589431e-04, -3.327630e-02, -6.328898e+00] // ln(Pa-s)
+};
+
+// ── Therminol 66 — fit to Eastman Therminol 66 TDS (SI liquid props, -3–340°C) ──
+const th66Fit = {
+  range: [-3, 340],
+  rho:   [-2.023558e-09, 8.101853e-07, -3.018942e-04, -6.361553e-01, 1.021117e+03],   // kg/m3
+  cp:    [1.046371e-08, -5.625335e-06, 1.715416e-03, 3.288806e+00, 1.495647e+03],     // J/kg-K
+  k:     [-2.632360e-13, 2.007050e-10, -2.062016e-07, -2.770900e-05, 1.181537e-01],   // W/m-K
+  lnmu:  [7.242297e-14, -8.815258e-11, 4.320740e-08, -1.101858e-05, 1.599771e-03, -1.436548e-01, 2.559735e-01] // ln(Pa-s)
+};
+
+function fluidProps(fit, tempC) {
+  return {
+    rho: polyval(fit.rho, tempC),
+    cp:  polyval(fit.cp, tempC),
+    k:   polyval(fit.k, tempC),
+    mu:  Math.exp(polyval(fit.lnmu, tempC)),
+  };
+}
+
+function fmt(v, sig) {
+  if (!isFinite(v) || v === null) return '—';
+  if (v === 0) return '0';
+  if (Math.abs(v) >= 1e6)  return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(v) >= 0.01) return parseFloat(v.toPrecision(sig || 5)).toString();
+  return v.toExponential(3);
+}
+
+function applyFluid() {
+  const key = document.getElementById('fluid-preset').value;
+  const panel = document.getElementById('props-panel');
+  if (key === 'water' || key === 'therminol66') {
+    panel.classList.add('visible');
+    document.getElementById('props-panel-title').textContent =
+      (key === 'water' ? 'Water' : 'Therminol 66') + ' — properties at average temperature';
+  } else {
+    panel.classList.remove('visible');
+  }
+  calc();
+}
+
+function calc() {
+  const key = document.getElementById('fluid-preset').value;
+  const resultIds = ['res-Re','res-Pr','res-Nu','res-h-Wm2K','res-h-kWm2K','res-h-Btu'];
+  const warnRegime = document.getElementById('warning-regime');
+  const warnRange  = document.getElementById('warning-range');
+  const badge = document.getElementById('res-Re-badge');
+
+  let T_in = parseFloat(document.getElementById('inp-T').value);
+  const d_m = (parseFloat(document.getElementById('inp-d').value) || 0) * toM[document.getElementById('unit-d').value];
+  const V_ms = (parseFloat(document.getElementById('inp-V').value) || 0) * toMS[document.getElementById('unit-V').value];
+
+  if (!key || !isFinite(T_in) || !d_m || !V_ms) {
+    resultIds.forEach(id => document.getElementById(id).textContent = '—');
+    document.getElementById('props-result').innerHTML = '';
+    document.getElementById('res-Nu-note').textContent = 'dimensionless';
+    badge.textContent = '';
+    warnRegime.classList.remove('visible');
+    warnRange.classList.remove('visible');
+    return;
+  }
+
+  let T_C = document.getElementById('unit-T').value === 'F' ? (T_in - 32) * 5 / 9 : T_in;
+
+  const fit = key === 'water' ? waterFit : th66Fit;
+  const props = fluidProps(fit, T_C);
+  const Pr = props.cp * props.mu / props.k;
+
+  document.getElementById('props-result').innerHTML =
+    '<span>ρ = ' + fmt(props.rho) + ' kg/m³</span>' +
+    '<span>µ = ' + fmt(props.mu * 1000) + ' cP</span>' +
+    '<span>k = ' + fmt(props.k, 4) + ' W/(m·K)</span>' +
+    '<span>cₚ = ' + fmt(props.cp) + ' J/(kg·K)</span>' +
+    '<span>Pr = ' + fmt(Pr, 4) + '</span>';
+
+  if (T_C < fit.range[0] || T_C > fit.range[1]) {
+    warnRange.classList.add('visible');
+  } else {
+    warnRange.classList.remove('visible');
+  }
+
+  const Re = (props.rho * V_ms * d_m) / props.mu;
+
+  let Nu, regime;
+  if (Re < 2300) {
+    Nu = parseFloat(document.getElementById('inp-bc').value);
+    regime = 'laminar';
+    warnRegime.classList.remove('visible');
+  } else {
+    const f = Math.pow(0.79 * Math.log(Re) - 1.64, -2);
+    Nu = (f / 8) * (Re - 1000) * Pr / (1 + 12.7 * Math.sqrt(f / 8) * (Math.pow(Pr, 2 / 3) - 1));
+    if (Re < 3000) {
+      regime = 'transient';
+      warnRegime.classList.add('visible');
+    } else {
+      regime = 'turbulent';
+      warnRegime.classList.remove('visible');
+    }
+  }
+
+  // Sieder-Tate viscosity-ratio correction, applied when a wall temperature is given
+  const Tw_in = parseFloat(document.getElementById('inp-Tw').value);
+  const NuNote = document.getElementById('res-Nu-note');
+  if (isFinite(Tw_in)) {
+    const Tw_C = document.getElementById('unit-Tw').value === 'F' ? (Tw_in - 32) * 5 / 9 : Tw_in;
+    const mu_w = fluidProps(fit, Tw_C).mu;
+    const corr = Math.pow(props.mu / mu_w, 0.14);
+    Nu = Nu * corr;
+    NuNote.textContent = 'corrected ×' + corr.toFixed(3) + (Tw_C > T_C ? ' (heating)' : Tw_C < T_C ? ' (cooling)' : '');
+  } else {
+    NuNote.textContent = 'dimensionless';
+  }
+
+  const h = Nu * props.k / d_m; // W/m2-K
+
+  document.getElementById('res-Re').textContent = fmt(Re, 4);
+  document.getElementById('res-Pr').textContent = fmt(Pr, 4);
+  document.getElementById('res-Nu').textContent = fmt(Nu, 4);
+  document.getElementById('res-h-Wm2K').textContent = fmt(h);
+  document.getElementById('res-h-kWm2K').textContent = fmt(h / 1000);
+  document.getElementById('res-h-Btu').textContent = fmt(h * 0.176110);
+
+  badge.textContent = regime === 'laminar' ? 'Laminar' : regime === 'transient' ? 'Transitional' : 'Turbulent';
+  badge.className = 're-badge ' + regime;
+}
+
+['unit-T','unit-d','unit-V'].forEach(id =>
+  document.getElementById(id).addEventListener('change', calc));
+
+calc();
+</script>
+</body>
+</html>

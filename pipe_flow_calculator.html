@@ -417,8 +417,13 @@ const walterFluids={
 };
 function waltherKV(f,Tc){const Tk=Tc+273.15;return Math.pow(10,Math.pow(10,f.A-f.B*Math.log10(Tk)))-0.7;}
 function astmRho(f,Tc){return f.rho15-0.65*(Tc-15);}
-function therminol66Visc(Tc){return Math.exp(22.214-5560.0/(Tc+273.15));}
-function therminol66Rho(Tc){return 1010-0.596*(Tc-15);}
+// Therminol 66 — regressed from Eastman Therminol 66 technical data sheet
+// (SI liquid properties table, valid -3 to 340°C)
+function polyval(c,x){let y=0;for(const v of c)y=y*x+v;return y;}
+const TH66_LNMU_PAS=[7.242297e-14,-8.815258e-11,4.320740e-08,-1.101858e-05,1.599771e-03,-1.436548e-01,2.559735e-01];
+const TH66_RHO=[-2.023558e-09,8.101853e-07,-3.018942e-04,-6.361553e-01,1.021117e+03];
+function therminol66Visc(Tc){return Math.exp(polyval(TH66_LNMU_PAS,Tc))*1000;} // cP
+function therminol66Rho(Tc){return polyval(TH66_RHO,Tc);} // kg/m3
 
 const fixedFluids={
   water_20:{cp_kgm3:1.002,rho_kgm3:998.2},
@@ -762,7 +767,7 @@ function applyIsoViscosity(){
     const fl=walterFluids[currentFluidKey];
     rho=astmRho(fl,tempC);kv=waltherKV(fl,tempC);mu_cp=kv*rho/1000;method='ASTM D1250';
   } else {
-    mu_cp=therminol66Visc(tempC);rho=therminol66Rho(tempC);kv=mu_cp/rho*1000;method='Solutia datasheet';
+    mu_cp=therminol66Visc(tempC);rho=therminol66Rho(tempC);kv=mu_cp/rho*1000;method='Eastman datasheet';
   }
   document.getElementById('iso-result').innerHTML=
     '<span>ν = '+kv.toFixed(2)+' cSt</span>'+

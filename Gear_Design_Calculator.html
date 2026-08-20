@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Spur & Helical Gear Sizing and Bending Stress Calculator | Jesse Philippi</title>
+<meta name="description" content="Size spur and helical gears from tooth count and pitch, then calculate Lewis/AGMA bending stress with the dynamic velocity factor. Free interactive engineering calculator.">
+<link rel="canonical" href="https://jphili.com/Gear_Design_Calculator.html">
+<meta property="og:title" content="Spur & Helical Gear Sizing and Bending Stress Calculator">
+<meta property="og:description" content="Gear sizing from teeth and pitch, plus Lewis/AGMA bending stress with dynamic factor.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jphili.com/Gear_Design_Calculator.html">
+<meta property="og:image" content="https://jphili.com/assets/og-default.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Spur & Helical Gear Sizing and Bending Stress Calculator",
+  "applicationCategory": "EngineeringApplication",
+  "operatingSystem": "Any (web-based)",
+  "url": "https://jphili.com/Gear_Design_Calculator.html",
+  "description": "Sizes spur and helical gears from tooth count and pitch, then calculates Lewis/AGMA bending stress with the dynamic velocity factor.",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "creator": {"@type": "Person", "name": "Jesse [Last Name]"}
+}
+</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name {
+      font-family: 'DM Serif Display', serif;
+      font-size: 15px;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-back {
+      font-size: 12px;
+      color: var(--ink-mid);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 3rem 5rem;
+    }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      color: var(--ink);
+      margin-bottom: 8px;
+    }
+    .page-subtitle {
+      font-size: 14px;
+      color: var(--ink-mid);
+      font-style: italic;
+      max-width: 620px;
+      line-height: 1.7;
+    }
+
+    .part-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin: 3rem 0 1.5rem;
+    }
+    .part-divider:first-of-type { margin-top: 0; }
+    .part-num {
+      font-family: 'DM Serif Display', serif;
+      font-style: italic;
+      font-size: 20px;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+    .part-title-block h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      color: var(--ink);
+      font-weight: 400;
+    }
+    .part-title-block p {
+      font-size: 12.5px;
+      color: var(--ink-mid);
+      margin-top: 2px;
+    }
+    .part-rule { flex: 1; height: 1px; background: var(--border); }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    /* ── INPUTS ── */
+    .inputs-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+    }
+    .field-row {
+      display: flex;
+      gap: 6px;
+    }
+    .field input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 11px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink-mid);
+      background: var(--parchment);
+      outline: none;
+      transition: border-color 0.2s;
+      cursor: pointer;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+
+    .field-note {
+      font-size: 11px;
+      color: var(--ink-faint);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    /* method row */
+    .method-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .method-row label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      white-space: nowrap;
+    }
+    .method-row select {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+      flex: 1;
+      min-width: 160px;
+    }
+    .method-row input {
+      width: 90px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      color: var(--ink);
+      background: var(--parchment);
+      outline: none;
+    }
+
+    /* ── RESULTS ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .result-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .result-card .rlabel {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--ink-faint);
+      margin-bottom: 4px;
+    }
+    .result-card .rvalue {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .result-card .runit {
+      font-size: 12px;
+      color: var(--ink-faint);
+      margin-top: 3px;
+    }
+
+    .result-card.vol-card .rvalue { font-size: 19px; }
+    .vol-sub {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 0.5px solid var(--border);
+    }
+    .vol-sub-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+    .vol-sub-row span:last-child { color: var(--ink-faint); }
+
+    .method-badge {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      background: var(--gold-pale);
+      color: var(--gold);
+    }
+    .method-badge.warn { background: var(--amber-pale); color: var(--amber); }
+    .method-badge.bad { background: var(--red-pale); color: var(--red); }
+    .method-badge.good { background: var(--green-pale); color: var(--green); }
+
+    /* ── FORMULA ── */
+    .formula-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem 1.75rem;
+      margin-top: 1.5rem;
+    }
+    .formula-title {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink-mid);
+      margin-bottom: 10px;
+    }
+    .formula-block {
+      font-family: 'Georgia', serif;
+      font-size: 16px;
+      color: var(--ink);
+      text-align: center;
+      padding: 8px 0;
+      letter-spacing: 0.02em;
+    }
+    .formula-block + .formula-block {
+      border-top: 0.5px solid var(--border);
+      margin-top: 6px;
+    }
+    .formula-block .frac {
+      display: inline-block;
+      vertical-align: middle;
+      text-align: center;
+      margin: 0 6px;
+    }
+    .formula-block .frac > span { display: block; padding: 0 4px; }
+    .formula-block .frac .num { border-bottom: 1px solid var(--ink); }
+    .formula-vars {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 20px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 0.5px solid var(--border);
+    }
+    .fvar {
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    /* ── METHOD NOTES ── */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 1.5rem;
+    }
+    .note-card {
+      background: var(--parchment-dark);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      font-size: 12.5px;
+      color: var(--ink-mid);
+      line-height: 1.6;
+    }
+    .note-card strong {
+      display: block;
+      color: var(--ink);
+      font-weight: 500;
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .next-phase-card {
+      background: var(--gold-pale);
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 1.1rem 1.4rem;
+      margin-top: 2rem;
+      font-size: 13px;
+      color: var(--ink-mid);
+      line-height: 1.65;
+    }
+    .next-phase-card strong { color: var(--ink); }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      background: var(--parchment-deeper);
+      padding: 2rem 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .notes-grid { grid-template-columns: 1fr; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Gear Sizing & Bending Stress</h1>
+    <p class="page-subtitle">Sizes an external spur or helical gear from tooth count and pitch, then estimates root bending stress using the Lewis equation with the AGMA dynamic (velocity) factor. Mating-gear profile shift and downloadable tooth geometry are on the way &mdash; see the note at the bottom of the page.</p>
+  </div>
+
+  <!-- ══════════════ PART 1: SIZING ══════════════ -->
+  <div class="part-divider">
+    <span class="part-num">I.</span>
+    <div class="part-title-block">
+      <h2>Gear Sizing</h2>
+      <p>Pitch diameter and standard full-depth tooth proportions</p>
+    </div>
+    <div class="part-rule"></div>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="method-row">
+      <label>Gear type</label>
+      <select id="inp-gearType" onchange="onGearTypeChange()">
+        <option value="spur" selected>Spur</option>
+        <option value="helical">Helical</option>
+      </select>
+      <label id="lbl-helix" style="display:none">Helix angle</label>
+      <input type="number" id="inp-helix" value="15" min="0.1" max="60" step="0.5" style="display:none" oninput="calcAll()" />
+    </div>
+
+    <div class="method-row">
+      <label>Pitch spec</label>
+      <select id="inp-pitchMode" onchange="onPitchModeChange()">
+        <option value="module" selected>Normal module (mm)</option>
+        <option value="dp">Normal diametral pitch (1/in)</option>
+      </select>
+      <input type="number" id="inp-pitchVal" value="2" min="0.01" step="0.05" oninput="calcAll()" />
+    </div>
+
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Number of teeth (N)</label>
+        <input type="number" id="inp-N" value="24" min="4" step="1" oninput="calcAll()" />
+      </div>
+
+      <div class="field">
+        <label>Normal pressure angle</label>
+        <select id="inp-phin" onchange="calcAll()">
+          <option value="14.5">14.5&deg; full depth</option>
+          <option value="20" selected>20&deg; full depth</option>
+          <option value="25">25&deg; full depth</option>
+          <option value="custom">Custom</option>
+        </select>
+      </div>
+
+      <div class="field" id="field-phin-custom" style="display:none">
+        <label>Custom pressure angle</label>
+        <input type="number" id="inp-phin-custom" value="20" min="10" max="35" step="0.5" oninput="calcAll()" />
+        <span class="field-note">Lewis Y data below reverts to 20&deg; table for any angle other than 14.5&deg;/20&deg;</span>
+      </div>
+
+      <div class="field">
+        <label>Face width (F)</label>
+        <div class="field-row">
+          <input type="number" id="inp-F" value="15" min="0.001" step="0.5" oninput="calcAll()" />
+          <select id="unit-F" onchange="calcAll()">
+            <option value="mm">mm</option>
+            <option value="in">in</option>
+          </select>
+        </div>
+        <span class="field-note">Shared with the bending-stress section below</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card vol-card">
+      <p class="rlabel">Pitch diameter</p>
+      <p class="rvalue" id="res-d-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-d-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Outside diameter</p>
+      <p class="rvalue" id="res-da-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-da-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Root diameter</p>
+      <p class="rvalue" id="res-df-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-df-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Base circle diameter</p>
+      <p class="rvalue" id="res-db-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-db-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Circular pitch (transverse)</p>
+      <p class="rvalue" id="res-pt-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-pt-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Whole depth</p>
+      <p class="rvalue" id="res-ht-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-ht-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Transverse pressure angle</p>
+      <p class="rvalue" id="res-phit">&mdash;</p>
+      <p class="runit">degrees</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Equivalent pitch</p>
+      <p class="rvalue" id="res-equivPitch">&mdash;</p>
+      <p class="runit" id="res-equivPitch-unit">&mdash;</p>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Lead (helical only)</p>
+      <p class="rvalue" id="res-lead-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-lead-in">&mdash;</span><span>in</span></div></div>
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Sizing equations (normal system, standard full depth)</p>
+    <div class="formula-block">m<sub>t</sub> = m<sub>n</sub> / cos&nbsp;&psi; &nbsp;&nbsp;&nbsp; d = N&middot;m<sub>t</sub></div>
+    <div class="formula-block">tan&nbsp;&phi;<sub>t</sub> = tan&nbsp;&phi;<sub>n</sub> / cos&nbsp;&psi;</div>
+    <div class="formula-block">d<sub>a</sub> = d + 2m<sub>n</sub> &nbsp;&nbsp;&nbsp; d<sub>f</sub> = d &minus; 2.5m<sub>n</sub> &nbsp;&nbsp;&nbsp; d<sub>b</sub> = d&middot;cos&nbsp;&phi;<sub>t</sub></div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>m<sub>n</sub></strong> = normal module</span>
+      <span class="fvar"><strong>m<sub>t</sub></strong> = transverse module</span>
+      <span class="fvar"><strong>&psi;</strong> = helix angle (0 for spur)</span>
+      <span class="fvar"><strong>&phi;<sub>n</sub>, &phi;<sub>t</sub></strong> = normal / transverse pressure angle</span>
+      <span class="fvar">Addendum a = 1.000&middot;m<sub>n</sub>, dedendum b = 1.250&middot;m<sub>n</sub></span>
+    </div>
+  </div>
+
+  <!-- ══════════════ PART 2: STRESS ══════════════ -->
+  <div class="part-divider">
+    <span class="part-num">II.</span>
+    <div class="part-title-block">
+      <h2>Bending Stress</h2>
+      <p>Lewis equation with the AGMA dynamic (velocity) factor K<sub>v</sub></p>
+    </div>
+    <div class="part-rule"></div>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="method-row">
+      <label>Load input</label>
+      <select id="inp-loadMode" onchange="onLoadModeChange()">
+        <option value="torque" selected>Torque</option>
+        <option value="force">Tangential force</option>
+      </select>
+    </div>
+
+    <div class="inputs-grid">
+      <div class="field" id="field-torque">
+        <label>Torque (at this gear)</label>
+        <div class="field-row">
+          <input type="number" id="inp-T" value="15" min="0" step="0.5" oninput="calcAll()" />
+          <select id="unit-T" onchange="calcAll()">
+            <option value="Nm">N&middot;m</option>
+            <option value="Nmm">N&middot;mm</option>
+            <option value="lbfin">lbf&middot;in</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" id="field-force" style="display:none">
+        <label>Tangential force (W<sub>t</sub>)</label>
+        <div class="field-row">
+          <input type="number" id="inp-Wt" value="500" min="0" step="1" oninput="calcAll()" />
+          <select id="unit-Wt" onchange="calcAll()">
+            <option value="N">N</option>
+            <option value="lbf">lbf</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Pinion speed (n)</label>
+        <div class="field-row">
+          <input type="number" id="inp-rpm" value="1750" min="0" step="10" oninput="calcAll()" />
+          <span class="runit" style="align-self:center;padding-left:4px;">rpm</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>AGMA quality number (Q<sub>v</sub>)</label>
+        <select id="inp-Qv" onchange="calcAll()">
+          <option value="5">5 &mdash; commercial, low speed</option>
+          <option value="6" selected>6 &mdash; commercial</option>
+          <option value="7">7</option>
+          <option value="8">8 &mdash; precision</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+          <option value="11">11 &mdash; high precision</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Allowable bending stress <span style="text-transform:none;">(optional)</span></label>
+        <div class="field-row">
+          <input type="number" id="inp-allow" value="" min="0" step="1" placeholder="e.g. 25000" oninput="calcAll()" />
+          <select id="unit-allow" onchange="calcAll()">
+            <option value="psi">psi</option>
+            <option value="ksi">ksi</option>
+            <option value="MPa">MPa</option>
+          </select>
+        </div>
+        <span class="field-note">Enter a material allowable to get a safety factor</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card">
+      <p class="rlabel">Tangential load W<sub>t</sub></p>
+      <p class="rvalue" id="res-Wt-N">&mdash;</p>
+      <p class="runit">N</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-Wt-lbf">&mdash;</span><span>lbf</span></div></div>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Pitch line velocity</p>
+      <p class="rvalue" id="res-Vt-fpm">&mdash;</p>
+      <p class="runit">ft/min</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-Vt-ms">&mdash;</span><span>m/s</span></div></div>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Lewis form factor Y</p>
+      <p class="rvalue" id="res-Y">&mdash;</p>
+      <p class="runit" id="res-Nv">&mdash;</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">AGMA dynamic factor K<sub>v</sub></p>
+      <p class="rvalue" id="res-Kv">&mdash;</p>
+      <p class="runit">dimensionless</p>
+      <span class="method-badge" id="res-Kv-badge">&mdash;</span>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Bending stress &sigma;</p>
+      <p class="rvalue" id="res-sigma-psi">&mdash;</p>
+      <p class="runit">psi</p>
+      <div class="vol-sub">
+        <div class="vol-sub-row"><span id="res-sigma-ksi">&mdash;</span><span>ksi</span></div>
+        <div class="vol-sub-row"><span id="res-sigma-MPa">&mdash;</span><span>MPa</span></div>
+      </div>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Safety factor</p>
+      <p class="rvalue" id="res-SF">&mdash;</p>
+      <p class="runit">vs. allowable stress</p>
+      <span class="method-badge" id="res-SF-badge" style="display:none">&mdash;</span>
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Lewis equation with AGMA dynamic factor</p>
+    <div class="formula-block">
+      &sigma; =
+      <span class="frac">
+        <span class="num">W<sub>t</sub> &middot; K<sub>v</sub></span>
+        <span>F &middot; m<sub>t</sub> &middot; Y</span>
+      </span>
+    </div>
+    <div class="formula-block">
+      K<sub>v</sub> =
+      <span class="frac">
+        <span class="num">(A + &radic;V<sub>t</sub>)</span>
+        <span>A</span>
+      </span><sup>B</sup>
+      &nbsp;&nbsp; B = 0.25(12&minus;Q<sub>v</sub>)<sup>2/3</sup> &nbsp;&nbsp; A = 50 + 56(1&minus;B)
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>W<sub>t</sub></strong> = tangential load = 2T/d</span>
+      <span class="fvar"><strong>V<sub>t</sub></strong> = pitch line velocity, ft/min</span>
+      <span class="fvar"><strong>Y</strong> = Lewis form factor (from N<sub>v</sub> = N/cos&sup3;&psi;)</span>
+      <span class="fvar">Valid for Q<sub>v</sub> = 5&ndash;11 (ANSI/AGMA 2001-D04)</span>
+    </div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <strong>Lewis form factor source</strong>
+      Y is interpolated from the classic AGMA/Lewis full-depth tooth-form-factor table (14.5&deg; and 20&deg; systems, N = 10 through rack). For helical gears the virtual tooth count N<sub>v</sub> = N/cos&sup3;&psi; is used to enter the same spur-gear table &mdash; the standard practical substitute for a true helical geometry factor.
+    </div>
+    <div class="note-card">
+      <strong>What this does &mdash; and doesn't &mdash; cover</strong>
+      This is Lewis bending stress with only the AGMA dynamic factor K<sub>v</sub> applied. It does not include overload (K<sub>o</sub>), load distribution (K<sub>m</sub>), size (K<sub>s</sub>), or rim thickness (K<sub>B</sub>) factors, nor surface (pitting/contact) stress. Treat results as a first-pass bending check, not a full AGMA 2001 design verification.
+    </div>
+  </div>
+
+  <!-- ══════════════ PART 3: MATING GEAR & PROFILE SHIFT ══════════════ -->
+  <div class="part-divider">
+    <span class="part-num">III.</span>
+    <div class="part-title-block">
+      <h2>Mating Gear & Profile Shift</h2>
+      <p>Undercut avoidance and operating center distance for a pair</p>
+    </div>
+    <div class="part-rule"></div>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Mating gear teeth (N<sub>2</sub>)</label>
+        <input type="number" id="inp-N2" value="48" min="4" step="1" oninput="calcAll()" />
+        <span class="field-note">Gear 1 is the gear defined in Part I &mdash; same module, pressure angle, and helix angle apply to both</span>
+      </div>
+      <div class="field" style="justify-content:flex-end">
+        <button type="button" onclick="swapGears()" style="border:1px solid var(--border-strong);border-radius:8px;background:var(--gold-pale);color:var(--gold);font-size:12px;font-weight:500;padding:9px 12px;cursor:pointer;">&#8646; Swap gear 1 &harr; gear 2</button>
+        <span class="field-note">Makes gear 2 into gear 1 (swaps N&#8596;N&#8322; and x&#8321;&#8596;x&#8322;) so Part IV can generate its geometry</span>
+      </div>
+
+      <div class="field">
+        <label>Profile shift, gear 1 (x&#8321;)</label>
+        <div class="field-row">
+          <input type="number" id="inp-x1" value="0" step="0.05" oninput="calcAll()" />
+          <button type="button" onclick="useMinX(1)" style="border:1px solid var(--border);border-radius:8px;background:var(--parchment);color:var(--ink-mid);font-size:12px;padding:0 10px;cursor:pointer;">Use min</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>Profile shift, gear 2 (x&#8322;)</label>
+        <div class="field-row">
+          <input type="number" id="inp-x2" value="0" step="0.05" oninput="calcAll()" />
+          <button type="button" onclick="useMinX(2)" style="border:1px solid var(--border);border-radius:8px;background:var(--parchment);color:var(--ink-mid);font-size:12px;padding:0 10px;cursor:pointer;">Use min</button>
+          <button type="button" onclick="balanceX2()" style="border:1px solid var(--border);border-radius:8px;background:var(--parchment);color:var(--ink-mid);font-size:12px;padding:0 10px;cursor:pointer;white-space:nowrap;">= &minus;x&#8321;</button>
+        </div>
+        <span class="field-note">The &minus;x&#8321; button balances x&#8322; to hold the standard center distance</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card">
+      <p class="rlabel">Min. shift, gear 1 (undercut)</p>
+      <p class="rvalue" id="res-x1min">&mdash;</p>
+      <p class="runit">x&#8321; below this undercuts</p>
+      <span class="method-badge" id="res-x1min-badge">&mdash;</span>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Min. shift, gear 2 (undercut)</p>
+      <p class="rvalue" id="res-x2min">&mdash;</p>
+      <p class="runit">x&#8322; below this undercuts</p>
+      <span class="method-badge" id="res-x2min-badge">&mdash;</span>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Sum of profile shifts</p>
+      <p class="rvalue" id="res-sumx">&mdash;</p>
+      <p class="runit">x&#8321; + x&#8322;</p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Operating pressure angle</p>
+      <p class="rvalue" id="res-awt">&mdash;</p>
+      <p class="runit">degrees, transverse</p>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Standard center distance</p>
+      <p class="rvalue" id="res-astd-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-astd-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Operating center distance</p>
+      <p class="rvalue" id="res-aw-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-aw-in">&mdash;</span><span>in</span></div></div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Gear 1 &mdash; OD / root dia.</p>
+      <p class="rvalue" id="res-da1-mm">&mdash;</p>
+      <p class="runit">mm outside dia.</p>
+      <div class="vol-sub">
+        <div class="vol-sub-row"><span id="res-df1-mm">&mdash;</span><span>mm root dia.</span></div>
+        <div class="vol-sub-row"><span id="res-da1-in">&mdash;</span><span>in outside dia.</span></div>
+        <div class="vol-sub-row"><span id="res-df1-in">&mdash;</span><span>in root dia.</span></div>
+      </div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Gear 2 &mdash; OD / root dia.</p>
+      <p class="rvalue" id="res-da2-mm">&mdash;</p>
+      <p class="runit">mm outside dia.</p>
+      <div class="vol-sub">
+        <div class="vol-sub-row"><span id="res-df2-mm">&mdash;</span><span>mm root dia.</span></div>
+        <div class="vol-sub-row"><span id="res-da2-in">&mdash;</span><span>in outside dia.</span></div>
+        <div class="vol-sub-row"><span id="res-df2-in">&mdash;</span><span>in root dia.</span></div>
+      </div>
+    </div>
+    <div class="result-card vol-card">
+      <p class="rlabel">Gear 2 &mdash; pitch diameter</p>
+      <p class="rvalue" id="res-d2-mm">&mdash;</p>
+      <p class="runit">mm</p>
+      <div class="vol-sub"><div class="vol-sub-row"><span id="res-d2-in">&mdash;</span><span>in</span></div></div>
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Undercut avoidance and operating center distance</p>
+    <div class="formula-block">x<sub>min</sub> = h*<sub>a</sub> &minus; (z&middot;sin&sup2;&phi;<sub>t</sub>) / (2&middot;cos&nbsp;&psi;)</div>
+    <div class="formula-block">inv&nbsp;&phi;<sub>wt</sub> = inv&nbsp;&phi;<sub>t</sub> + 2(x&#8321;+x&#8322;)tan&nbsp;&phi;<sub>n</sub> / (z&#8321;+z&#8322;) &nbsp;&nbsp;&nbsp; inv&nbsp;&phi; = tan&nbsp;&phi; &minus; &phi;</div>
+    <div class="formula-block">a<sub>w</sub> = a&middot;cos&nbsp;&phi;<sub>t</sub> / cos&nbsp;&phi;<sub>wt</sub> &nbsp;&nbsp;&nbsp; a = m<sub>t</sub>(z&#8321;+z&#8322;)/2</div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>h*<sub>a</sub></strong> = 1.00 (standard full-depth addendum coefficient)</span>
+      <span class="fvar">Operating pressure angle &amp; center distance solved by inverting inv(&phi;) numerically</span>
+      <span class="fvar">d<sub>a</sub> = d + 2m<sub>n</sub>(1+x) &nbsp;&nbsp; d<sub>f</sub> = d &minus; 2m<sub>n</sub>(1.25&minus;x)</span>
+    </div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <strong>Practical shift range</strong>
+      Keep x roughly between &minus;0.5 and +0.8 for standard cutting tools &mdash; large positive shifts risk a pointed tooth tip (top land thinner than ~0.2&times; module), and this calculator doesn't check top-land thickness. Verify tip thickness in your CAD model once geometry is generated in Part IV.
+    </div>
+    <div class="note-card">
+      <strong>Holding standard center distance</strong>
+      Setting x&#8322; = &minus;x&#8321; (the button above) keeps the sum of shifts at zero, so the operating center distance equals the standard center distance even though the pinion is corrected for undercut. This is the classic "long-and-short addendum" approach.
+    </div>
+  </div>
+
+  <div class="next-phase-card">
+    <strong>Coming next on this page:</strong> generating the actual involute tooth geometry for gear 1 (using the module, pressure angle, helix angle, and profile shift x&#8321; from above) with a downloadable DXF file you can extrude in Fusion 360, SolidWorks, or import directly into laser-cutting software.
+  </div>
+</div>
+
+  <!-- ══════════════ PART 4: GEOMETRY & DXF EXPORT ══════════════ -->
+  <div class="part-divider">
+    <span class="part-num">IV.</span>
+    <div class="part-title-block">
+      <h2>Tooth Geometry & DXF Export</h2>
+      <p>Full involute profile for gear 1, ready to extrude or laser-cut</p>
+    </div>
+    <div class="part-rule"></div>
+  </div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="inputs-grid">
+      <div class="field">
+        <label>Root fillet coefficient (&rho;*)</label>
+        <input type="number" id="inp-rho" value="0.38" min="0.05" max="0.6" step="0.01" oninput="calcAll()" />
+        <span class="field-note">Fraction of module; standard full-round rack tip &asymp; 0.38. Increased automatically if too small to bridge base and root circles.</span>
+      </div>
+      <div class="field">
+        <label>Center bore diameter <span style="text-transform:none;">(0 = none)</span></label>
+        <div class="field-row">
+          <input type="number" id="inp-bore" value="0" min="0" step="0.5" oninput="calcAll()" />
+          <select id="unit-bore" onchange="calcAll()">
+            <option value="mm">mm</option>
+            <option value="in">in</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>DXF output units</label>
+        <select id="inp-dxfUnit" onchange="calcAll()">
+          <option value="mm" selected>Millimeters</option>
+          <option value="in">Inches</option>
+        </select>
+        <span class="field-note">Sets the file's $INSUNITS flag so CAD software scales it correctly on import</span>
+      </div>
+      <div class="field">
+        <label>Note</label>
+        <span class="field-note" style="margin-top:9px;">Geometry is generated for gear 1 (Part I / Part III) at profile shift x&#8321;. This is a 2D transverse-plane profile &mdash; for a helical gear, extrude with the twist angle noted below rather than a straight extrude.</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Preview</p>
+  <div class="inputs-card" style="padding:1.25rem;">
+    <canvas id="gearCanvas" width="640" height="640" style="width:100%;height:auto;max-width:520px;display:block;margin:0 auto;background:var(--parchment);border-radius:8px;"></canvas>
+    <div style="text-align:center;margin-top:14px;">
+      <button type="button" onclick="downloadDXF()" style="border:1px solid var(--border-strong);border-radius:8px;background:var(--gold-pale);color:var(--gold);font-size:13px;font-weight:500;padding:10px 20px;cursor:pointer;">&#8681; Download DXF</button>
+    </div>
+  </div>
+
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card">
+      <p class="rlabel">Fillet radius used</p>
+      <p class="rvalue" id="res-rho">&mdash;</p>
+      <p class="runit">mm</p>
+      <span class="method-badge" id="res-rho-badge" style="display:none">&mdash;</span>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Tip land thickness</p>
+      <p class="rvalue" id="res-tipThick">&mdash;</p>
+      <p class="runit">&times; module (0.2 min. recommended)</p>
+      <span class="method-badge" id="res-tip-badge">&mdash;</span>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Twist angle (for helical extrude)</p>
+      <p class="rvalue" id="res-twist">&mdash;</p>
+      <p class="runit" id="res-twist-unit">&mdash;</p>
+    </div>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Involute flank and root fillet construction</p>
+    <div class="formula-block">x(t) = r<sub>b</sub>(cos t + t&middot;sin t) &nbsp;&nbsp;&nbsp; y(t) = r<sub>b</sub>(sin t &minus; t&middot;cos t)</div>
+    <div class="formula-block">inv(t) = t &minus; arctan(t) &nbsp;&nbsp;&nbsp; &psi;(&rho;) = &psi;<sub>r</sub> + inv(t<sub>r</sub>) &minus; inv(t)</div>
+    <div class="formula-block">Root fillet: circular arc of radius &rho;*&middot;m<sub>n</sub>, tangent to the root circle and to the involute flank's base point</div>
+    <div class="formula-vars">
+      <span class="fvar">Flank sampled parametrically in roll angle t from the root/base circle to the outside circle</span>
+      <span class="fvar">Fillet found via tangent-circle intersection (root circle &cap; circle of radius &rho; centered on the flank's base point)</span>
+      <span class="fvar">Full gear built by rotating one tooth N&minus;1 times about the gear center</span>
+    </div>
+  </div>
+
+  <div class="notes-grid">
+    <div class="note-card">
+      <strong>What the fillet is &mdash; and isn't</strong>
+      This is a constant-radius circular arc tangent to the root and flank, not a true hob-generated trochoid. It's the standard simplification used by most quick gear-profile tools and is entirely adequate for extruded, printed, or laser-cut parts. If you need the exact hobbed root form for a high-load application, that requires simulating the generating rack's cutting motion &mdash; out of scope here.
+    </div>
+    <div class="note-card">
+      <strong>Helical gears need a twisted extrude</strong>
+      The DXF is the 2D transverse profile only. A straight extrude of it gives you a spur-equivalent shape, not a true helical tooth. In Fusion 360, use Extrude &rarr; Twist Angle; in SolidWorks, use a Helical Sweep along the axis. The twist angle for a given face width F is 360&deg;&middot;F/Lead, shown above.
+    </div>
+  </div>
+
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ══════════════ Unit conversion helpers ══════════════
+const MM_PER_IN = 25.4;
+const toN = { N: 1, lbf: 4.4482216152605 };
+const toNmm = { Nmm: 1, Nm: 1000, lbfin: 112.98497884239 };
+
+function fmt(v, sig) {
+  if (!isFinite(v) || v === null) return '—';
+  if (v === 0) return '0';
+  if (Math.abs(v) >= 1e6)  return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(v) >= 0.01) return parseFloat(v.toPrecision(sig || 5)).toString();
+  return v.toExponential(3);
+}
+
+// ══════════════ Lewis form factor tables (AGMA/Lewis classic, full depth) ══════════════
+// Keys = number of teeth (1000 stands in for "rack" — the curve is flat by that point)
+const Y_TABLE = {
+  14.5: {10:0.176,11:0.192,12:0.210,13:0.223,14:0.236,15:0.245,16:0.255,17:0.264,18:0.270,19:0.277,20:0.283,22:0.292,24:0.302,26:0.308,28:0.314,30:0.318,32:0.322,34:0.325,36:0.329,38:0.332,40:0.336,45:0.340,50:0.346,55:0.352,60:0.355,65:0.358,70:0.360,75:0.361,80:0.363,90:0.366,100:0.368,150:0.375,200:0.378,300:0.382,1000:0.390},
+  20:   {10:0.201,11:0.226,12:0.245,13:0.264,14:0.276,15:0.289,16:0.295,17:0.302,18:0.308,19:0.314,20:0.320,22:0.330,24:0.337,26:0.344,28:0.352,30:0.358,32:0.364,34:0.370,36:0.377,38:0.383,40:0.389,45:0.399,50:0.408,55:0.415,60:0.421,65:0.425,70:0.429,75:0.433,80:0.436,90:0.442,100:0.446,150:0.458,200:0.463,300:0.471,1000:0.484}
+};
+
+function interpY(N, phiKey) {
+  const table = Y_TABLE[phiKey];
+  const keys = Object.keys(table).map(Number).sort((a,b)=>a-b);
+  if (N <= keys[0]) return table[keys[0]];
+  if (N >= keys[keys.length-1]) return table[keys[keys.length-1]];
+  for (let i = 0; i < keys.length-1; i++) {
+    if (N >= keys[i] && N <= keys[i+1]) {
+      const frac = (N - keys[i]) / (keys[i+1] - keys[i]);
+      return table[keys[i]] + frac * (table[keys[i+1]] - table[keys[i]]);
+    }
+  }
+}
+
+// ══════════════ UI toggles ══════════════
+function onGearTypeChange() {
+  const isHelical = document.getElementById('inp-gearType').value === 'helical';
+  document.getElementById('lbl-helix').style.display = isHelical ? '' : 'none';
+  document.getElementById('inp-helix').style.display = isHelical ? '' : 'none';
+  calcAll();
+}
+function onPitchModeChange() {
+  const mode = document.getElementById('inp-pitchMode').value;
+  const val = document.getElementById('inp-pitchVal');
+  val.value = mode === 'module' ? 2 : 12;
+  calcAll();
+}
+document.getElementById('inp-phin').addEventListener('change', function() {
+  document.getElementById('field-phin-custom').style.display = this.value === 'custom' ? '' : 'none';
+  calcAll();
+});
+function onLoadModeChange() {
+  const mode = document.getElementById('inp-loadMode').value;
+  document.getElementById('field-torque').style.display = mode === 'torque' ? '' : 'none';
+  document.getElementById('field-force').style.display = mode === 'force' ? '' : 'none';
+  calcAll();
+}
+
+// ══════════════ Main calculation ══════════════
+// Shared gear state, populated by calcSizing(), consumed by calcStress()
+window.G = {};
+
+function calcSizing() {
+  const gearType = document.getElementById('inp-gearType').value;
+  const psiDeg = gearType === 'helical' ? (parseFloat(document.getElementById('inp-helix').value) || 0) : 0;
+  const pitchMode = document.getElementById('inp-pitchMode').value;
+  const pitchVal = parseFloat(document.getElementById('inp-pitchVal').value) || 0;
+  const N = parseFloat(document.getElementById('inp-N').value) || 0;
+  const phinSel = document.getElementById('inp-phin').value;
+  const phinDeg = phinSel === 'custom' ? (parseFloat(document.getElementById('inp-phin-custom').value) || 20) : parseFloat(phinSel);
+  const F_raw = parseFloat(document.getElementById('inp-F').value) || 0;
+  const F_unit = document.getElementById('unit-F').value;
+  const F_mm = F_unit === 'mm' ? F_raw : F_raw * MM_PER_IN;
+
+  const ids = ['res-d-mm','res-d-in','res-da-mm','res-da-in','res-df-mm','res-df-in','res-db-mm','res-db-in',
+               'res-pt-mm','res-pt-in','res-ht-mm','res-ht-in','res-phit','res-equivPitch','res-lead-mm','res-lead-in'];
+
+  if (!N || N < 4 || !pitchVal || !F_mm || psiDeg >= 90) {
+    ids.forEach(id => document.getElementById(id).textContent = '—');
+    G.valid = false;
+    return;
+  }
+
+  const mn_mm = pitchMode === 'module' ? pitchVal : MM_PER_IN / pitchVal;
+  const psi = psiDeg * Math.PI / 180;
+  const phin = phinDeg * Math.PI / 180;
+
+  const mt_mm = mn_mm / Math.cos(psi);
+  const d_mm = N * mt_mm;
+  const phit = Math.atan(Math.tan(phin) / Math.cos(psi));
+  const a_mm = mn_mm;
+  const b_mm = 1.25 * mn_mm;
+  const da_mm = d_mm + 2 * a_mm;
+  const df_mm = d_mm - 2 * b_mm;
+  const db_mm = d_mm * Math.cos(phit);
+  const pt_mm = Math.PI * mt_mm;
+  const ht_mm = a_mm + b_mm;
+  const lead_mm = psiDeg > 0 ? Math.PI * d_mm / Math.tan(psi) : null;
+
+  document.getElementById('res-d-mm').textContent = fmt(d_mm);
+  document.getElementById('res-d-in').textContent = fmt(d_mm / MM_PER_IN);
+  document.getElementById('res-da-mm').textContent = fmt(da_mm);
+  document.getElementById('res-da-in').textContent = fmt(da_mm / MM_PER_IN);
+  document.getElementById('res-df-mm').textContent = fmt(df_mm);
+  document.getElementById('res-df-in').textContent = fmt(df_mm / MM_PER_IN);
+  document.getElementById('res-db-mm').textContent = fmt(db_mm);
+  document.getElementById('res-db-in').textContent = fmt(db_mm / MM_PER_IN);
+  document.getElementById('res-pt-mm').textContent = fmt(pt_mm);
+  document.getElementById('res-pt-in').textContent = fmt(pt_mm / MM_PER_IN);
+  document.getElementById('res-ht-mm').textContent = fmt(ht_mm);
+  document.getElementById('res-ht-in').textContent = fmt(ht_mm / MM_PER_IN);
+  document.getElementById('res-phit').textContent = fmt(phit * 180 / Math.PI, 4);
+
+  if (pitchMode === 'module') {
+    document.getElementById('res-equivPitch').textContent = fmt(MM_PER_IN / mn_mm);
+    document.getElementById('res-equivPitch-unit').textContent = 'normal DP, 1/in';
+  } else {
+    document.getElementById('res-equivPitch').textContent = fmt(mn_mm);
+    document.getElementById('res-equivPitch-unit').textContent = 'normal module, mm';
+  }
+
+  if (lead_mm !== null) {
+    document.getElementById('res-lead-mm').textContent = fmt(lead_mm);
+    document.getElementById('res-lead-in').textContent = fmt(lead_mm / MM_PER_IN);
+  } else {
+    document.getElementById('res-lead-mm').textContent = 'N/A — spur';
+    document.getElementById('res-lead-in').textContent = '—';
+  }
+
+  G = { valid: true, N, psi, psiDeg, phinDeg, phin, phit, d_mm, mt_mm, mn_mm, F_mm };
+}
+
+// ══════════════ Involute function helpers ══════════════
+function invFn(phi) { return Math.tan(phi) - phi; } // phi in radians
+function invInverse(target) {
+  // Newton-Raphson solve for phi such that tan(phi) - phi = target
+  let phi = 0.4; // reasonable starting guess (~23 deg)
+  for (let i = 0; i < 60; i++) {
+    const f = Math.tan(phi) - phi - target;
+    const fp = Math.pow(1 / Math.cos(phi), 2) - 1; // sec^2(phi) - 1
+    if (Math.abs(fp) < 1e-12) break;
+    const next = phi - f / fp;
+    if (next <= 0 || next >= Math.PI / 2) break; // stay in valid range
+    if (Math.abs(next - phi) < 1e-12) { phi = next; break; }
+    phi = next;
+  }
+  return phi;
+}
+
+function useMinX(which) {
+  if (!G.valid) return;
+  const N2 = parseFloat(document.getElementById('inp-N2').value) || 0;
+  if (!N2) return;
+  const z = which === 1 ? G.N : N2;
+  const xmin = 1 - (z * Math.pow(Math.sin(G.phit), 2)) / (2 * Math.cos(G.psi));
+  document.getElementById(which === 1 ? 'inp-x1' : 'inp-x2').value = Math.max(0, xmin).toFixed(3);
+  calcAll();
+}
+function balanceX2() {
+  const x1 = parseFloat(document.getElementById('inp-x1').value) || 0;
+  document.getElementById('inp-x2').value = (-x1).toFixed(3);
+  calcAll();
+}
+function swapGears() {
+  const N = document.getElementById('inp-N');
+  const N2 = document.getElementById('inp-N2');
+  const x1 = document.getElementById('inp-x1');
+  const x2 = document.getElementById('inp-x2');
+  const tmpN = N.value, tmpX = x1.value;
+  N.value = N2.value; N2.value = tmpN;
+  x1.value = x2.value; x2.value = tmpX;
+  calcAll();
+}
+
+function calcMating() {
+  const ids = ['res-x1min','res-x2min','res-sumx','res-awt','res-astd-mm','res-astd-in','res-aw-mm','res-aw-in',
+               'res-da1-mm','res-da1-in','res-df1-mm','res-df1-in','res-da2-mm','res-da2-in','res-df2-mm','res-df2-in',
+               'res-d2-mm','res-d2-in'];
+  const x1Badge = document.getElementById('res-x1min-badge');
+  const x2Badge = document.getElementById('res-x2min-badge');
+
+  const N2 = parseFloat(document.getElementById('inp-N2').value) || 0;
+  if (!G.valid || !N2 || N2 < 4) {
+    ids.forEach(id => document.getElementById(id).textContent = '—');
+    x1Badge.style.display = 'none';
+    x2Badge.style.display = 'none';
+    return;
+  }
+
+  const x1 = parseFloat(document.getElementById('inp-x1').value) || 0;
+  const x2 = parseFloat(document.getElementById('inp-x2').value) || 0;
+  const N1 = G.N;
+
+  const x1min = 1 - (N1 * Math.pow(Math.sin(G.phit), 2)) / (2 * Math.cos(G.psi));
+  const x2min = 1 - (N2 * Math.pow(Math.sin(G.phit), 2)) / (2 * Math.cos(G.psi));
+
+  document.getElementById('res-x1min').textContent = fmt(x1min, 4);
+  document.getElementById('res-x2min').textContent = fmt(x2min, 4);
+
+  x1Badge.style.display = '';
+  if (x1 < x1min - 1e-6) { x1Badge.textContent = 'x' + '\u2081' + ' undercuts gear 1'; x1Badge.className = 'method-badge bad'; }
+  else { x1Badge.textContent = 'Gear 1 OK'; x1Badge.className = 'method-badge good'; }
+
+  x2Badge.style.display = '';
+  if (x2 < x2min - 1e-6) { x2Badge.textContent = 'x' + '\u2082' + ' undercuts gear 2'; x2Badge.className = 'method-badge bad'; }
+  else { x2Badge.textContent = 'Gear 2 OK'; x2Badge.className = 'method-badge good'; }
+
+  const sumX = x1 + x2;
+  document.getElementById('res-sumx').textContent = fmt(sumX, 4);
+
+  const invPhit = invFn(G.phit);
+  const invPhiwt = invPhit + (2 * sumX * Math.tan(G.phin)) / (N1 + N2);
+  const phiwt = invInverse(invPhiwt);
+
+  const a_std_mm = G.mt_mm * (N1 + N2) / 2;
+  const aw_mm = a_std_mm * Math.cos(G.phit) / Math.cos(phiwt);
+
+  document.getElementById('res-awt').textContent = fmt(phiwt * 180 / Math.PI, 4);
+  document.getElementById('res-astd-mm').textContent = fmt(a_std_mm);
+  document.getElementById('res-astd-in').textContent = fmt(a_std_mm / MM_PER_IN);
+  document.getElementById('res-aw-mm').textContent = fmt(aw_mm);
+  document.getElementById('res-aw-in').textContent = fmt(aw_mm / MM_PER_IN);
+
+  const d1_mm = N1 * G.mt_mm;
+  const d2_mm = N2 * G.mt_mm;
+  const da1_mm = d1_mm + 2 * G.mn_mm * (1 + x1);
+  const df1_mm = d1_mm - 2 * G.mn_mm * (1.25 - x1);
+  const da2_mm = d2_mm + 2 * G.mn_mm * (1 + x2);
+  const df2_mm = d2_mm - 2 * G.mn_mm * (1.25 - x2);
+
+  document.getElementById('res-da1-mm').textContent = fmt(da1_mm);
+  document.getElementById('res-da1-in').textContent = fmt(da1_mm / MM_PER_IN);
+  document.getElementById('res-df1-mm').textContent = fmt(df1_mm);
+  document.getElementById('res-df1-in').textContent = fmt(df1_mm / MM_PER_IN);
+  document.getElementById('res-da2-mm').textContent = fmt(da2_mm);
+  document.getElementById('res-da2-in').textContent = fmt(da2_mm / MM_PER_IN);
+  document.getElementById('res-df2-mm').textContent = fmt(df2_mm);
+  document.getElementById('res-df2-in').textContent = fmt(df2_mm / MM_PER_IN);
+  document.getElementById('res-d2-mm').textContent = fmt(d2_mm);
+  document.getElementById('res-d2-in').textContent = fmt(d2_mm / MM_PER_IN);
+}
+
+function calcStress() {
+  const idsWt = ['res-Wt-N','res-Wt-lbf','res-Vt-fpm','res-Vt-ms','res-Y','res-Nv','res-Kv','res-sigma-psi','res-sigma-ksi','res-sigma-MPa','res-SF'];
+  const kvBadge = document.getElementById('res-Kv-badge');
+  const sfBadge = document.getElementById('res-SF-badge');
+
+  if (!G.valid) {
+    idsWt.forEach(id => document.getElementById(id).textContent = '—');
+    kvBadge.style.display = 'none';
+    sfBadge.style.display = 'none';
+    return;
+  }
+
+  const loadMode = document.getElementById('inp-loadMode').value;
+  const rpm = parseFloat(document.getElementById('inp-rpm').value) || 0;
+  const Qv = parseFloat(document.getElementById('inp-Qv').value);
+
+  let Wt_N;
+  if (loadMode === 'torque') {
+    const T_raw = parseFloat(document.getElementById('inp-T').value) || 0;
+    const T_unit = document.getElementById('unit-T').value;
+    const T_Nmm = T_raw * toNmm[T_unit];
+    Wt_N = 2 * T_Nmm / G.d_mm;
+  } else {
+    const Wt_raw = parseFloat(document.getElementById('inp-Wt').value) || 0;
+    const Wt_unit = document.getElementById('unit-Wt').value;
+    Wt_N = Wt_raw * toN[Wt_unit];
+  }
+
+  if (!Wt_N || !rpm) {
+    idsWt.forEach(id => document.getElementById(id).textContent = '—');
+    kvBadge.style.display = 'none';
+    sfBadge.style.display = 'none';
+    return;
+  }
+
+  const d_in = G.d_mm / MM_PER_IN;
+  const Vt_fpm = Math.PI * d_in * rpm / 12;
+  const Vt_ms = Vt_fpm * 0.00508;
+
+  const Nv = G.N / Math.pow(Math.cos(G.psi), 3);
+  const phiKey = (G.phinDeg === 14.5) ? 14.5 : 20; // custom/25° falls back to 20° table
+  const Y = interpY(Nv, phiKey);
+
+  const B = 0.25 * Math.pow(12 - Qv, 2/3);
+  const A = 50 + 56 * (1 - B);
+  const Kv = Math.pow((A + Math.sqrt(Vt_fpm)) / A, B);
+  const Vmax = Math.pow(A + (Qv - 3), 2);
+
+  const sigma_MPa = (Wt_N * Kv) / (G.F_mm * G.mt_mm * Y);
+  const sigma_psi = sigma_MPa * 145.037738;
+  const sigma_ksi = sigma_psi / 1000;
+
+  document.getElementById('res-Wt-N').textContent = fmt(Wt_N);
+  document.getElementById('res-Wt-lbf').textContent = fmt(Wt_N / toN.lbf);
+  document.getElementById('res-Vt-fpm').textContent = fmt(Vt_fpm);
+  document.getElementById('res-Vt-ms').textContent = fmt(Vt_ms);
+  document.getElementById('res-Y').textContent = fmt(Y, 4);
+  document.getElementById('res-Nv').textContent = (G.psiDeg > 0 ? 'Nv = ' + fmt(Nv, 4) : 'N = ' + G.N) + ' · ' + phiKey + '° table';
+  document.getElementById('res-Kv').textContent = fmt(Kv, 4);
+  document.getElementById('res-sigma-psi').textContent = fmt(sigma_psi);
+  document.getElementById('res-sigma-ksi').textContent = fmt(sigma_ksi);
+  document.getElementById('res-sigma-MPa').textContent = fmt(sigma_MPa);
+
+  kvBadge.style.display = '';
+  if (Vt_fpm > Vmax) {
+    kvBadge.textContent = 'V exceeds Qv rating (max ' + fmt(Vmax) + ' ft/min)';
+    kvBadge.className = 'method-badge bad';
+  } else {
+    kvBadge.textContent = 'Qv ' + Qv + ' valid to ' + fmt(Vmax) + ' ft/min';
+    kvBadge.className = 'method-badge good';
+  }
+
+  const allowRaw = parseFloat(document.getElementById('inp-allow').value);
+  const allowUnit = document.getElementById('unit-allow').value;
+  if (allowRaw && allowRaw > 0) {
+    let allow_psi;
+    if (allowUnit === 'psi') allow_psi = allowRaw;
+    else if (allowUnit === 'ksi') allow_psi = allowRaw * 1000;
+    else allow_psi = allowRaw * 145.037738; // MPa -> psi
+    const SF = allow_psi / sigma_psi;
+    document.getElementById('res-SF').textContent = fmt(SF, 4);
+    sfBadge.style.display = '';
+    if (SF >= 2) { sfBadge.textContent = 'Comfortable margin'; sfBadge.className = 'method-badge good'; }
+    else if (SF >= 1) { sfBadge.textContent = 'Positive but tight'; sfBadge.className = 'method-badge warn'; }
+    else { sfBadge.textContent = 'Exceeds allowable'; sfBadge.className = 'method-badge bad'; }
+  } else {
+    document.getElementById('res-SF').textContent = '—';
+    sfBadge.style.display = 'none';
+  }
+}
+
+// ══════════════ Part IV: involute tooth geometry & DXF export ══════════════
+function toothInv(t) { return t - Math.atan(t); }
+
+// Builds one tooth's right-flank + fillet in a LOCAL frame where the tooth
+// centerline sits at angle 0. Right flank occupies positive angles.
+function buildToothLocal(N, mn, phin, psi, x, rhoStarIn) {
+  const mt = mn / Math.cos(psi);
+  const phit = Math.atan(Math.tan(phin) / Math.cos(psi));
+  const r = N * mt / 2;
+  const rb = r * Math.cos(phit);
+  const ra = r + mn * (1 + x);
+  let rf = r - mn * (1.25 - x);
+  if (rf < mn * 0.05) rf = mn * 0.05; // guard against degenerate/negative root radius
+
+  const st = mt * (Math.PI / 2 + 2 * x * Math.tan(phin));
+  const halfAngle = st / (2 * r);
+  const t_r = Math.sqrt(Math.max(0, (r / rb) ** 2 - 1));
+  const K = halfAngle + toothInv(t_r);
+  const t_max = Math.sqrt(Math.max(0, (ra / rb) ** 2 - 1));
+
+  const rootAboveBase = rf >= rb;
+  const t_start = rootAboveBase ? Math.sqrt(Math.max(0, (rf / rb) ** 2 - 1)) : 0;
+
+  const NSAMPLES = 16;
+  const rightFlank = [];
+  for (let i = 0; i <= NSAMPLES; i++) {
+    const t = t_start + (t_max - t_start) * i / NSAMPLES;
+    const rho = rb * Math.sqrt(1 + t * t);
+    const ang = K - toothInv(t);
+    rightFlank.push({ x: rho * Math.cos(ang), y: rho * Math.sin(ang), ang });
+  }
+  const tipHalfAngle = rightFlank[rightFlank.length - 1].ang;
+
+  let filletArcRight = [];
+  let rootTangentAngleRight;
+  let rhoFillet = rhoStarIn * mn;
+  let filletWasBumped = false;
+  let T = null;
+
+  if (!rootAboveBase) {
+    const E = rightFlank[0];
+    // The involute meets the base circle radially, so its tangent there points
+    // along OE. For the fillet to be tangent to the FLANK (not just pass through
+    // E), its center must lie on the perpendicular to OE at E, at distance rhoFillet.
+    // That fixes |Fc| = sqrt(rb^2 + rhoFillet^2) regardless of which side is chosen.
+    const minR2 = (rb * rb - rf * rf) / (2 * rf); // min radius for that circle to reach the root circle
+    let R2 = rhoFillet;
+    if (R2 < minR2) { R2 = minR2 * 1.001 + 1e-6; filletWasBumped = true; }
+    rhoFillet = R2;
+
+    const ux = E.x / rb, uy = E.y / rb;
+    const cand1 = { x: E.x - R2 * uy, y: E.y + R2 * ux };
+    const cand2 = { x: E.x + R2 * uy, y: E.y - R2 * ux };
+    const ang1 = Math.atan2(cand1.y, cand1.x);
+    const ang2 = Math.atan2(cand2.y, cand2.x);
+    const Fc = ang1 > ang2 ? cand1 : cand2; // further from centerline = valley side
+    const dd = Math.hypot(Fc.x, Fc.y);
+
+    // intersect fillet circle (Fc, R2) with the root circle (O, rf)
+    const a_ = (dd * dd + rf * rf - R2 * R2) / (2 * dd);
+    const h2 = Math.max(0, rf * rf - a_ * a_);
+    const h = Math.sqrt(h2);
+    const fux = Fc.x / dd, fuy = Fc.y / dd;
+    const fpx = -fuy, fpy = fux;
+    const Mx = a_ * fux, My = a_ * fuy;
+    const cT1 = { x: Mx + h * fpx, y: My + h * fpy };
+    const cT2 = { x: Mx - h * fpx, y: My - h * fpy };
+    const angFc = Math.atan2(Fc.y, Fc.x);
+    T = (Math.abs(Math.atan2(cT1.y, cT1.x) - angFc) < Math.abs(Math.atan2(cT2.y, cT2.x) - angFc)) ? cT1 : cT2;
+    rootTangentAngleRight = Math.atan2(T.y, T.x);
+
+    const startAng = Math.atan2(E.y - Fc.y, E.x - Fc.x);
+    const endAng = Math.atan2(T.y - Fc.y, T.x - Fc.x);
+    let sweep = endAng - startAng;
+    while (sweep <= -Math.PI) sweep += 2 * Math.PI;
+    while (sweep > Math.PI) sweep -= 2 * Math.PI;
+    const NF = 10;
+    for (let i = 1; i <= NF; i++) {
+      const a2 = startAng + sweep * i / NF;
+      filletArcRight.push({ x: Fc.x + R2 * Math.cos(a2), y: Fc.y + R2 * Math.sin(a2) });
+    }
+  } else {
+    T = { x: rf * Math.cos(rightFlank[0].ang), y: rf * Math.sin(rightFlank[0].ang) };
+    rootTangentAngleRight = rightFlank[0].ang;
+  }
+
+  return { r, rb, ra, rf, K, halfAngle, tipHalfAngle, rightFlank, filletArcRight, rootTangentAngleRight, rhoFillet, filletWasBumped };
+}
+
+function rotatePt(p, a) {
+  const c = Math.cos(a), s = Math.sin(a);
+  return { x: p.x * c - p.y * s, y: p.x * s + p.y * c };
+}
+
+// Assembles the full N-tooth closed outline (array of {x,y}) from one tooth's local geometry.
+function buildFullOutline(tooth, N) {
+  const pts = [];
+  const halfPitch = Math.PI / N;
+  const rootHalfSweep = halfPitch - tooth.rootTangentAngleRight; // angular gap on either side of tooth reserved for root arc
+
+  for (let k = 0; k < N; k++) {
+    const thetaC = k * 2 * Math.PI / N;
+
+    // left root tangent
+    const Tleft = { x: tooth.rf * Math.cos(-tooth.rootTangentAngleRight), y: tooth.rf * Math.sin(-tooth.rootTangentAngleRight) };
+    pts.push(rotatePt(Tleft, thetaC));
+
+    // left fillet: mirror of right fillet, reversed (root -> base order)
+    const leftFillet = tooth.filletArcRight.slice().reverse().map(p => ({ x: p.x, y: -p.y }));
+    leftFillet.forEach(p => pts.push(rotatePt(p, thetaC)));
+
+    // left flank: mirror of right flank (t increasing = base -> tip)
+    tooth.rightFlank.forEach(p => pts.push(rotatePt({ x: p.x, y: -p.y }, thetaC)));
+
+    // tip arc: left tip -> right tip
+    const NT = 6;
+    for (let i = 1; i < NT; i++) {
+      const a2 = -tooth.tipHalfAngle + (2 * tooth.tipHalfAngle) * i / NT;
+      pts.push(rotatePt({ x: tooth.ra * Math.cos(a2), y: tooth.ra * Math.sin(a2) }, thetaC));
+    }
+
+    // right flank: tip -> base
+    tooth.rightFlank.slice().reverse().forEach(p => pts.push(rotatePt(p, thetaC)));
+
+    // right fillet: base -> root
+    tooth.filletArcRight.forEach(p => pts.push(rotatePt(p, thetaC)));
+
+    const Tright = { x: tooth.rf * Math.cos(tooth.rootTangentAngleRight), y: tooth.rf * Math.sin(tooth.rootTangentAngleRight) };
+    pts.push(rotatePt(Tright, thetaC));
+
+    // root arc across to next tooth's left root tangent
+    const nextThetaC = (k + 1) * 2 * Math.PI / N;
+    const startAng = thetaC + tooth.rootTangentAngleRight;
+    const endAng = nextThetaC - tooth.rootTangentAngleRight;
+    const NR = 6;
+    for (let i = 1; i < NR; i++) {
+      const a2 = startAng + (endAng - startAng) * i / NR;
+      pts.push({ x: tooth.rf * Math.cos(a2), y: tooth.rf * Math.sin(a2) });
+    }
+  }
+  return pts;
+}
+
+function drawGear(points, ra, boreR_mm) {
+  const canvas = document.getElementById('gearCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  if (!points || !points.length) return;
+
+  const margin = 30;
+  const scale = (Math.min(W, H) - 2 * margin) / (2 * ra);
+  const cx = W / 2, cy = H / 2;
+  const toCanvas = (p) => ({ x: cx + p.x * scale, y: cy - p.y * scale });
+
+  ctx.strokeStyle = '#8a6d2f';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    const c = toCanvas(p);
+    if (i === 0) ctx.moveTo(c.x, c.y); else ctx.lineTo(c.x, c.y);
+  });
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(201,168,76,0.18)';
+  ctx.fill();
+  ctx.stroke();
+
+  if (boreR_mm > 0) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, boreR_mm * scale, 0, 2 * Math.PI);
+    ctx.strokeStyle = '#5a4e38';
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
+  }
+
+  // center mark
+  ctx.strokeStyle = 'rgba(90,78,56,0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx - 8, cy); ctx.lineTo(cx + 8, cy);
+  ctx.moveTo(cx, cy - 8); ctx.lineTo(cx, cy + 8);
+  ctx.stroke();
+}
+
+function buildDXF(points, boreR, unitCode) {
+  let s = '';
+  s += '0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n' + unitCode + '\n0\nENDSEC\n';
+  s += '0\nSECTION\n2\nENTITIES\n';
+  s += '0\nPOLYLINE\n8\n0\n66\n1\n70\n1\n';
+  points.forEach(p => {
+    s += '0\nVERTEX\n8\n0\n10\n' + p.x.toFixed(5) + '\n20\n' + p.y.toFixed(5) + '\n30\n0.0\n';
+  });
+  s += '0\nSEQEND\n';
+  if (boreR > 0) {
+    s += '0\nCIRCLE\n8\n0\n10\n0.0\n20\n0.0\n30\n0.0\n40\n' + boreR.toFixed(5) + '\n';
+  }
+  s += '0\nENDSEC\n0\nEOF\n';
+  return s;
+}
+
+function calcGeometry() {
+  const canvasCard = document.getElementById('gearCanvas');
+  const ids = ['res-rho','res-tipThick','res-twist'];
+  const rhoBadge = document.getElementById('res-rho-badge');
+  const tipBadge = document.getElementById('res-tip-badge');
+
+  if (!G.valid) {
+    ids.forEach(id => document.getElementById(id).textContent = '—');
+    rhoBadge.style.display = 'none';
+    const ctx = canvasCard.getContext('2d');
+    ctx.clearRect(0, 0, canvasCard.width, canvasCard.height);
+    G.geometry = null;
+    return;
+  }
+
+  const x1 = parseFloat(document.getElementById('inp-x1').value) || 0;
+  const rhoStar = parseFloat(document.getElementById('inp-rho').value) || 0.38;
+
+  const tooth = buildToothLocal(G.N, G.mn_mm, G.phin, G.psi, x1, rhoStar);
+  const outline = buildFullOutline(tooth, G.N);
+
+  const boreRaw = parseFloat(document.getElementById('inp-bore').value) || 0;
+  const boreUnit = document.getElementById('unit-bore').value;
+  const boreDia_mm = boreUnit === 'mm' ? boreRaw : boreRaw * MM_PER_IN;
+  const boreR_mm = boreDia_mm / 2;
+
+  drawGear(outline, tooth.ra, boreR_mm);
+
+  document.getElementById('res-rho').textContent = fmt(tooth.rhoFillet, 4);
+  rhoBadge.style.display = tooth.filletWasBumped ? '' : 'none';
+  if (tooth.filletWasBumped) {
+    rhoBadge.textContent = 'Increased to bridge root & base circles';
+    rhoBadge.className = 'method-badge warn';
+  }
+
+  const tipLandArc_mm = tooth.ra * 2 * tooth.tipHalfAngle;
+  const tipRatio = tipLandArc_mm / G.mn_mm;
+  document.getElementById('res-tipThick').textContent = fmt(tipRatio, 4);
+  if (tipRatio <= 0) { tipBadge.textContent = 'Invalid — flanks cross, reduce x\u2081 or increase N'; tipBadge.className = 'method-badge bad'; }
+  else if (tipRatio < 0.2) { tipBadge.textContent = 'Thin / near-pointed tip'; tipBadge.className = 'method-badge bad'; }
+  else if (tipRatio < 0.35) { tipBadge.textContent = 'Acceptable but thin'; tipBadge.className = 'method-badge warn'; }
+  else { tipBadge.textContent = 'Healthy tip land'; tipBadge.className = 'method-badge good'; }
+
+  if (G.psiDeg > 0) {
+    const lead_mm = Math.PI * G.d_mm / Math.tan(G.psi);
+    const twistDeg = 360 * G.F_mm / lead_mm;
+    document.getElementById('res-twist').textContent = fmt(twistDeg, 4);
+    document.getElementById('res-twist-unit').textContent = 'degrees, over face width F';
+  } else {
+    document.getElementById('res-twist').textContent = 'N/A — spur';
+    document.getElementById('res-twist-unit').textContent = 'straight extrude';
+  }
+
+  // stash for DXF download
+  const dxfUnit = document.getElementById('inp-dxfUnit').value;
+  const scaleToUnit = dxfUnit === 'mm' ? 1 : 1 / MM_PER_IN;
+  G.geometry = {
+    outline: outline.map(p => ({ x: p.x * scaleToUnit, y: p.y * scaleToUnit })),
+    boreR: boreR_mm * scaleToUnit,
+    insUnits: dxfUnit === 'mm' ? 4 : 1
+  };
+}
+
+function downloadDXF() {
+  if (!G.geometry) { alert('Enter valid gear parameters above before downloading.'); return; }
+  const dxfText = buildDXF(G.geometry.outline, G.geometry.boreR, G.geometry.insUnits);
+  const blob = new Blob([dxfText], { type: 'application/dxf' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'gear_N' + G.N + '_m' + fmt(G.mn_mm, 3) + '.dxf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function calcAll() {
+  calcSizing();
+  calcStress();
+  calcMating();
+  calcGeometry();
+}
+
+calcAll();
+</script>
+</body>
+</html>

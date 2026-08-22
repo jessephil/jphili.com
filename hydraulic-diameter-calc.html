@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hydraulic Diameter Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+      --blue: #1c4f82;
+      --blue-pale: #e6f0fb;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 580px; line-height: 1.7; }
+
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    /* ── INPUTS ── */
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+      font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px;
+      font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; cursor: pointer;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 2px; }
+
+    /* shape preset row */
+    .fluid-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .fluid-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .fluid-row select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-family: inherit; font-size: 13px; color: var(--ink); background: var(--parchment); outline: none; flex: 1; min-width: 160px; }
+
+    /* diagram panel */
+    .diagram-panel {
+      background: var(--blue-pale);
+      border: 1px solid rgba(28,79,130,0.2);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .diagram-panel svg { flex: 0 0 auto; }
+    .diagram-panel-text { flex: 1; min-width: 160px; }
+    .diagram-panel-title { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue); margin-bottom: 6px; }
+    .diagram-panel-caption { font-size: 13px; color: var(--blue); }
+
+    /* ── RESULTS ── */
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+
+    .result-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+    .flow-sub { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+    .flow-sub-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-mid); }
+    .flow-sub-row span:last-child { color: var(--ink-faint); }
+
+    .warning-banner { background: var(--amber-pale); border: 1px solid rgba(122,90,26,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--amber); margin-bottom: 12px; display: none; }
+    .warning-banner.visible { display: block; }
+
+    /* ── FORMULA ── */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; margin-top: 1.5rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 15px; color: var(--ink); padding: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    .source-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); line-height: 1.6; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr; }
+      .result-card .rvalue { font-size: 17px; }
+      .diagram-panel { flex-direction: column; text-align: center; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Fluid Mechanics</p>
+    <h1 class="page-title">Hydraulic Diameter Calculator</h1>
+    <p class="page-subtitle">Computes the hydraulic diameter (D<sub>h</sub> = 4A/P) for circular, annular, rectangular, elliptical, triangular, and open-channel cross sections — the equivalent diameter used to apply circular-pipe Reynolds number, friction factor, and Nusselt number correlations to non-circular flow passages.</p>
+  </div>
+
+  <p class="section-label">Cross Section</p>
+  <div class="inputs-card">
+
+    <!-- Shape select -->
+    <div class="fluid-row">
+      <label>Shape</label>
+      <select id="shape-select" onchange="renderShape()">
+        <option value="circular">Circular pipe (full)</option>
+        <option value="annular">Annular (pipe-in-pipe)</option>
+        <option value="rectangular">Rectangular / square duct</option>
+        <option value="elliptical">Elliptical duct</option>
+        <option value="triangular">Triangular duct (three sides)</option>
+        <option value="trapezoidal">Trapezoidal open channel</option>
+        <option value="partial-circular">Partially filled circular pipe</option>
+      </select>
+    </div>
+
+    <!-- Diagram -->
+    <div class="diagram-panel">
+      <div id="diagram-svg"></div>
+      <div class="diagram-panel-text">
+        <p class="diagram-panel-title" id="diagram-title">Cross section</p>
+        <p class="diagram-panel-caption" id="diagram-caption"></p>
+      </div>
+    </div>
+
+    <!-- Dynamic inputs -->
+    <div class="inputs-grid" id="inputs-grid"></div>
+  </div>
+
+  <!-- WARNING -->
+  <div class="warning-banner" id="warning-invalid"></div>
+
+  <!-- RESULTS -->
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+
+    <div class="result-card">
+      <p class="rlabel">Flow area (A)</p>
+      <p class="rvalue" id="res-A-mm2">—</p>
+      <p class="runit">mm²</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span id="res-A-in2">—</span><span>in²</span></div>
+      </div>
+    </div>
+
+    <div class="result-card">
+      <p class="rlabel">Wetted perimeter (P)</p>
+      <p class="rvalue" id="res-P-mm">—</p>
+      <p class="runit">mm</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span id="res-P-in">—</span><span>in</span></div>
+      </div>
+    </div>
+
+    <div class="result-card primary">
+      <p class="rlabel">Hydraulic diameter (D<sub>h</sub>)</p>
+      <p class="rvalue" id="res-Dh-mm">—</p>
+      <p class="runit">mm</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span id="res-Dh-in">—</span><span>in</span></div>
+        <div class="flow-sub-row"><span id="res-Dh-ft">—</span><span>ft</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FORMULA -->
+  <div class="formula-card">
+    <p class="formula-title">Hydraulic Diameter — General Definition</p>
+    <div class="formula-block">
+      <span>D_h = 4A / P</span>
+    </div>
+    <p style="font-size:13px; color:var(--ink-mid); margin-bottom:6px;">A is the flow cross-sectional area; P is the wetted perimeter — the portion of the boundary actually in contact with the fluid. For closed conduits (circular, annular, rectangular, elliptical, triangular) P is the full perimeter. For open channels (trapezoidal, partially filled pipe) the free liquid surface is excluded from P.</p>
+
+    <p class="formula-title" style="margin-top:14px;" id="shape-formula-title">Shape formula</p>
+    <div class="formula-block" id="shape-formula-block"></div>
+    <div class="formula-vars" id="shape-formula-vars"></div>
+    <p id="shape-formula-note" style="font-size:12px; color:var(--ink-mid); margin-top:10px;"></p>
+
+    <p class="source-note">
+      D_h is a defined equivalent diameter, not an exact geometric quantity — substituting it for D in circular-pipe correlations (Re, Darcy friction factor, Nu) is a standard engineering approximation. Accuracy degrades for highly non-circular, re-entrant, or extreme-aspect-ratio sections; consult correlation-specific validity ranges (e.g. Gnielinski, Colebrook) before relying on D_h in a non-circular duct. Elliptical perimeter uses Ramanujan's second approximation (error &lt; 0.04% for all aspect ratios). Source: Çengel &amp; Cimbala, <em>Fluid Mechanics: Fundamentals and Applications</em>.
+    </p>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+// ── Unit conversions ──
+const toM = { mm: 0.001, cm: 0.01, m: 1, in: 0.0254, ft: 0.3048 };
+
+function fmt(v, sig) {
+  if (!isFinite(v) || v === null) return '—';
+  if (v === 0) return '0';
+  if (Math.abs(v) >= 1e6)  return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (Math.abs(v) >= 0.01) return parseFloat(v.toPrecision(sig || 5)).toString();
+  return v.toExponential(3);
+}
+
+function unitSelect(id, def) {
+  const opts = ['mm','cm','m','in','ft'];
+  return '<select id="' + id + '" onchange="calc()">' +
+    opts.map(u => '<option value="' + u + '"' + (u === def ? ' selected' : '') + '>' + u + '</option>').join('') +
+    '</select>';
+}
+
+function field(id, labelHtml, defVal, unitId, unitDef, noteHtml) {
+  return '<div class="field">' +
+    '<label>' + labelHtml + '</label>' +
+    '<div class="field-row">' +
+      '<input type="number" id="' + id + '" value="' + defVal + '" step="any" oninput="calc()" />' +
+      unitSelect(unitId, unitDef) +
+    '</div>' +
+    (noteHtml ? '<span class="field-note">' + noteHtml + '</span>' : '') +
+    '</div>';
+}
+
+function getM(id, unitId) {
+  const raw = parseFloat(document.getElementById(id).value);
+  const unit = document.getElementById(unitId).value;
+  return raw * toM[unit];
+}
+
+// ── Shape library ──
+const shapes = {
+
+  circular: {
+    inputs: () => field('D', 'Diameter (D)', 50, 'D-unit', 'mm'),
+    compute: () => {
+      const D = getM('D', 'D-unit');
+      if (!(D > 0)) return { valid: false, msg: 'Diameter must be greater than zero.' };
+      return { valid: true, A: Math.PI * D * D / 4, P: Math.PI * D };
+    },
+    diagram: () =>
+      '<svg viewBox="0 0 140 140" width="140" height="140">' +
+        '<circle cx="70" cy="70" r="55" fill="var(--parchment)" stroke="var(--gold)" stroke-width="2.5"/>' +
+        '<line x1="70" y1="70" x2="125" y2="70" stroke="var(--ink)" stroke-width="1.25" stroke-dasharray="4,3"/>' +
+        '<circle cx="70" cy="70" r="2" fill="var(--ink)"/>' +
+        '<text x="92" y="65" font-family="DM Sans" font-size="13" fill="var(--ink)">D</text>' +
+      '</svg>',
+    caption: 'Full circular pipe — fluid contacts the entire wall.',
+    formulaBlock: 'A = &pi;D&sup2;/4 &nbsp;&nbsp; P = &pi;D &nbsp;&nbsp; D_h = D',
+    formulaVars: [['D','pipe diameter']],
+    formulaNote: 'For a full circular pipe, D_h reduces exactly to the physical diameter.'
+  },
+
+  annular: {
+    inputs: () =>
+      field('Do', 'Outer diameter (D<sub>o</sub>)', 80, 'Do-unit', 'mm') +
+      field('Di', 'Inner diameter (D<sub>i</sub>)', 50, 'Di-unit', 'mm'),
+    compute: () => {
+      const Do = getM('Do', 'Do-unit');
+      const Di = getM('Di', 'Di-unit');
+      if (!(Do > 0) || !(Di > 0)) return { valid: false, msg: 'Both diameters must be greater than zero.' };
+      if (Di >= Do) return { valid: false, msg: 'Outer diameter must be greater than inner diameter.' };
+      return { valid: true, A: Math.PI * (Do*Do - Di*Di) / 4, P: Math.PI * (Do + Di) };
+    },
+    diagram: () =>
+      '<svg viewBox="0 0 140 140" width="140" height="140">' +
+        '<circle cx="70" cy="70" r="55" fill="var(--parchment)" stroke="var(--gold)" stroke-width="2.5"/>' +
+        '<circle cx="70" cy="70" r="28" fill="var(--parchment-dark)" stroke="var(--gold)" stroke-width="2"/>' +
+        '<line x1="70" y1="70" x2="125" y2="70" stroke="var(--ink)" stroke-width="1.25" stroke-dasharray="4,3"/>' +
+        '<line x1="70" y1="70" x2="98" y2="70" stroke="var(--ink-mid)" stroke-width="1.25"/>' +
+        '<text x="94" y="65" font-family="DM Sans" font-size="12" fill="var(--ink)">D_o</text>' +
+        '<text x="76" y="65" font-family="DM Sans" font-size="11" fill="var(--ink-mid)">D_i</text>' +
+      '</svg>',
+    caption: 'Annulus — both inner and outer walls are wetted.',
+    formulaBlock: 'A = &pi;(D_o&sup2; &minus; D_i&sup2;)/4 &nbsp;&nbsp; P = &pi;(D_o + D_i) &nbsp;&nbsp; D_h = D_o &minus; D_i',
+    formulaVars: [['D_o','outer diameter'], ['D_i','inner diameter']],
+    formulaNote: 'Both walls are wetted, so D_h simplifies to the gap width D_o − D_i.'
+  },
+
+  rectangular: {
+    inputs: () =>
+      field('a', 'Width (a)', 60, 'a-unit', 'mm') +
+      field('b', 'Height (b)', 30, 'b-unit', 'mm'),
+    compute: () => {
+      const a = getM('a', 'a-unit');
+      const b = getM('b', 'b-unit');
+      if (!(a > 0) || !(b > 0)) return { valid: false, msg: 'Width and height must be greater than zero.' };
+      return { valid: true, A: a*b, P: 2*(a+b) };
+    },
+    diagram: () =>
+      '<svg viewBox="0 0 140 140" width="140" height="140">' +
+        '<rect x="20" y="45" width="100" height="55" fill="var(--parchment)" stroke="var(--gold)" stroke-width="2.5"/>' +
+        '<text x="65" y="38" font-family="DM Sans" font-size="13" fill="var(--ink)">a</text>' +
+        '<text x="126" y="76" font-family="DM Sans" font-size="13" fill="var(--ink)">b</text>' +
+      '</svg>',
+    caption: 'Rectangular duct — square when a = b.',
+    formulaBlock: 'A = ab &nbsp;&nbsp; P = 2(a + b) &nbsp;&nbsp; D_h = 2ab / (a + b)',
+    formulaVars: [['a','duct width'], ['b','duct height']],
+    formulaNote: 'For a square duct (a = b), D_h = a — equal to the side length.'
+  },
+
+  elliptical: {
+    inputs: () =>
+      field('W', 'Width, major axis (W = 2a)', 60, 'W-unit', 'mm') +
+      field('H', 'Height, minor axis (H = 2b)', 30, 'H-unit', 'mm'),
+    compute: () => {
+      const W = getM('W', 'W-unit');
+      const H = getM('H', 'H-unit');
+      if (!(W > 0) || !(H > 0)) return { valid: false, msg: 'Width and height must be greater than zero.' };
+      const a = W/2, b = H/2;
+      const A = Math.PI * a * b;
+      const h = Math.pow((a-b)/(a+b), 2);
+      const P = Math.PI * (a+b) * (1 + (3*h)/(10 + Math.sqrt(4 - 3*h)));
+      return { valid: true, A, P };
+    },
+    diagram: () =>
+      '<svg viewBox="0 0 140 140" width="140" height="140">' +
+        '<ellipse cx="70" cy="70" rx="55" ry="32" fill="var(--parchment)" stroke="var(--gold)" stroke-width="2.5"/>' +
+        '<text x="65" y="34" font-family="DM Sans" font-size="13" fill="var(--ink)">W</text>' +
+        '<text x="128" y="76" font-family="DM Sans" font-size="13" fill="var(--ink)">H</text>' +
+      '</svg>',
+    caption: 'Elliptical duct.',
+    formulaBlock: 'A = &pi;ab &nbsp;&nbsp; P &asymp; &pi;(a+b)[1 + 3h/(10+&radic;(4&minus;3h))], &nbsp; h = ((a&minus;b)/(a+b))&sup2;',
+    formulaVars: [['a','semi-major axis, W/2'], ['b','semi-minor axis, H/2']],
+    formulaNote: "Perimeter via Ramanujan's second approximation (error < 0.04% for all aspect ratios)."
+  },
+
+  triangular: {
+    inputs: () =>
+      field('ta', 'Side a', 40, 'ta-unit', 'mm') +
+      field('tb', 'Side b', 40, 'tb-unit', 'mm') +
+      field('tc', 'Side c', 40, 'tc-unit', 'mm'),
+    compute: () => {
+      const a = getM('ta', 'ta-unit');
+      const b = getM('tb', 'tb-unit');
+      const c = getM('tc', 'tc-unit');
+      if (!(a > 0) || !(b > 0) || !(c > 0)) return { valid: false, msg: 'All three sides must be greater than zero.' };
+      if (a+b <= c || b+c <= a || a+c <= b) return { valid: false, msg: 'These sides do not form a valid triangle (triangle inequality violated).' };
+      const s = (a+b+c)/2;
+      const A = Math.sqrt(s*(s-a)*(s-b)*(s-c));
+      return { valid: true, A, P: a+b+c };
+    },
+    diagram: () =>
+      '<svg viewBox="0 0 140 140" width="140" height="140">' +
+        '<polygon points="70,28 20,105 120,105" fill="var(--parchment)" stroke="var(--gold)" stroke-width="2.5"/>' +
+        '<text x="38" y="72" font-family="DM Sans" font-size="12" fill="var(--ink)">a</text>' +
+        '<text x="95" y="72" font-family="DM Sans" font-size="12" fill="var(--ink)">b</text>' +
+        '<text x="66" y="118" font-family="DM Sans" font-size="12" fill="var(--ink)">c</text>' +
+      '</svg>',
+    caption: 'General (scalene) triangular duct.',
+    formulaBlock: 's = (a+b+c)/2 &nbsp;&nbsp; A = &radic;[s(s&minus;a)(s&minus;b)(s&minus;c)] &nbsp;&nbsp; P = a+b+c',
+    formulaVars: [['a, b, c','triangle side lengths'], ['s','semi-perimeter']],
+    formulaNote: "Heron's formula — covers equilateral and right triangular ducts as special cases."
+  },
+
+  trapezoidal: {
+    inputs: () =>
+      field('bw', 'Bottom width (b)', 300, 'bw-unit', 'mm') +
+      field('Bw', 'Top / free-surface width (B)', 500, 'Bw-unit', 'mm') +
+      field('y', 'Flow depth (y)', 200, 'y-unit', 'mm'),
+    compute: () => {
+      const b = getM('bw', 'bw-unit');
+      const B = getM('Bw', 'Bw-unit');
+      const y = getM('y', 'y-unit');
+      if (!(b > 0) || !(B > 0) || !(y > 0)) return { valid: false, msg: 'Bottom width, top width, and depth must all be greater than zero.' };
+      if (B < b) return { valid: false, msg: 'Top width must be greater than or equal to bottom width.' };
+      const A = (b+B)/2 * y;
+      const halfDiff = (B-b)/2;
+      const P = b + 2*Math.sqrt(y*y + halfDiff*halfDiff);
+      return { valid: true, A, P };
+    },
+    diagram: () =>
+      '<svg viewBox="0 0 140 140" width="140" height="140">' +
+        '<polygon points="35,100 105,100 122,35 18,35" fill="var(--parchment)" stroke="var(--gold)" stroke-width="2.5"/>' +
+        '<line x1="18" y1="35" x2="122" y2="35" stroke="var(--blue)" stroke-width="2" stroke-dasharray="4,3"/>' +
+        '<text x="45" y="28" font-family="DM Sans" font-size="11" fill="var(--blue)">B (surface)</text>' +
+        '<text x="65" y="115" font-family="DM Sans" font-size="12" fill="var(--ink)">b</text>' +
+        '<text x="6" y="70" font-family="DM Sans" font-size="12" fill="var(--ink)">y</text>' +
+      '</svg>',
+    caption: 'Open channel — the free surface B is not wetted.',
+    formulaBlock: 'A = (b+B)y/2 &nbsp;&nbsp; P = b + 2&radic;[y&sup2; + ((B&minus;b)/2)&sup2;]',
+    formulaVars: [['b','channel bottom width'], ['B','free-surface width'], ['y','flow depth']],
+    formulaNote: 'The top width B is the free liquid surface and is excluded from the wetted perimeter P.'
+  },
+
+  'partial-circular': {
+    inputs: () =>
+      field('pD', 'Pipe diameter (D)', 300, 'pD-unit', 'mm') +
+      field('py', 'Flow depth (y)', 120, 'py-unit', 'mm'),
+    compute: () => {
+      const D = getM('pD', 'pD-unit');
+      const y = getM('py', 'py-unit');
+      if (!(D > 0) || !(y > 0)) return { valid: false, msg: 'Diameter and depth must be greater than zero.' };
+      if (y >= D) return { valid: false, msg: 'Flow depth must be less than pipe diameter (use the full-circular shape for y = D).' };
+      const theta = 2 * Math.acos(1 - 2*y/D);
+      const A = (D*D/8) * (theta - Math.sin(theta));
+      const P = D * theta / 2;
+      return { valid: true, A, P };
+    },
+    diagram: () =>
+      '<svg viewBox="0 0 140 140" width="140" height="140">' +
+        '<defs><clipPath id="fc"><rect x="10" y="58" width="120" height="60"/></clipPath></defs>' +
+        '<circle cx="70" cy="70" r="55" fill="var(--parchment)" stroke="var(--gold)" stroke-width="2.5"/>' +
+        '<circle cx="70" cy="70" r="55" fill="var(--gold-light)" opacity="0.35" clip-path="url(#fc)"/>' +
+        '<line x1="10" y1="58" x2="130" y2="58" stroke="var(--blue)" stroke-width="2" stroke-dasharray="4,3"/>' +
+        '<text x="78" y="50" font-family="DM Sans" font-size="11" fill="var(--blue)">surface</text>' +
+        '<line x1="70" y1="70" x2="70" y2="15" stroke="var(--ink)" stroke-width="1.25" stroke-dasharray="4,3"/>' +
+        '<text x="75" y="42" font-family="DM Sans" font-size="12" fill="var(--ink)">D</text>' +
+        '<line x1="134" y1="58" x2="134" y2="118" stroke="var(--ink-mid)" stroke-width="1.25"/>' +
+        '<text x="122" y="92" font-family="DM Sans" font-size="12" fill="var(--ink-mid)">y</text>' +
+      '</svg>',
+    caption: 'Partially filled circular pipe — open channel flow.',
+    formulaBlock: '&theta; = 2cos&#8315;&sup1;(1 &minus; 2y/D) &nbsp;&nbsp; A = (D&sup2;/8)(&theta; &minus; sin&theta;) &nbsp;&nbsp; P = D&theta;/2',
+    formulaVars: [['D','pipe diameter'], ['y','flow depth'], ['&theta;','central angle subtended by free surface, rad']],
+    formulaNote: 'The free-surface chord is excluded from P. Valid for 0 < y < D; y = D/2 (half full) gives D_h = D.'
+  }
+};
+
+function renderShape() {
+  const key = document.getElementById('shape-select').value;
+  const shape = shapes[key];
+
+  document.getElementById('inputs-grid').innerHTML = shape.inputs();
+  document.getElementById('diagram-svg').innerHTML = shape.diagram();
+  document.getElementById('diagram-caption').textContent = shape.caption;
+
+  document.getElementById('shape-formula-block').innerHTML = '<span>' + shape.formulaBlock + '</span>';
+  document.getElementById('shape-formula-vars').innerHTML = shape.formulaVars
+    .map(([sym, desc]) => '<span class="fvar"><strong>' + sym + '</strong> = ' + desc + '</span>').join('');
+  document.getElementById('shape-formula-note').textContent = shape.formulaNote;
+
+  calc();
+}
+
+function calc() {
+  const key = document.getElementById('shape-select').value;
+  const shape = shapes[key];
+  const warn = document.getElementById('warning-invalid');
+
+  let result;
+  try { result = shape.compute(); }
+  catch (e) { result = { valid: false, msg: 'Enter valid numeric dimensions.' }; }
+
+  const ids = ['res-A-mm2','res-A-in2','res-P-mm','res-P-in','res-Dh-mm','res-Dh-in','res-Dh-ft'];
+
+  if (!result.valid) {
+    warn.textContent = '⚠ ' + result.msg;
+    warn.classList.add('visible');
+    ids.forEach(id => document.getElementById(id).textContent = '—');
+    return;
+  }
+  warn.classList.remove('visible');
+
+  const A = result.A, P = result.P; // m^2, m
+  const Dh = 4 * A / P;             // m
+
+  document.getElementById('res-A-mm2').textContent = fmt(A * 1e6);
+  document.getElementById('res-A-in2').textContent = fmt(A / (0.0254*0.0254));
+  document.getElementById('res-P-mm').textContent = fmt(P * 1000);
+  document.getElementById('res-P-in').textContent = fmt(P / 0.0254);
+  document.getElementById('res-Dh-mm').textContent = fmt(Dh * 1000);
+  document.getElementById('res-Dh-in').textContent = fmt(Dh / 0.0254);
+  document.getElementById('res-Dh-ft').textContent = fmt(Dh / 0.3048);
+}
+
+renderShape();
+</script>
+</body>
+</html>

@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beam Bending Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+      --blue: #1c4f82;
+      --blue-pale: #e6f0fb;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 640px; line-height: 1.7; }
+
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    /* ── INPUTS ── */
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .inputs-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+      font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border); border-radius: 8px; padding: 9px 8px;
+      font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; cursor: pointer;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 2px; }
+
+    .fluid-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .fluid-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .fluid-row select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-family: inherit; font-size: 13px; color: var(--ink); background: var(--parchment); outline: none; flex: 1; min-width: 160px; }
+
+    /* dynamic support/load rows */
+    .dyn-row {
+      display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap;
+      background: var(--parchment); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 10px;
+    }
+    .dyn-row .field { flex: 1 1 150px; }
+    .dyn-row .field.type-field { flex: 1 1 170px; }
+    .remove-btn {
+      border: 1px solid rgba(122,42,42,0.35); color: var(--red); background: var(--red-pale);
+      border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 12px; font-weight: 500;
+      cursor: pointer; height: 38px; white-space: nowrap;
+    }
+    .remove-btn:hover { background: #efd9d9; }
+    .add-btn {
+      border: 1px solid var(--border-strong); color: var(--gold); background: var(--gold-pale);
+      border-radius: 8px; padding: 10px 18px; font-family: inherit; font-size: 13px; font-weight: 500;
+      cursor: pointer;
+    }
+    .add-btn:hover { background: #e8d9ab; }
+
+    .mode-toggle { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 20px; overflow: hidden; }
+    .mode-toggle button { padding: 7px 20px; border: none; background: var(--parchment-dark); color: var(--ink-mid); cursor: pointer; font-family: inherit; font-size: 13px; font-weight: 500; transition: background 0.15s, color 0.15s; }
+    .mode-toggle button.active { background: var(--gold); color: #fff; }
+    .mode-toggle button:not(.active):hover { background: var(--gold-pale); }
+
+    /* diagram panel */
+    .beam-panel {
+      background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+    }
+    .beam-panel svg { width: 100%; height: auto; display: block; }
+    .chart-label { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-mid); margin: 18px 0 6px; }
+    .chart-label:first-child { margin-top: 0; }
+
+    /* ── RESULTS ── */
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+
+    .result-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 20px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+    .flow-sub { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+    .flow-sub-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-mid); }
+    .flow-sub-row span:last-child { color: var(--ink-faint); }
+
+    .warning-banner { background: var(--amber-pale); border: 1px solid rgba(122,90,26,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--amber); margin-bottom: 12px; display: none; }
+    .warning-banner.visible { display: block; }
+
+    /* ── FORMULA ── */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; margin-top: 1.5rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 15px; color: var(--ink); padding: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    .source-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); line-height: 1.6; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid, .inputs-grid.cols-3 { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr; }
+      .result-card .rvalue { font-size: 17px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+
+    .print-header { display: none; }
+    .print-btn { margin-top: 14px; }
+
+    @media print {
+      body::before { display: none !important; }
+      nav, footer, .mode-toggle, .add-btn, .remove-btn, .hover-instructions { display: none !important; }
+      #warning-invalid:empty { display: none !important; }
+
+      .print-header { display: block !important; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1.5px solid var(--ink); font-size: 12px; color: var(--ink-mid); display: flex; justify-content: space-between; }
+      .print-header strong { color: var(--ink); font-family: 'DM Serif Display', serif; font-size: 15px; }
+
+      body, .page { background: white !important; }
+      .card, .inputs-card, .beam-panel, .formula-card { background: white !important; border: 1px solid #ccc !important; break-inside: avoid; }
+      .dyn-row { background: white !important; break-inside: avoid; }
+      .result-card, .result-card.primary { background: white !important; }
+
+      .page { max-width: 100% !important; padding: 0 !important; }
+      .section-label { break-after: avoid; }
+
+      input, select {
+        border: none !important; background: transparent !important; padding: 2px 0 !important;
+        color: var(--ink) !important; -webkit-appearance: none !important; appearance: none !important;
+      }
+      .field-row { gap: 4px; }
+
+      .beam-panel svg { max-width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="print-header">
+    <span><strong>Jesse Philippi</strong> &mdash; jphili.com</span>
+    <span>Beam Bending Calculator &middot; printed <span id="print-date"></span></span>
+  </div>
+
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Beam Bending Calculator</h1>
+    <p class="page-subtitle">Multi-support beams with simple or fixed supports, point loads, point moments, and distributed loads — solved with the direct stiffness (matrix) method, which handles statically indeterminate configurations directly.</p>
+    <div class="mode-toggle" style="margin-top:14px;">
+      <button id="mode-2d-btn" class="active" onclick="setMode(false)">2D</button>
+      <button id="mode-3d-btn" onclick="setMode(true)">3D (angled loads)</button>
+    </div>
+    <br>
+    <button class="add-btn print-btn" onclick="window.print()">Print / Save as PDF</button>
+  </div>
+
+  <div id="warning-invalid" class="warning-banner"></div>
+
+  <p class="section-label">Beam Properties</p>
+  <div class="inputs-card">
+    <div class="fluid-row">
+      <label>Material</label>
+      <select id="material-preset" onchange="applyMaterialPreset()">
+        <option value="custom">Custom E</option>
+        <option value="steel">Steel (E = 200 GPa)</option>
+        <option value="aluminum">Aluminum (E = 69 GPa)</option>
+        <option value="wood">Wood, Douglas fir (E = 13 GPa)</option>
+      </select>
+    </div>
+    <div class="inputs-grid" id="beam-props-grid"></div>
+  </div>
+
+  <p class="section-label">Cross-Section (Moment of Inertia)</p>
+  <div class="inputs-card">
+    <div id="sections-list"></div>
+    <button class="add-btn" onclick="addSection()">+ Add section</button>
+    <p class="field-note" style="margin-top:10px;">For a beam or shaft whose cross-section changes along its length, add sections to step the moment of inertia. Each section runs from the end of the previous one; the last always extends to the end of the beam. Modulus of elasticity E is assumed uniform (same material throughout).</p>
+  </div>
+
+  <p class="section-label">Supports</p>
+  <div class="inputs-card">
+    <div id="supports-list"></div>
+    <button class="add-btn" onclick="addSupport()">+ Add support</button>
+    <p class="field-note" style="margin-top:10px;">Simple = pin/roller (restrains deflection only). Fixed = restrains deflection and rotation. Bearing = elastic radial support with a finite stiffness, useful for shafts (restrains deflection only, like Simple, but elastically rather than rigidly). Two or more simple/bearing supports, or a single fixed support, are required for stability.</p>
+  </div>
+
+  <p class="section-label">Loads</p>
+  <div class="inputs-card">
+    <div id="loads-list"></div>
+    <button class="add-btn" onclick="addLoad()">+ Add load</button>
+    <p class="field-note" style="margin-top:10px;">Point loads and distributed loads act downward when positive. Moments act counterclockwise when positive.</p>
+  </div>
+
+  <p class="section-label">Beam Diagram</p>
+  <div class="beam-panel">
+    <div style="display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;">
+      <div style="flex:2 1 480px; min-width:260px;"><div id="beam-svg"></div></div>
+      <div id="endview-wrap" style="flex:1 1 180px; max-width:210px; display:none;">
+        <p class="chart-label" style="margin-top:0;">End View</p>
+        <div id="endview-svg"></div>
+        <p class="field-note">Looking along +X. Angle measured counterclockwise from straight down.</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Diagrams</p>
+  <div class="beam-panel">
+    <p class="chart-label">Shear Force, V(x)</p>
+    <div id="shear-svg"></div>
+    <p class="chart-label">Bending Moment, M(x)</p>
+    <div id="moment-svg"></div>
+    <p class="chart-label">Deflection, &delta;(x)</p>
+    <div id="defl-svg"></div>
+    <p class="field-note hover-instructions" style="margin-top:10px;">Hover or tap anywhere on a diagram to read the exact x and value at that point.</p>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Method — Direct Stiffness (Matrix) Analysis</p>
+    <p style="font-size:13px; color:var(--ink-mid); margin-bottom:10px;">The beam is discretized into Euler&ndash;Bernoulli elements between every support and load location. This treats determinate and indeterminate (multi-support, mixed simple/fixed) beams identically, without special-case logic per configuration.</p>
+    <div class="formula-block">
+      <span>k = (EI/L_e&sup3;)&middot;[12, 6L_e, &minus;12, 6L_e; 6L_e, 4L_e&sup2;, &minus;6L_e, 2L_e&sup2;; ...]</span>
+      <span>EI&middot;d&sup2;y/dx&sup2; = M(x), &nbsp; dM/dx = V(x)</span>
+    </div>
+    <p style="font-size:13px; color:var(--ink-mid); margin-bottom:6px;">Distributed loads are converted to equivalent fixed-end nodal forces before assembly. Within each span, deflection is recovered as a closed-form quartic satisfying the solved end deflections/rotations plus any distributed load on that span — giving exact V(x), M(x), and y(x) between nodes rather than linear interpolation.</p>
+
+    <div class="formula-vars">
+      <span class="fvar"><strong>EI</strong> = flexural rigidity</span>
+      <span class="fvar"><strong>L_e</strong> = element (span) length</span>
+      <span class="fvar"><strong>M</strong> = bending moment, sagging positive</span>
+      <span class="fvar"><strong>V</strong> = shear force</span>
+      <span class="fvar"><strong>y</strong> = deflection, downward positive</span>
+    </div>
+
+    <p style="font-size:13px; color:var(--ink-mid); margin-top:14px; margin-bottom:6px;"><strong>Bearing supports.</strong> A bearing is modeled as a linear elastic radial spring (reaction = k&middot;&delta;) added directly into the stiffness matrix, rather than as a rigid constraint &mdash; so the shaft is free to deflect at that location, and the stiffer the bearing, the closer the result converges to a rigid simple support. Like a simple support, a bearing restrains radial deflection only, not rotation. Radial stiffness is assumed the same in every direction (isotropic), so it applies unchanged to both bending planes below.</p>
+    <p style="font-size:13px; color:var(--ink-mid); margin-bottom:6px;"><strong>Angled point loads (biaxial bending).</strong> A point load applied at an angle is resolved into a Y-component (P&middot;cos&theta;) and a Z-component (P&middot;sin&theta;), each solved as a fully independent beam problem sharing the same supports and cross-section. This is exact &mdash; not an approximation &mdash; for a shaft whose cross-section has equal moment of inertia in every direction (i.e. round or otherwise doubly-symmetric), since bending in the two planes is then completely uncoupled. Distributed loads and applied moments are not angled and act only in the Y-plane. Shear, moment, and deflection diagrams show the Y-component, Z-component, and resultant magnitude (&radic;(Y&sup2;+Z&sup2;)) together; reactions and fixed-end moments on the beam diagram show the resultant with a (Y, Z) breakdown. Angle is measured counterclockwise from straight down, viewed looking along +X from the beam's start &mdash; see the End View diagram. Note: for a single load, the resultant magnitude is mathematically identical regardless of angle &mdash; only its Y/Z split changes.</p>
+
+    <p class="source-note">
+      Sign convention: downward loads positive, sagging moment positive, deflection computed positive downward but plotted as negative (dipping below the axis) so the deflection diagram visually matches the direction of a downward load. Moment of inertia may vary in piecewise-constant sections along the beam; each section boundary is inserted as an analysis node so displacement, rotation, shear, and moment stay exactly continuous across the step. Modulus of elasticity E is assumed uniform (single material). Method verified against closed-form and independent virtual-work solutions for simply-supported, cantilever, propped-cantilever, continuous-beam, and stepped-section cases. References: Euler&ndash;Bernoulli beam theory; McGuire, Gallagher &amp; Ziemian, <em>Matrix Structural Analysis</em>; Hibbeler, <em>Mechanics of Materials</em>.
+    </p>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+/* ══════════════════════════ Unit handling ══════════════════════════ */
+const UNIT = {
+  length:  { mm: 0.001, cm: 0.01, m: 1, in: 0.0254, ft: 0.3048 },
+  force:   { N: 1, kN: 1000, lbf: 4.448222, kip: 4448.222 },
+  modulus: { MPa: 1e6, GPa: 1e9, ksi: 6.894757e6, psi: 6894.757 },
+  inertia: { 'mm\u2074': 1e-12, 'cm\u2074': 1e-8, 'm\u2074': 1, 'in\u2074': 4.16231e-7 },
+  moment:  { 'N\u00b7m': 1, 'kN\u00b7m': 1000, 'lbf\u00b7ft': 1.355818, 'kip\u00b7ft': 1355.818 },
+  distload:{ 'N/m': 1, 'kN/m': 1000, 'lbf/ft': 14.5939, 'kip/ft': 14593.9 },
+  stiffness:{ 'N/\u00b5m': 1e6, 'kN/mm': 1e6, 'lbf/in': 175.1268, 'kip/in': 175126.8 },
+};
+
+// Last unit chosen per quantity kind — used as the default for newly-added
+// support/load rows, and as the display unit for the beam diagram + charts.
+let prefUnit = { length: 'm', force: 'kN', moment: 'kN\u00b7m', distload: 'kN/m', stiffness: 'N/\u00b5m', inertia: 'mm\u2074' };
+function trackUnit(kind, unit) { prefUnit[kind] = unit; }
+function toDisplay(v_SI, kind) { return v_SI / UNIT[kind][prefUnit[kind]]; }
+
+function fmt(v, sig) {
+  if (!isFinite(v) || v === null) return '\u2014';
+  if (v === 0) return '0';
+  if (Math.abs(v) < 0.01) return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  return parseFloat(v.toPrecision(sig || 5)).toString();
+}
+
+function stripCommas(str) {
+  return String(str).replace(/,/g, '');
+}
+
+function formatWithCommas(raw) {
+  raw = String(raw);
+  const negative = raw.startsWith('-');
+  if (negative) raw = raw.slice(1);
+  let [intPart, decPart] = raw.split('.');
+  intPart = (intPart || '').replace(/[^\d]/g, '');
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  let result = (negative ? '-' : '') + intPart;
+  if (decPart !== undefined) result += '.' + decPart.replace(/[^\d]/g, '');
+  return result;
+}
+
+// Live-formats a text input as comma-grouped while typing, preserving cursor position.
+function onNumericInput(el) {
+  const posFromEnd = el.value.length - (el.selectionStart ?? el.value.length);
+  let sanitized = el.value.replace(/[^0-9.\-]/g, '');
+  sanitized = sanitized[0] === '-' ? '-' + sanitized.slice(1).replace(/-/g, '') : sanitized.replace(/-/g, '');
+  const firstDot = sanitized.indexOf('.');
+  if (firstDot !== -1) sanitized = sanitized.slice(0, firstDot + 1) + sanitized.slice(firstDot + 1).replace(/\./g, '');
+  const formatted = formatWithCommas(sanitized);
+  el.value = formatted;
+  const newPos = Math.max(0, formatted.length - posFromEnd);
+  if (el.setSelectionRange) el.setSelectionRange(newPos, newPos);
+}
+
+function unitSelect(id, table, def, onchange, trackKind) {
+  const opts = Object.keys(table);
+  const changeAttr = (trackKind ? 'trackUnit(\'' + trackKind + '\', this.value); ' : '') + onchange;
+  return '<select id="' + id + '" onchange="' + changeAttr + '">' +
+    opts.map(u => '<option value="' + u + '"' + (u === def ? ' selected' : '') + '>' + u + '</option>').join('') +
+    '</select>';
+}
+
+function field(id, labelHtml, defVal, unitId, table, unitDef, onchange, noteHtml, trackKind) {
+  return '<div class="field">' +
+    '<label>' + labelHtml + '</label>' +
+    '<div class="field-row">' +
+      '<input type="text" inputmode="decimal" id="' + id + '" value="' + formatWithCommas(defVal) + '" oninput="onNumericInput(this); ' + onchange + '" />' +
+      unitSelect(unitId, table, unitDef, onchange, trackKind) +
+    '</div>' +
+    (noteHtml ? '<span class="field-note">' + noteHtml + '</span>' : '') +
+    '</div>';
+}
+
+function fieldPlain(id, labelHtml, defVal, onchange, noteHtml) {
+  return '<div class="field">' +
+    '<label>' + labelHtml + '</label>' +
+    '<div class="field-row">' +
+      '<input type="text" inputmode="decimal" id="' + id + '" value="' + formatWithCommas(defVal) + '" oninput="onNumericInput(this); ' + onchange + '" />' +
+    '</div>' +
+    (noteHtml ? '<span class="field-note">' + noteHtml + '</span>' : '') +
+    '</div>';
+}
+
+function getVal(id, unitId, table) {
+  const raw = parseFloat(stripCommas(document.getElementById(id).value));
+  const unit = document.getElementById(unitId).value;
+  return raw * table[unit];
+}
+
+/* ══════════════════════════ Beam solver (direct stiffness method) ══════════════════════════ */
+function solveBeam({ L, E, sections, supports, loads }) {
+  function round(v){ return Math.round(v*1e6)/1e6; }
+  let xs = new Set([0, L]);
+  supports.forEach(s => xs.add(round(s.x)));
+  loads.forEach(ld => {
+    if (ld.type==='point'||ld.type==='moment') xs.add(round(ld.x));
+    if (ld.type==='udl'){ xs.add(round(ld.x1)); xs.add(round(ld.x2)); }
+  });
+  sections.forEach(sec => xs.add(round(sec.xEnd))); // section (I) boundaries become mesh nodes too
+  const nodeX = Array.from(xs).sort((a,b)=>a-b);
+  const n = nodeX.length, ndof = 2*n;
+  const idx = x => nodeX.findIndex(v => Math.abs(v-x) < 1e-6);
+
+  function sectionAt(xMid) {
+    return sections.find(sc => xMid >= sc.xStart - 1e-6 && xMid <= sc.xEnd + 1e-6) || sections[sections.length-1];
+  }
+
+  const elements = [];
+  for (let i=0;i<n-1;i++){
+    const x1=nodeX[i], x2=nodeX[i+1], Le=x2-x1;
+    let w=0;
+    loads.forEach(ld => { if (ld.type==='udl' && ld.x1<=x1+1e-6 && ld.x2>=x2-1e-6) w += ld.w; });
+    const EI = E * sectionAt((x1+x2)/2).I;
+    elements.push({ i1:i, i2:i+1, x1, x2, Le, w, EI });
+  }
+
+  const K = Array.from({length:ndof}, () => new Array(ndof).fill(0));
+  const F = new Array(ndof).fill(0);
+
+  elements.forEach(el => {
+    const Le = el.Le, k = el.EI/(Le**3);
+    const ke = [
+      [12*k, 6*Le*k, -12*k, 6*Le*k],
+      [6*Le*k, 4*Le*Le*k, -6*Le*k, 2*Le*Le*k],
+      [-12*k, -6*Le*k, 12*k, -6*Le*k],
+      [6*Le*k, 2*Le*Le*k, -6*Le*k, 4*Le*Le*k],
+    ];
+    const map = [2*el.i1, 2*el.i1+1, 2*el.i2, 2*el.i2+1];
+    for (let a=0;a<4;a++) for (let b=0;b<4;b++) K[map[a]][map[b]] += ke[a][b];
+    if (el.w !== 0){
+      const w = el.w;
+      const fef = [w*Le/2, w*Le*Le/12, w*Le/2, -w*Le*Le/12];
+      for (let a=0;a<4;a++) F[map[a]] += fef[a];
+    }
+  });
+
+  loads.forEach(ld => {
+    if (ld.type==='point') F[2*idx(ld.x)] += ld.P;
+    if (ld.type==='moment') F[2*idx(ld.x)+1] += ld.M;
+  });
+
+  // Bearings are elastic radial springs, not rigid constraints: add stiffness
+  // to the diagonal rather than eliminating the DOF. Rotation stays free,
+  // same as a simple support — a single bearing has no moment resistance.
+  supports.filter(s => s.type === 'bearing').forEach(s => {
+    const i = idx(s.x);
+    K[2*i][2*i] += s.k;
+  });
+
+  const restrained = new Array(ndof).fill(false);
+  supports.forEach(s => {
+    const i = idx(s.x);
+    if (s.type === 'fixed') { restrained[2*i] = true; restrained[2*i+1] = true; }
+    else if (s.type === 'simple') { restrained[2*i] = true; }
+  });
+  const freeDofs = [];
+  for (let i=0;i<ndof;i++) if (!restrained[i]) freeDofs.push(i);
+
+  const nf = freeDofs.length;
+  const Kff = Array.from({length:nf}, ()=> new Array(nf).fill(0));
+  const Ff = new Array(nf).fill(0);
+  for (let a=0;a<nf;a++){
+    Ff[a] = F[freeDofs[a]];
+    for (let b=0;b<nf;b++) Kff[a][b] = K[freeDofs[a]][freeDofs[b]];
+  }
+
+  let df;
+  try { df = gaussSolve(Kff, Ff); }
+  catch(e){ return { error: 'singular' }; }
+  if (df.some(v => !isFinite(v))) return { error: 'singular' };
+
+  const d = new Array(ndof).fill(0);
+  freeDofs.forEach((dof,a) => { d[dof] = df[a]; });
+
+  const Kd = new Array(ndof).fill(0);
+  for (let a=0;a<ndof;a++){
+    let sum=0;
+    for (let b=0;b<ndof;b++) sum += K[a][b]*d[b];
+    Kd[a] = sum;
+  }
+  const reactions = supports.map(s => {
+    const i = idx(s.x);
+    if (s.type === 'bearing') return { x: s.x, type: 'bearing', R: s.k * d[2*i], M: 0 };
+    return { x:s.x, type: s.type, R: F[2*i]-Kd[2*i], M: s.type==='fixed' ? (F[2*i+1]-Kd[2*i+1]) : 0 };
+  });
+
+  elements.forEach(el => {
+    const Le=el.Le, w=el.w, EI=el.EI;
+    const v1=d[2*el.i1], t1=d[2*el.i1+1], v2=d[2*el.i2], t2=d[2*el.i2+1];
+    const A=v1, B=t1;
+    const R1 = v2 - A - B*Le - (w/(24*EI))*Le**4;
+    const R2 = t2 - B - (w/(6*EI))*Le**3;
+    const Dc = (R2 - 2*R1/Le)/(Le*Le);
+    const Cc = R1/(Le*Le) - Dc*Le;
+    el.coeffs = { A,B,C:Cc,D:Dc,w };
+  });
+
+  function sample(x){
+    x = Math.max(0, Math.min(L, x));
+    let el = elements.find(e => x >= e.x1-1e-9 && x <= e.x2+1e-9);
+    if (!el) el = elements[elements.length-1];
+    const s = x - el.x1;
+    const { A,B,C,D,w } = el.coeffs;
+    const EI = el.EI;
+    const y = A + B*s + C*s*s + D*s**3 + (w/(24*EI))*s**4;
+    const theta = B + 2*C*s + 3*D*s*s + (w/(6*EI))*s**3;
+    const M = -(EI*(2*C + 6*D*s) + (w/2)*s*s);
+    const V = -(6*D*EI + w*s);
+    return { x, y, theta, M, V };
+  }
+  return { nodeX, elements, reactions, sample };
+}
+
+function gaussSolve(A, b){
+  const n = b.length;
+  const M = A.map((row,i) => [...row, b[i]]);
+  for (let col=0; col<n; col++){
+    let piv = col;
+    for (let r=col+1;r<n;r++) if (Math.abs(M[r][col]) > Math.abs(M[piv][col])) piv = r;
+    if (Math.abs(M[piv][col]) < 1e-12) throw new Error('singular');
+    [M[col],M[piv]] = [M[piv],M[col]];
+    const pv = M[col][col];
+    for (let c=col;c<=n;c++) M[col][c] /= pv;
+    for (let r=0;r<n;r++){
+      if (r===col) continue;
+      const factor = M[r][col];
+      for (let c=col;c<=n;c++) M[r][c] -= factor*M[col][c];
+    }
+  }
+  return M.map(row => row[n]);
+}
+
+/* ══════════════════════════ App state (structural only — values live in the DOM) ══════════════════════════ */
+let supportRows = [];
+let loadRows = [];
+let sectionRows = [];
+let supportCounter = 0, loadCounter = 0, sectionCounter = 0;
+let lastResultY = null, lastResultZ = null, lastL = 0;
+let mode3D = false;
+const chartScales = {};
+
+function newSupportRow(x, type, xUnit) {
+  const id = 's' + (supportCounter++);
+  supportRows.push({ id, defX: x, xUnit: xUnit || prefUnit.length, defType: type, kVal: undefined, kUnit: undefined });
+  return id;
+}
+function newLoadRow(kind, opts) {
+  const id = 'l' + (loadCounter++);
+  loadRows.push({ id, kind, opts: opts || {} });
+  return id;
+}
+
+// Read current DOM values back into the row arrays before a full re-render,
+// so editing one row and then adding/removing another doesn't reset it.
+function captureSupportsFromDOM() {
+  supportRows.forEach(row => {
+    const xEl = document.getElementById('sx-' + row.id);
+    const xuEl = document.getElementById('sxu-' + row.id);
+    const typeEl = document.getElementById('stype-' + row.id);
+    if (xEl) row.defX = parseFloat(stripCommas(xEl.value));
+    if (xuEl) row.xUnit = xuEl.value;
+    if (typeEl) row.defType = typeEl.value;
+    const kEl = document.getElementById('sk-' + row.id);
+    const kuEl = document.getElementById('sku-' + row.id);
+    if (kEl) row.kVal = parseFloat(stripCommas(kEl.value));
+    if (kuEl) row.kUnit = kuEl.value;
+  });
+}
+function captureLoadsFromDOM() {
+  loadRows.forEach(row => {
+    const o = row.opts || {};
+    if (row.kind === 'point') {
+      o.x = numVal('lx-' + row.id); o.xUnit = selVal('lxu-' + row.id);
+      o.P = numVal('lP-' + row.id); o.PUnit = selVal('lPu-' + row.id);
+      { const av = numVal('lAngle-' + row.id); if (av !== undefined) o.angle = av; }
+    } else if (row.kind === 'moment') {
+      o.x = numVal('lx-' + row.id); o.xUnit = selVal('lxu-' + row.id);
+      o.M = numVal('lM-' + row.id); o.MUnit = selVal('lMu-' + row.id);
+    } else if (row.kind === 'udl') {
+      o.x1 = numVal('lx1-' + row.id); o.x1Unit = selVal('lx1u-' + row.id);
+      o.x2 = numVal('lx2-' + row.id); o.x2Unit = selVal('lx2u-' + row.id);
+      o.w = numVal('lw-' + row.id); o.wUnit = selVal('lwu-' + row.id);
+    }
+    row.opts = o;
+  });
+}
+function numVal(id) { const el = document.getElementById(id); return el ? parseFloat(stripCommas(el.value)) : undefined; }
+function selVal(id) { const el = document.getElementById(id); return el ? el.value : undefined; }
+
+/* ── Beam properties ── */
+function renderBeamProps() {
+  document.getElementById('beam-props-grid').innerHTML =
+    field('beam-L', 'Beam length', 10, 'beam-L-unit', UNIT.length, prefUnit.length, 'onLengthChanged()', null, 'length') +
+    field('beam-E', 'Modulus of elasticity, E', 200, 'beam-E-unit', UNIT.modulus, 'GPa', 'onEChanged()');
+}
+function onLengthChanged() {
+  renderSections(); // last section's "extends to end of beam" display needs to update
+  recalc();
+}
+function onEChanged() {
+  document.getElementById('material-preset').value = 'custom';
+  recalc();
+}
+function applyMaterialPreset() {
+  const preset = document.getElementById('material-preset').value;
+  const table = { steel: 200, aluminum: 69, wood: 13 };
+  if (table[preset] !== undefined) {
+    document.getElementById('beam-E').value = table[preset];
+    document.getElementById('beam-E-unit').value = 'GPa';
+  }
+  recalc();
+}
+
+/* ── Supports ── */
+function supportExtraFields(row) {
+  if (row.defType !== 'bearing') return '';
+  return field('sk-' + row.id, 'Radial stiffness, k', row.kVal ?? 100, 'sku-' + row.id, UNIT.stiffness, row.kUnit || prefUnit.stiffness, 'recalc()', null, 'stiffness');
+}
+function renderSupports() {
+  const html = supportRows.map(row => {
+    const posField = field('sx-' + row.id, 'Position', row.defX, 'sxu-' + row.id, UNIT.length, row.xUnit || prefUnit.length, 'recalc()', null, 'length');
+    return '<div class="dyn-row">' +
+      posField +
+      '<div class="field type-field"><label>Support type</label>' +
+        '<select id="stype-' + row.id + '" onchange="onSupportTypeChanged(\'' + row.id + '\')">' +
+          '<option value="simple"' + (row.defType==='simple'?' selected':'') + '>Simple (pin/roller)</option>' +
+          '<option value="fixed"' + (row.defType==='fixed'?' selected':'') + '>Fixed</option>' +
+          '<option value="bearing"' + (row.defType==='bearing'?' selected':'') + '>Bearing (elastic)</option>' +
+        '</select></div>' +
+      '<div id="sfields-' + row.id + '" style="display:contents;">' + supportExtraFields(row) + '</div>' +
+      '<button class="remove-btn" onclick="removeSupport(\'' + row.id + '\')">Remove</button>' +
+      '</div>';
+  }).join('');
+  document.getElementById('supports-list').innerHTML = html;
+}
+function onSupportTypeChanged(id) {
+  const row = supportRows.find(r => r.id === id);
+  row.defType = document.getElementById('stype-' + id).value;
+  document.getElementById('sfields-' + id).innerHTML = supportExtraFields(row);
+  recalc();
+}
+function addSupport() {
+  captureSupportsFromDOM();
+  const L = parseFloat(stripCommas(document.getElementById('beam-L').value)) || 10;
+  newSupportRow(L, 'simple');
+  renderSupports(); recalc();
+}
+function removeSupport(id) {
+  captureSupportsFromDOM();
+  supportRows = supportRows.filter(r => r.id !== id);
+  renderSupports(); recalc();
+}
+
+/* ── Loads ── */
+function loadRowFields(row) {
+  const o = row.opts;
+  if (row.kind === 'point') {
+    return field('lx-' + row.id, 'Position', o.x ?? 5, 'lxu-' + row.id, UNIT.length, o.xUnit || prefUnit.length, 'recalc()', null, 'length') +
+           field('lP-' + row.id, 'Load, P (down +)', o.P ?? 20, 'lPu-' + row.id, UNIT.force, o.PUnit || prefUnit.force, 'recalc()', null, 'force') +
+           (mode3D ? fieldPlain('lAngle-' + row.id, 'Angle (\u00b0)', o.angle ?? 0, 'recalc()', '0\u00b0 = straight down (Y), 90\u00b0 = horizontal (Z).') : '');
+  }
+  if (row.kind === 'moment') {
+    return field('lx-' + row.id, 'Position', o.x ?? 5, 'lxu-' + row.id, UNIT.length, o.xUnit || prefUnit.length, 'recalc()', null, 'length') +
+           field('lM-' + row.id, 'Moment (ccw +)', o.M ?? 10, 'lMu-' + row.id, UNIT.moment, o.MUnit || prefUnit.moment, 'recalc()', null, 'moment');
+  }
+  if (row.kind === 'udl') {
+    return field('lx1-' + row.id, 'Start', o.x1 ?? 0, 'lx1u-' + row.id, UNIT.length, o.x1Unit || prefUnit.length, 'recalc()', null, 'length') +
+           field('lx2-' + row.id, 'End', o.x2 ?? 10, 'lx2u-' + row.id, UNIT.length, o.x2Unit || prefUnit.length, 'recalc()', null, 'length') +
+           field('lw-' + row.id, 'Intensity, w (down +)', o.w ?? 5, 'lwu-' + row.id, UNIT.distload, o.wUnit || prefUnit.distload, 'recalc()', null, 'distload');
+  }
+  return '';
+}
+function renderLoads() {
+  const html = loadRows.map(row => {
+    return '<div class="dyn-row" id="row-' + row.id + '">' +
+      '<div class="field type-field"><label>Load type</label>' +
+        '<select id="ltype-' + row.id + '" onchange="onLoadTypeChanged(\'' + row.id + '\')">' +
+          '<option value="point"' + (row.kind==='point'?' selected':'') + '>Point load</option>' +
+          '<option value="moment"' + (row.kind==='moment'?' selected':'') + '>Point moment</option>' +
+          '<option value="udl"' + (row.kind==='udl'?' selected':'') + '>Distributed load (UDL)</option>' +
+        '</select></div>' +
+      '<div id="fields-' + row.id + '" style="display:contents;">' + loadRowFields(row) + '</div>' +
+      '<button class="remove-btn" onclick="removeLoad(\'' + row.id + '\')">Remove</button>' +
+      '</div>';
+  }).join('');
+  document.getElementById('loads-list').innerHTML = html;
+}
+function onLoadTypeChanged(id) {
+  const row = loadRows.find(r => r.id === id);
+  row.kind = document.getElementById('ltype-' + id).value;
+  row.opts = {};
+  document.getElementById('fields-' + id).innerHTML = loadRowFields(row);
+  recalc();
+}
+function addLoad() {
+  captureLoadsFromDOM();
+  const L = parseFloat(stripCommas(document.getElementById('beam-L').value)) || 10;
+  newLoadRow('point', { x: L / 2, P: 20 });
+  renderLoads(); recalc();
+}
+function removeLoad(id) {
+  captureLoadsFromDOM();
+  loadRows = loadRows.filter(r => r.id !== id);
+  renderLoads(); recalc();
+}
+
+/* ── Cross-section (variable moment of inertia) ── */
+function currentBeamLength() {
+  const el = document.getElementById('beam-L');
+  return el ? (parseFloat(stripCommas(el.value)) || 10) : 10;
+}
+function renderSections() {
+  const L = currentBeamLength();
+  const html = sectionRows.map((row, i) => {
+    const isLast = i === sectionRows.length - 1;
+    const IField = field('secI-' + row.id, 'Moment of inertia, I', row.IVal ?? 8360000, 'secIu-' + row.id, UNIT.inertia, row.IUnit || prefUnit.inertia, 'recalc()', null, 'inertia');
+    let extentField;
+    if (isLast) {
+      const L_SI = getVal('beam-L', 'beam-L-unit', UNIT.length);
+      extentField = '<div class="field"><label>Extent</label>' +
+        '<div class="field-row"><input type="text" value="to end of beam (' + fmt(toDisplay(L_SI, 'length')) + ' ' + prefUnit.length + ')" disabled style="color:var(--ink-faint); font-style:italic; background:var(--parchment-dark);"/></div></div>';
+    } else {
+      extentField = field('secEnd-' + row.id, 'Ends at', row.xEndVal ?? (L/2), 'secEndu-' + row.id, UNIT.length, row.xEndUnit || prefUnit.length, 'recalc()', null, 'length');
+    }
+    const removeBtn = sectionRows.length > 1 ? '<button class="remove-btn" onclick="removeSection(\'' + row.id + '\')">Remove</button>' : '';
+    return '<div class="dyn-row">' + IField + extentField + removeBtn + '</div>';
+  }).join('');
+  document.getElementById('sections-list').innerHTML = html;
+}
+function captureSectionsFromDOM() {
+  sectionRows.forEach((row, i) => {
+    const IEl = document.getElementById('secI-' + row.id);
+    const IuEl = document.getElementById('secIu-' + row.id);
+    if (IEl) row.IVal = parseFloat(stripCommas(IEl.value));
+    if (IuEl) row.IUnit = IuEl.value;
+    const isLast = i === sectionRows.length - 1;
+    if (!isLast) {
+      const endEl = document.getElementById('secEnd-' + row.id);
+      const enduEl = document.getElementById('secEndu-' + row.id);
+      if (endEl) row.xEndVal = parseFloat(stripCommas(endEl.value));
+      if (enduEl) row.xEndUnit = enduEl.value;
+    }
+  });
+}
+function addSection() {
+  captureSectionsFromDOM();
+  const L = currentBeamLength();
+  const priorEnd = sectionRows.length >= 1 ? (sectionRows[sectionRows.length-1].xEndVal ?? 0) : 0;
+  const prevRow = sectionRows[sectionRows.length - 1];
+  if (prevRow) {
+    prevRow.xEndVal = priorEnd + (L - priorEnd) / 2;
+    prevRow.xEndUnit = prevRow.xEndUnit || prefUnit.length;
+  }
+  const newId = 'sec' + (sectionCounter++);
+  sectionRows.push({ id: newId, IVal: prevRow ? prevRow.IVal : 8360000, IUnit: prevRow ? prevRow.IUnit : prefUnit.inertia });
+  renderSections(); recalc();
+}
+function removeSection(id) {
+  captureSectionsFromDOM();
+  if (sectionRows.length <= 1) return;
+  sectionRows = sectionRows.filter(r => r.id !== id);
+  renderSections(); recalc();
+}
+
+/* ══════════════════════════ Validation ══════════════════════════ */
+function checkStability(supports, L) {
+  if (supports.length === 0) return 'Add at least one support \u2014 the beam currently has no supports and cannot carry load.';
+  const positions = supports.map(s => s.x);
+  const dupes = positions.some((x,i) => positions.findIndex(y=>Math.abs(y-x)<1e-6) !== i);
+  if (dupes) return 'Two supports share the same position \u2014 move them to distinct locations.';
+  const fixedCount = supports.filter(s => s.type==='fixed').length;
+  const translationOnlyCount = supports.filter(s => s.type==='simple' || s.type==='bearing').length;
+  if (fixedCount === 0 && translationOnlyCount < 2) return 'A beam with only simple or bearing supports needs at least two of them to prevent free rotation \u2014 neither restrains rotation on its own. Add another support or change one to Fixed.';
+  const outOfRange = supports.some(s => s.x < -1e-6 || s.x > L + 1e-6);
+  if (outOfRange) return 'A support position falls outside the beam length.';
+  const badStiffness = supports.some(s => s.type==='bearing' && !(s.k > 0));
+  if (badStiffness) return 'Bearing radial stiffness must be greater than zero.';
+  return null;
+}
+
+function checkSections(sections) {
+  for (const s of sections) {
+    if (!(s.I > 0)) return 'Each cross-section\'s moment of inertia must be greater than zero.';
+    if (s.xEnd - s.xStart < 1e-9) return 'Cross-section breakpoints must increase along the beam and stay within its length.';
+  }
+  return null;
+}
+
+/* ══════════════════════════ Compute + render everything ══════════════════════════ */
+function readInputs() {
+  const L = getVal('beam-L', 'beam-L-unit', UNIT.length);
+  const E = getVal('beam-E', 'beam-E-unit', UNIT.modulus);
+
+  const sections = [];
+  let prevEnd = 0;
+  sectionRows.forEach((row, i) => {
+    const I = getVal('secI-' + row.id, 'secIu-' + row.id, UNIT.inertia);
+    const isLast = i === sectionRows.length - 1;
+    const end = isLast ? L : getVal('secEnd-' + row.id, 'secEndu-' + row.id, UNIT.length);
+    sections.push({ xStart: prevEnd, xEnd: end, I });
+    prevEnd = end;
+  });
+
+  const supports = supportRows.map(row => {
+    const type = document.getElementById('stype-' + row.id).value;
+    const base = {
+      x: getVal('sx-' + row.id, 'sxu-' + row.id, UNIT.length),
+      type,
+    };
+    if (type === 'bearing') {
+      base.k = getVal('sk-' + row.id, 'sku-' + row.id, UNIT.stiffness);
+    }
+    return base;
+  });
+
+  const loadsY = [];
+  const loadsZ = [];
+  let has3D = false;
+  loadRows.forEach(row => {
+    if (row.kind === 'point') {
+      const x = getVal('lx-' + row.id, 'lxu-' + row.id, UNIT.length);
+      const P = getVal('lP-' + row.id, 'lPu-' + row.id, UNIT.force);
+      const angleDeg = mode3D ? (numVal('lAngle-' + row.id) || 0) : 0;
+      const rad = angleDeg * Math.PI / 180;
+      const Py = P * Math.cos(rad), Pz = P * Math.sin(rad);
+      loadsY.push({ type: 'point', x, P: Py });
+      if (Math.abs(Pz) > 1e-9) { loadsZ.push({ type: 'point', x, P: Pz }); has3D = true; }
+    } else if (row.kind === 'moment') {
+      loadsY.push({ type: 'moment', x: getVal('lx-' + row.id, 'lxu-' + row.id, UNIT.length), M: getVal('lM-' + row.id, 'lMu-' + row.id, UNIT.moment) });
+    } else {
+      loadsY.push({ type: 'udl', x1: getVal('lx1-' + row.id, 'lx1u-' + row.id, UNIT.length), x2: getVal('lx2-' + row.id, 'lx2u-' + row.id, UNIT.length), w: getVal('lw-' + row.id, 'lwu-' + row.id, UNIT.distload) });
+    }
+  });
+  // A point load also carries angle metadata forward for the end-view diagram.
+  const pointLoadsForDiagram = loadRows.filter(r => r.kind === 'point').map(row => ({
+    x: getVal('lx-' + row.id, 'lxu-' + row.id, UNIT.length),
+    P: getVal('lP-' + row.id, 'lPu-' + row.id, UNIT.force),
+    angle: mode3D ? (numVal('lAngle-' + row.id) || 0) : 0,
+  }));
+
+  return { L, E, sections, supports, loadsY, loadsZ, has3D, pointLoadsForDiagram };
+}
+
+function showWarning(msg) {
+  const warn = document.getElementById('warning-invalid');
+  if (!msg) { warn.classList.remove('visible'); warn.textContent = ''; return; }
+  warn.textContent = '\u26a0 ' + msg;
+  warn.classList.add('visible');
+}
+
+function buildComboPts(resultY, resultZ, L) {
+  const N = 240;
+  const xs = new Set();
+  for (let i = 0; i <= N; i++) xs.add(Math.round((i / N) * L * 1e6) / 1e6);
+  resultY.nodeX.forEach(x => xs.add(Math.round(x * 1e6) / 1e6));
+  resultZ.nodeX.forEach(x => xs.add(Math.round(x * 1e6) / 1e6));
+  return Array.from(xs).sort((a, b) => a - b).map(x => ({ x, sY: resultY.sample(x), sZ: resultZ.sample(x) }));
+}
+
+function recalc() {
+  let inputs;
+  try { inputs = readInputs(); }
+  catch (e) { showWarning('Enter valid numeric values in all fields.'); clearOutputs(); return; }
+
+  if (!(inputs.L > 0) || !(inputs.E > 0)) {
+    showWarning('Beam length and E must both be greater than zero.');
+    clearOutputs();
+    return;
+  }
+
+  const sectionsMsg = checkSections(inputs.sections);
+  if (sectionsMsg) { showWarning(sectionsMsg); clearOutputs(); return; }
+
+  const stabilityMsg = checkStability(inputs.supports, inputs.L);
+  if (stabilityMsg) { showWarning(stabilityMsg); clearOutputs(); return; }
+
+  const resultY = solveBeam({ L: inputs.L, E: inputs.E, sections: inputs.sections, supports: inputs.supports, loads: inputs.loadsY });
+  const resultZ = solveBeam({ L: inputs.L, E: inputs.E, sections: inputs.sections, supports: inputs.supports, loads: inputs.loadsZ });
+
+  if (resultY.error || resultZ.error) {
+    showWarning('This support/load configuration produced an unstable (singular) system. Check for mechanisms or conflicting fixed rotations.');
+    clearOutputs();
+    return;
+  }
+  showWarning(null);
+
+  const pts = buildComboPts(resultY, resultZ, inputs.L);
+
+  lastResultY = resultY;
+  lastResultZ = resultZ;
+  lastL = inputs.L;
+
+  drawBeamDiagram(inputs, resultY, resultZ);
+  if (mode3D) {
+    drawEndView(inputs.pointLoadsForDiagram);
+    drawComboChart('shear-svg', pts, 'V', inputs.L, 'V', prefUnit.force, 1 / UNIT.force[prefUnit.force]);
+    drawComboChart('moment-svg', pts, 'M', inputs.L, 'M', prefUnit.moment, 1 / UNIT.moment[prefUnit.moment]);
+    drawComboChart('defl-svg', pts, 'y', inputs.L, '\u03b4', prefUnit.length, 1 / UNIT.length[prefUnit.length], -1, 1);
+  } else {
+    document.getElementById('endview-wrap').style.display = 'none';
+    document.getElementById('endview-svg').innerHTML = '';
+    drawChart('shear-svg', pts, 'V', inputs.L, 'V', prefUnit.force, 1 / UNIT.force[prefUnit.force]);
+    drawChart('moment-svg', pts, 'M', inputs.L, 'M', prefUnit.moment, 1 / UNIT.moment[prefUnit.moment]);
+    drawChart('defl-svg', pts, 'y', inputs.L, '\u03b4', prefUnit.length, 1 / UNIT.length[prefUnit.length], -1);
+  }
+}
+
+function setMode(is3D) {
+  captureLoadsFromDOM();
+  mode3D = is3D;
+  document.getElementById('mode-2d-btn').classList.toggle('active', !is3D);
+  document.getElementById('mode-3d-btn').classList.toggle('active', is3D);
+  renderLoads();
+  recalc();
+}
+
+function clearOutputs() {
+  lastResultY = null; lastResultZ = null;
+  document.getElementById('beam-svg').innerHTML = '';
+  document.getElementById('endview-svg').innerHTML = '';
+  document.getElementById('shear-svg').innerHTML = '';
+  document.getElementById('moment-svg').innerHTML = '';
+  document.getElementById('defl-svg').innerHTML = '';
+}
+
+/* ══════════════════════════ SVG drawing ══════════════════════════ */
+const VB_W = 900, MARGIN_L = 55, MARGIN_R = 55;
+function sx(x, L) { return MARGIN_L + (x/L) * (VB_W - MARGIN_L - MARGIN_R); }
+
+function drawBeamDiagram(inputs, resultY, resultZ) {
+  const L = inputs.L, beamY = 80;
+  let svg = '<svg viewBox="0 0 ' + VB_W + ' 195" xmlns="http://www.w3.org/2000/svg" font-family="DM Sans, sans-serif">';
+
+  if (inputs.sections.length <= 1) {
+    svg += '<line x1="' + sx(0,L) + '" y1="' + beamY + '" x2="' + sx(L,L) + '" y2="' + beamY + '" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"/>';
+  } else {
+    const Ivals = inputs.sections.map(s => s.I);
+    const maxI = Math.max(...Ivals), minI = Math.min(...Ivals);
+    const hMin = 6, hMax = 18;
+    inputs.sections.forEach(sec => {
+      const x1 = sx(sec.xStart, L), x2 = sx(sec.xEnd, L);
+      let h;
+      if (maxI === minI) h = (hMin + hMax) / 2;
+      else {
+        const t = (Math.pow(sec.I, 0.25) - Math.pow(minI, 0.25)) / (Math.pow(maxI, 0.25) - Math.pow(minI, 0.25));
+        h = hMin + t * (hMax - hMin);
+      }
+      svg += '<rect x="' + x1 + '" y="' + (beamY - h/2) + '" width="' + (x2-x1) + '" height="' + h + '" fill="var(--ink)" rx="1.5"/>';
+    });
+    for (let i = 1; i < inputs.sections.length; i++) {
+      const bx = sx(inputs.sections[i].xStart, L);
+      svg += '<line x1="' + bx + '" y1="' + (beamY-13) + '" x2="' + bx + '" y2="' + (beamY+13) + '" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="2,2"/>';
+    }
+  }
+
+  inputs.loadsY.filter(l=>l.type==='udl').forEach(l => {
+    const x1 = sx(l.x1, L), x2 = sx(l.x2, L);
+    svg += '<rect x="' + x1 + '" y="' + (beamY-30) + '" width="' + (x2-x1) + '" height="26" fill="var(--gold-light)" opacity="0.4"/>';
+    for (let px=x1; px<=x2; px += Math.max(18,(x2-x1)/8)) {
+      svg += '<line x1="' + px + '" y1="' + (beamY-30) + '" x2="' + px + '" y2="' + (beamY-4) + '" stroke="var(--gold)" stroke-width="1.5" marker-end="url(#arrow)"/>';
+    }
+    svg += '<text x="' + ((x1+x2)/2) + '" y="' + (beamY-36) + '" text-anchor="middle" font-size="11" fill="var(--ink-mid)">w = ' + fmt(toDisplay(l.w, 'distload')) + ' ' + prefUnit.distload + '</text>';
+  });
+
+  inputs.pointLoadsForDiagram.forEach(l => {
+    const x = sx(l.x, L);
+    const dir = l.P >= 0 ? 1 : -1;
+    svg += '<line x1="' + x + '" y1="' + (beamY-45*dir) + '" x2="' + x + '" y2="' + (beamY-6*dir) + '" stroke="var(--gold)" stroke-width="2.5" marker-end="url(#arrow)"/>';
+    const angleTxt = Math.abs(l.angle) > 1e-9 ? ' @ ' + fmt(l.angle) + '\u00b0' : '';
+    svg += '<text x="' + x + '" y="' + (dir>0 ? beamY-50 : beamY+62) + '" text-anchor="middle" font-size="11" fill="var(--ink-mid)">P = ' + fmt(toDisplay(l.P, 'force')) + ' ' + prefUnit.force + angleTxt + '</text>';
+  });
+
+  inputs.loadsY.filter(l=>l.type==='moment').forEach(l => {
+    const x = sx(l.x, L);
+    const sweep = l.M >= 0 ? 1 : 0;
+    svg += '<path d="M ' + (x-14) + ' ' + (beamY-16) + ' A 14 14 0 1 ' + sweep + ' ' + (x+14) + ' ' + (beamY-16) + '" fill="none" stroke="var(--gold)" stroke-width="2" marker-end="url(#arrow)"/>';
+    svg += '<text x="' + x + '" y="' + (beamY-34) + '" text-anchor="middle" font-size="11" fill="var(--ink-mid)">M = ' + fmt(toDisplay(l.M, 'moment')) + ' ' + prefUnit.moment + '</text>';
+  });
+
+  inputs.supports.forEach(s => {
+    const x = sx(s.x, L);
+    if (s.type === 'simple') {
+      svg += '<polygon points="' + (x-11) + ',' + (beamY+22) + ' ' + (x+11) + ',' + (beamY+22) + ' ' + x + ',' + (beamY+3) + '" fill="none" stroke="var(--ink)" stroke-width="2"/>';
+      svg += '<line x1="' + (x-16) + '" y1="' + (beamY+22) + '" x2="' + (x+16) + '" y2="' + (beamY+22) + '" stroke="var(--ink)" stroke-width="2"/>';
+      for (let hx=x-14; hx<=x+14; hx+=6) svg += '<line x1="' + hx + '" y1="' + (beamY+22) + '" x2="' + (hx-6) + '" y2="' + (beamY+30) + '" stroke="var(--ink)" stroke-width="1"/>';
+    } else if (s.type === 'fixed') {
+      svg += '<rect x="' + (x-3) + '" y="' + (beamY-2) + '" width="6" height="26" fill="var(--ink)"/>';
+      for (let hy=beamY; hy<=beamY+22; hy+=6) svg += '<line x1="' + (x-3) + '" y1="' + hy + '" x2="' + (x-11) + '" y2="' + (hy+6) + '" stroke="var(--ink)" stroke-width="1"/>';
+    } else {
+      // bearing: draw as a spring (zigzag) to visually distinguish it as elastic
+      const zTop = beamY + 3, zBot = beamY + 26, zigN = 5, zigW = 7;
+      let zpath = 'M ' + x + ' ' + zTop;
+      for (let zi = 0; zi < zigN; zi++) {
+        const zy = zTop + ((zBot - zTop) / zigN) * (zi + 1);
+        const zx = x + (zi % 2 === 0 ? zigW : -zigW);
+        zpath += ' L ' + zx + ' ' + zy;
+      }
+      svg += '<path d="' + zpath + '" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linejoin="round"/>';
+      svg += '<line x1="' + (x-16) + '" y1="' + zBot + '" x2="' + (x+16) + '" y2="' + zBot + '" stroke="var(--ink)" stroke-width="2"/>';
+      for (let hx=x-14; hx<=x+14; hx+=6) svg += '<line x1="' + hx + '" y1="' + zBot + '" x2="' + (hx-6) + '" y2="' + (zBot+8) + '" stroke="var(--ink)" stroke-width="1"/>';
+    }
+    svg += '<text x="' + x + '" y="' + (beamY+48) + '" text-anchor="middle" font-size="10.5" fill="var(--ink-mid)">x=' + fmt(toDisplay(s.x, 'length')) + ' ' + prefUnit.length + (s.type==='fixed'?' (fixed)':s.type==='bearing'?' (bearing)':'') + '</text>';
+
+    const ry = resultY.reactions.find(rr => Math.abs(rr.x - s.x) < 1e-6);
+    const rz = resultZ.reactions.find(rr => Math.abs(rr.x - s.x) < 1e-6);
+    if (ry && rz) {
+      if (mode3D) {
+        const Rres = Math.hypot(ry.R, rz.R);
+        svg += '<text x="' + x + '" y="' + (beamY+62) + '" text-anchor="middle" font-size="11" font-weight="500" fill="var(--blue)">R = ' + fmt(toDisplay(Rres, 'force')) + ' ' + prefUnit.force +
+          ' <tspan font-size="9" font-weight="400" fill="var(--ink-faint)">(Y ' + fmt(toDisplay(ry.R,'force')) + ', Z ' + fmt(toDisplay(rz.R,'force')) + ')</tspan></text>';
+        if (s.type === 'fixed') {
+          const My = resultY.sample(s.x).M, Mz = resultZ.sample(s.x).M;
+          const Mres = Math.hypot(My, Mz);
+          svg += '<text x="' + x + '" y="' + (beamY+76) + '" text-anchor="middle" font-size="11" font-weight="500" fill="var(--blue)">M = ' + fmt(toDisplay(Mres, 'moment')) + ' ' + prefUnit.moment +
+            ' <tspan font-size="9" font-weight="400" fill="var(--ink-faint)">(Y ' + fmt(toDisplay(My,'moment')) + ', Z ' + fmt(toDisplay(Mz,'moment')) + ')</tspan></text>';
+        }
+      } else {
+        svg += '<text x="' + x + '" y="' + (beamY+62) + '" text-anchor="middle" font-size="11" font-weight="500" fill="var(--blue)">R = ' + fmt(toDisplay(ry.R, 'force')) + ' ' + prefUnit.force + '</text>';
+        if (s.type === 'fixed') {
+          const internalM = resultY.sample(s.x).M;
+          svg += '<text x="' + x + '" y="' + (beamY+76) + '" text-anchor="middle" font-size="11" font-weight="500" fill="var(--blue)">M = ' + fmt(toDisplay(internalM, 'moment')) + ' ' + prefUnit.moment + '</text>';
+        }
+      }
+      if (s.type === 'bearing') {
+        svg += '<text x="' + x + '" y="' + (beamY+76) + '" text-anchor="middle" font-size="10" fill="var(--ink-faint)">k = ' + fmt(toDisplay(s.k, 'stiffness')) + ' ' + prefUnit.stiffness + '</text>';
+      }
+    }
+  });
+
+  svg += '<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--gold)"/></marker></defs>';
+  svg += '</svg>';
+  document.getElementById('beam-svg').innerHTML = svg;
+}
+
+function drawEndView(pointLoads) {
+  const wrap = document.getElementById('endview-wrap');
+  const holder = document.getElementById('endview-svg');
+  const anyAngled = pointLoads.some(l => Math.abs(l.angle) > 1e-9 && Math.abs(l.P) > 1e-12);
+  if (!anyAngled) { holder.innerHTML = ''; wrap.style.display = 'none'; return; }
+  wrap.style.display = '';
+
+  const cx = 105, cy = 105, R = 62;
+  let svg = '<svg viewBox="0 0 210 210" xmlns="http://www.w3.org/2000/svg" font-family="DM Sans, sans-serif">';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + R + '" fill="none" stroke="var(--ink)" stroke-width="2.5"/>';
+  svg += '<circle cx="' + cx + '" cy="' + cy + '" r="2" fill="var(--ink)"/>';
+  svg += '<line x1="' + cx + '" y1="' + (cy-R-8) + '" x2="' + cx + '" y2="' + (cy-R+8) + '" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="2,2"/>';
+  svg += '<text x="' + cx + '" y="' + (cy-R-12) + '" text-anchor="middle" font-size="10" fill="var(--ink-faint)">0\u00b0</text>';
+
+  pointLoads.forEach(l => {
+    if (Math.abs(l.P) < 1e-12) return;
+    const rad = l.angle * Math.PI / 180;
+    const dirX = Math.sin(rad), dirY = Math.cos(rad);
+    const tailR = R + 26, headR = 3;
+    const tx = cx + tailR * dirX, ty = cy + tailR * dirY;
+    const hx = cx + headR * dirX, hy = cy + headR * dirY;
+    svg += '<line x1="' + tx + '" y1="' + ty + '" x2="' + hx + '" y2="' + hy + '" stroke="var(--gold)" stroke-width="2.2" marker-end="url(#endarrow)"/>';
+    const lx = cx + (tailR + 15) * dirX, ly = cy + (tailR + 15) * dirY;
+    svg += '<text x="' + lx + '" y="' + ly + '" text-anchor="middle" font-size="9.5" fill="var(--ink-mid)">x=' + fmt(toDisplay(l.x, 'length')) + '</text>';
+  });
+
+  svg += '<defs><marker id="endarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="var(--gold)"/></marker></defs>';
+  svg += '</svg>';
+  holder.innerHTML = svg;
+}
+
+function clientXToUserX(svgEl, clientX, L) {
+  const rect = svgEl.getBoundingClientRect();
+  if (!rect.width) return 0;
+  const relX = clientX - rect.left;
+  const svgX = relX * (VB_W / rect.width);
+  const xUser = ((svgX - MARGIN_L) / (VB_W - MARGIN_L - MARGIN_R)) * L;
+  return Math.max(0, Math.min(L, xUser));
+}
+
+function drawChart(holderId, pts, engineKey, L, keyLabel, unitLabel, scale, sign) {
+  sign = sign || 1;
+  const vals = pts.map(p => p.sY[engineKey] * sign);
+  let vmin = Math.min(...vals, 0), vmax = Math.max(...vals, 0);
+  if (vmax - vmin < 1e-9) { vmax += 1; vmin -= 1; }
+  const pad = (vmax-vmin)*0.15;
+  vmax += pad; vmin -= pad;
+  const H = 150, top=15, bottom=H-25;
+  const sy = v => top + (1 - (v-vmin)/(vmax-vmin)) * (bottom-top);
+  const zeroY = sy(0);
+  chartScales[holderId] = { vmin, vmax, top, bottom, L, engineKey, keyLabel, unitLabel, scale, sign, simple: true };
+
+  const path = pts.map((p,i) => (i===0?'M':'L') + ' ' + sx(p.x,L) + ' ' + sy(p.sY[engineKey]*sign)).join(' ');
+  const area = 'M ' + sx(0,L) + ' ' + zeroY + ' ' + pts.map(p => 'L ' + sx(p.x,L) + ' ' + sy(p.sY[engineKey]*sign)).join(' ') + ' L ' + sx(L,L) + ' ' + zeroY + ' Z';
+
+  const extreme = vals.reduce((best,v,i) => Math.abs(v) > Math.abs(vals[best]) ? i : best, 0);
+  const epX = pts[extreme].x, epVal = vals[extreme];
+
+  let svg = '<svg viewBox="0 0 ' + VB_W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" font-family="DM Sans, sans-serif">';
+  svg += '<path d="' + area + '" fill="var(--gold)" opacity="0.16"/>';
+  svg += '<line x1="' + sx(0,L) + '" y1="' + zeroY + '" x2="' + sx(L,L) + '" y2="' + zeroY + '" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="4,3"/>';
+  svg += '<path d="' + path + '" fill="none" stroke="var(--gold)" stroke-width="2.2"/>';
+  svg += '<circle cx="' + sx(epX,L) + '" cy="' + sy(epVal) + '" r="3.2" fill="var(--red)"/>';
+  svg += '<text x="' + sx(epX,L) + '" y="' + (sy(epVal) - (epVal>=0 ? 8 : -14)) + '" text-anchor="middle" font-size="11" fill="var(--red)">max ' + fmt(epVal*scale) + ' ' + unitLabel + '</text>';
+
+  const gid = 'hover-' + holderId;
+  svg += '<g id="' + gid + '" style="display:none;">' +
+      '<line class="hv-line" y1="' + top + '" y2="' + bottom + '" stroke="var(--blue)" stroke-width="1" stroke-dasharray="3,2"/>' +
+      '<circle class="hv-dot" r="3.5" fill="var(--blue)"/>' +
+      '<rect class="hv-bg" width="118" height="34" rx="5" fill="var(--parchment)" stroke="var(--border-strong)" stroke-width="1"/>' +
+      '<text class="hv-t1" font-size="11" fill="var(--ink)"></text>' +
+      '<text class="hv-t2" font-size="11" fill="var(--blue)"></text>' +
+    '</g>';
+  svg += '<rect class="hv-capture" x="0" y="0" width="' + VB_W + '" height="' + H + '" style="fill:transparent;pointer-events:all;cursor:crosshair;"/>';
+  svg += '</svg>';
+
+  const holder = document.getElementById(holderId);
+  holder.innerHTML = svg;
+
+  const svgEl = holder.querySelector('svg');
+  const capture = svgEl.querySelector('.hv-capture');
+  const group = svgEl.querySelector('#' + gid);
+  const line = group.querySelector('.hv-line');
+  const dot = group.querySelector('.hv-dot');
+  const bg = group.querySelector('.hv-bg');
+  const t1 = group.querySelector('.hv-t1');
+  const t2 = group.querySelector('.hv-t2');
+
+  function update(evt) {
+    if (!lastResultY) return;
+    const cs = chartScales[holderId];
+    const xUser = clientXToUserX(svgEl, evt.clientX, cs.L);
+    const samp = lastResultY.sample(xUser);
+    const val = samp[cs.engineKey] * cs.sign;
+    const xPix = sx(xUser, cs.L);
+    const yPix = cs.top + (1 - (val - cs.vmin)/(cs.vmax - cs.vmin)) * (cs.bottom - cs.top);
+
+    group.style.display = 'block';
+    line.setAttribute('x1', xPix); line.setAttribute('x2', xPix);
+    dot.setAttribute('cx', xPix); dot.setAttribute('cy', yPix);
+
+    const boxW = 118, boxH = 34;
+    let boxX = xPix + 8;
+    if (boxX + boxW > VB_W - 4) boxX = xPix - boxW - 8;
+    let boxY = yPix - boxH - 8;
+    if (boxY < 2) boxY = yPix + 10;
+    if (boxY + boxH > H - 2) boxY = H - boxH - 2;
+
+    bg.setAttribute('x', boxX); bg.setAttribute('y', boxY);
+    t1.setAttribute('x', boxX+10); t1.setAttribute('y', boxY+16);
+    t1.textContent = 'x = ' + fmt(toDisplay(xUser, 'length')) + ' ' + prefUnit.length;
+    t2.setAttribute('x', boxX+10); t2.setAttribute('y', boxY+29);
+    t2.textContent = cs.keyLabel + ' = ' + fmt(val*cs.scale) + ' ' + cs.unitLabel;
+  }
+
+  capture.addEventListener('pointermove', update);
+  capture.addEventListener('pointerdown', update);
+  capture.addEventListener('pointerleave', () => { group.style.display = 'none'; });
+}
+
+function drawComboChart(holderId, pts, engineKey, L, keyLabel, unitLabel, scale, signY, signZ) {
+  signY = signY || 1; signZ = signZ || 1;
+  const valsY = pts.map(p => p.sY[engineKey] * signY);
+  const valsZ = pts.map(p => p.sZ[engineKey] * signZ);
+  const valsRes = pts.map(p => Math.hypot(p.sY[engineKey], p.sZ[engineKey]));
+  const allVals = valsY.concat(valsZ, valsRes);
+  let vmin = Math.min(...allVals, 0), vmax = Math.max(...allVals, 0);
+  if (vmax - vmin < 1e-9) { vmax += 1; vmin -= 1; }
+  const pad = (vmax-vmin)*0.15;
+  vmax += pad; vmin -= pad;
+  const H = 165, top=28, bottom=H-25;
+  const sy = v => top + (1 - (v-vmin)/(vmax-vmin)) * (bottom-top);
+  const zeroY = sy(0);
+  chartScales[holderId] = { vmin, vmax, top, bottom, L, engineKey, keyLabel, unitLabel, scale, signY, signZ };
+
+  function pathFor(vals) { return pts.map((p,i) => (i===0?'M':'L') + ' ' + sx(p.x,L) + ' ' + sy(vals[i])).join(' '); }
+
+  const extreme = valsRes.reduce((best,v,i) => Math.abs(v) > Math.abs(valsRes[best]) ? i : best, 0);
+  const epX = pts[extreme].x, epVal = valsRes[extreme];
+
+  let svg = '<svg viewBox="0 0 ' + VB_W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" font-family="DM Sans, sans-serif">';
+  svg += '<line x1="' + sx(0,L) + '" y1="' + zeroY + '" x2="' + sx(L,L) + '" y2="' + zeroY + '" stroke="var(--border-strong)" stroke-width="1" stroke-dasharray="4,3"/>';
+  svg += '<path d="' + pathFor(valsY) + '" fill="none" stroke="var(--gold)" stroke-width="1.7"/>';
+  svg += '<path d="' + pathFor(valsZ) + '" fill="none" stroke="var(--green)" stroke-width="1.7"/>';
+  svg += '<path d="' + pathFor(valsRes) + '" fill="none" stroke="var(--red)" stroke-width="2.4"/>';
+  svg += '<circle cx="' + sx(epX,L) + '" cy="' + sy(epVal) + '" r="3.2" fill="var(--red)"/>';
+  svg += '<text x="' + sx(epX,L) + '" y="' + (sy(epVal) - 8) + '" text-anchor="middle" font-size="11" fill="var(--red)">max ' + fmt(epVal*scale) + ' ' + unitLabel + '</text>';
+
+  svg += '<g font-size="10.5">' +
+    '<line x1="8" y1="10" x2="24" y2="10" stroke="var(--gold)" stroke-width="2"/><text x="28" y="13" fill="var(--ink-mid)">Y</text>' +
+    '<line x1="50" y1="10" x2="66" y2="10" stroke="var(--green)" stroke-width="2"/><text x="70" y="13" fill="var(--ink-mid)">Z</text>' +
+    '<line x1="97" y1="10" x2="113" y2="10" stroke="var(--red)" stroke-width="2.4"/><text x="117" y="13" fill="var(--ink-mid)">Resultant</text>' +
+    '</g>';
+
+  const gid = 'hover-' + holderId;
+  svg += '<g id="' + gid + '" style="display:none;">' +
+      '<line class="hv-line" y1="' + top + '" y2="' + bottom + '" stroke="var(--blue)" stroke-width="1" stroke-dasharray="3,2"/>' +
+      '<rect class="hv-bg" width="140" height="66" rx="5" fill="var(--parchment)" stroke="var(--border-strong)" stroke-width="1"/>' +
+      '<text class="hv-t0" font-size="11" fill="var(--ink)"></text>' +
+      '<text class="hv-t1" font-size="11" fill="var(--gold)"></text>' +
+      '<text class="hv-t2" font-size="11" fill="var(--green)"></text>' +
+      '<text class="hv-t3" font-size="11" font-weight="500" fill="var(--red)"></text>' +
+    '</g>';
+  svg += '<rect class="hv-capture" x="0" y="0" width="' + VB_W + '" height="' + H + '" style="fill:transparent;pointer-events:all;cursor:crosshair;"/>';
+  svg += '</svg>';
+
+  const holder = document.getElementById(holderId);
+  holder.innerHTML = svg;
+
+  const svgEl = holder.querySelector('svg');
+  const capture = svgEl.querySelector('.hv-capture');
+  const group = svgEl.querySelector('#' + gid);
+  const line = group.querySelector('.hv-line');
+  const bg = group.querySelector('.hv-bg');
+  const t0 = group.querySelector('.hv-t0');
+  const t1 = group.querySelector('.hv-t1');
+  const t2 = group.querySelector('.hv-t2');
+  const t3 = group.querySelector('.hv-t3');
+
+  function update(evt) {
+    if (!lastResultY || !lastResultZ) return;
+    const cs = chartScales[holderId];
+    const xUser = clientXToUserX(svgEl, evt.clientX, cs.L);
+    const sYv = lastResultY.sample(xUser), sZv = lastResultZ.sample(xUser);
+    const valY = sYv[cs.engineKey] * cs.signY;
+    const valZ = sZv[cs.engineKey] * cs.signZ;
+    const valRes = Math.hypot(sYv[cs.engineKey], sZv[cs.engineKey]);
+    const xPix = sx(xUser, cs.L);
+
+    group.style.display = 'block';
+    line.setAttribute('x1', xPix); line.setAttribute('x2', xPix);
+
+    const boxW = 140, boxH = 66;
+    let boxX = xPix + 8;
+    if (boxX + boxW > VB_W - 4) boxX = xPix - boxW - 8;
+    const boxY = 30;
+
+    bg.setAttribute('x', boxX); bg.setAttribute('y', boxY);
+    t0.setAttribute('x', boxX+10); t0.setAttribute('y', boxY+16);
+    t0.textContent = 'x = ' + fmt(toDisplay(xUser, 'length')) + ' ' + prefUnit.length;
+    t1.setAttribute('x', boxX+10); t1.setAttribute('y', boxY+31);
+    t1.textContent = 'Y: ' + fmt(valY*cs.scale) + ' ' + cs.unitLabel;
+    t2.setAttribute('x', boxX+10); t2.setAttribute('y', boxY+46);
+    t2.textContent = 'Z: ' + fmt(valZ*cs.scale) + ' ' + cs.unitLabel;
+    t3.setAttribute('x', boxX+10); t3.setAttribute('y', boxY+61);
+    t3.textContent = 'Res: ' + fmt(valRes*cs.scale) + ' ' + cs.unitLabel;
+  }
+
+  capture.addEventListener('pointermove', update);
+  capture.addEventListener('pointerdown', update);
+  capture.addEventListener('pointerleave', () => { group.style.display = 'none'; });
+}
+
+/* ══════════════════════════ Init ══════════════════════════ */
+document.getElementById('print-date').textContent = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+renderBeamProps();
+sectionRows.push({ id: 'sec' + (sectionCounter++), IVal: 8360000, IUnit: prefUnit.inertia });
+renderSections();
+newSupportRow(0, 'simple');
+newSupportRow(10, 'simple');
+renderSupports();
+newLoadRow('point', { x: 5, P: 20 });
+renderLoads();
+recalc();
+</script>
+</body>
+</html>

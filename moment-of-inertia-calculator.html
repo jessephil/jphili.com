@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moment of Inertia Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+      --blue: #1c4f82;
+      --blue-pale: #e6f0fb;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 1.5rem 3rem 5rem; }
+
+    .page-header { margin-bottom: 1rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 4px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--ink); margin-bottom: 0; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 640px; line-height: 1.7; }
+
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+
+    /* ── INPUTS ── */
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 0.85rem; }
+    .inputs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .inputs-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px;
+      font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field select {
+      border: 1px solid var(--border); border-radius: 8px; padding: 7px 8px;
+      font-family: inherit; font-size: 13px; color: var(--ink-mid); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; cursor: pointer;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 2px; }
+
+    .fluid-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .fluid-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .fluid-row select { border: 1px solid var(--border); border-radius: 8px; padding: 6px 9px; font-family: inherit; font-size: 13px; color: var(--ink); background: var(--parchment); outline: none; flex: 1; min-width: 130px; }
+
+    .add-btn {
+      border: 1px solid var(--border-strong); color: var(--gold); background: var(--gold-pale);
+      border-radius: 8px; padding: 10px 18px; font-family: inherit; font-size: 13px; font-weight: 500;
+      cursor: pointer;
+    }
+    .add-btn:hover { background: #e8d9ab; }
+
+    /* diagram panel */
+    .beam-panel {
+      background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px;
+      padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+    }
+    .beam-panel svg { width: 100%; height: auto; display: block; }
+
+    /* ── RESULTS ── */
+    .results-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+
+    .result-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 8px; padding: 0.6rem 0.7rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 10px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 2px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 16px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 11px; color: var(--ink-faint); margin-top: 1px; }
+    .flow-sub { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+    .flow-sub-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-mid); }
+    .flow-sub-row span:last-child { color: var(--ink-faint); }
+
+    .warning-banner { background: var(--amber-pale); border: 1px solid rgba(122,90,26,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--amber); margin-bottom: 12px; display: none; }
+    .warning-banner.visible { display: block; }
+
+    /* ── FORMULA ── */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; margin-top: 1.5rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 15px; color: var(--ink); padding: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+
+    .source-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); line-height: 1.6; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .inputs-grid, .inputs-grid.cols-3 { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr; }
+      .result-card .rvalue { font-size: 17px; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">Moment of Inertia Calculator</h1>
+  </div>
+
+  <div id="warning-invalid" class="warning-banner"></div>
+
+  <p class="section-label">Cross-Section</p>
+  <div class="inputs-card">
+    <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+      <div style="flex:1 1 280px; min-width:260px;">
+        <div class="fluid-row">
+          <label>Shape</label>
+          <select id="shape-select" onchange="onShapeChanged()">
+            <option value="rect">Rectangle</option>
+            <option value="circle">Circle (solid)</option>
+            <option value="hollow_circle">Hollow circle (tube)</option>
+            <option value="box">Hollow rectangle (box tube)</option>
+            <option value="ibeam">I-beam / wide flange</option>
+            <option value="triangle">Isoceles triangle</option>
+          </select>
+          <label>Units</label>
+          <select id="unit-select" onchange="onUnitChanged()">
+            <option value="mm">mm</option>
+            <option value="cm">cm</option>
+            <option value="m">m</option>
+            <option value="in">in</option>
+            <option value="ft">ft</option>
+          </select>
+        </div>
+        <div class="inputs-grid" id="dims-grid"></div>
+        <p class="field-note" id="shape-note" style="margin-top:8px;"></p>
+      </div>
+      <div style="flex:1 1 260px; min-width:220px; max-width:320px; border-left:1px solid var(--border); padding-left:20px;">
+        <div id="shape-svg"></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">Section Properties</p>
+  <p class="field-note" style="margin:-4px 0 8px;">S = section modulus (I/c) &mdash; stress from bending, &sigma;=M/S. &nbsp; r = radius of gyration (&radic;(I/A)) &mdash; used in buckling checks.</p>
+  <div class="results-grid" id="results-grid"></div>
+
+  <div class="formula-card" id="formula-card"></div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+/* ══════════════════════════ Helpers (shared conventions with the beam calculator) ══════════════════════════ */
+function fmt(v, sig) {
+  if (!isFinite(v) || v === null) return '\u2014';
+  if (v === 0) return '0';
+  if (Math.abs(v) < 0.01) return v.toExponential(3);
+  if (Math.abs(v) >= 1000) return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  return parseFloat(v.toPrecision(sig || 5)).toString();
+}
+
+function stripCommas(str) { return String(str).replace(/,/g, ''); }
+
+function formatWithCommas(raw) {
+  raw = String(raw);
+  const negative = raw.startsWith('-');
+  if (negative) raw = raw.slice(1);
+  let [intPart, decPart] = raw.split('.');
+  intPart = (intPart || '').replace(/[^\d]/g, '');
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  let result = (negative ? '-' : '') + intPart;
+  if (decPart !== undefined) result += '.' + decPart.replace(/[^\d]/g, '');
+  return result;
+}
+
+function onNumericInput(el) {
+  const posFromEnd = el.value.length - (el.selectionStart ?? el.value.length);
+  let sanitized = el.value.replace(/[^0-9.\-]/g, '');
+  sanitized = sanitized[0] === '-' ? '-' + sanitized.slice(1).replace(/-/g, '') : sanitized.replace(/-/g, '');
+  const firstDot = sanitized.indexOf('.');
+  if (firstDot !== -1) sanitized = sanitized.slice(0, firstDot + 1) + sanitized.slice(firstDot + 1).replace(/\./g, '');
+  const formatted = formatWithCommas(sanitized);
+  el.value = formatted;
+  const newPos = Math.max(0, formatted.length - posFromEnd);
+  if (el.setSelectionRange) el.setSelectionRange(newPos, newPos);
+}
+
+function field(id, labelHtml, defVal, noteHtml) {
+  return '<div class="field">' +
+    '<label>' + labelHtml + '</label>' +
+    '<div class="field-row">' +
+      '<input type="text" inputmode="decimal" id="' + id + '" value="' + formatWithCommas(defVal) + '" oninput="onNumericInput(this); recalc()" />' +
+    '</div>' +
+    (noteHtml ? '<span class="field-note">' + noteHtml + '</span>' : '') +
+    '</div>';
+}
+
+function numVal(id) { const el = document.getElementById(id); return el ? parseFloat(stripCommas(el.value)) : NaN; }
+
+const UNIT_FACTORS = { mm: 0.001, cm: 0.01, m: 1, in: 0.0254, ft: 0.3048 }; // to meters
+let currentUnit = 'mm';
+
+/* ══════════════════════════ Shape library ══════════════════════════ */
+// All dimensions and results share ONE consistent length unit chosen by the user
+// (e.g. everything in mm, or everything in inches) -- so no per-field unit
+// conversion is needed; results are simply unit^2, unit^3, unit^4 of that choice.
+const SHAPES = {
+
+  rect: {
+    label: 'Rectangle',
+    note: 'Solid rectangular section.',
+    fields: [
+      { id: 'b', label: 'Width, b', def: 50 },
+      { id: 'h', label: 'Height, h', def: 100 },
+    ],
+    compute(v) {
+      const { b, h } = v;
+      if (!(b > 0 && h > 0)) return null;
+      const A = b * h;
+      const Ix = b * h ** 3 / 12, Iy = h * b ** 3 / 12;
+      return { A, Ix, Iy, Sx: Ix / (h / 2), Sy: Iy / (b / 2), rx: Math.sqrt(Ix / A), ry: Math.sqrt(Iy / A) };
+    },
+    formula: 'A = b\u00b7h &nbsp; I<sub>x</sub> = b\u00b7h\u00b3/12 &nbsp; I<sub>y</sub> = h\u00b7b\u00b3/12',
+    vars: ['<strong>b</strong> = width', '<strong>h</strong> = height', 'x = horizontal centroidal axis', 'y = vertical centroidal axis'],
+    draw(v) { return drawRect(v.b, v.h); },
+  },
+
+  circle: {
+    label: 'Circle (solid)',
+    note: 'Solid circular section \u2014 common for shafts.',
+    fields: [{ id: 'd', label: 'Diameter, d', def: 50 }],
+    compute(v) {
+      const { d } = v;
+      if (!(d > 0)) return null;
+      const A = Math.PI * d * d / 4;
+      const I = Math.PI * d ** 4 / 64;
+      const J = Math.PI * d ** 4 / 32;
+      return { A, Ix: I, Iy: I, Sx: I / (d / 2), Sy: I / (d / 2), rx: d / 4, ry: d / 4, J };
+    },
+    formula: 'A = \u03c0d\u00b2/4 &nbsp; I<sub>x</sub> = I<sub>y</sub> = \u03c0d\u2074/64 &nbsp; J = \u03c0d\u2074/32',
+    vars: ['<strong>d</strong> = diameter', 'J = polar moment of inertia (torsion constant \u2014 exact for a circular shaft)'],
+    draw(v) { return drawCircle(v.d); },
+  },
+
+  hollow_circle: {
+    label: 'Hollow circle (tube)',
+    note: 'Tube or pipe \u2014 common for hollow shafts.',
+    fields: [
+      { id: 'Do', label: 'Outer diameter, D\u2092', def: 50 },
+      { id: 'Di', label: 'Inner diameter, D\u1d62', def: 40 },
+    ],
+    compute(v) {
+      const { Do, Di } = v;
+      if (!(Do > 0 && Di >= 0 && Di < Do)) return null;
+      const A = Math.PI * (Do ** 2 - Di ** 2) / 4;
+      const I = Math.PI * (Do ** 4 - Di ** 4) / 64;
+      const J = Math.PI * (Do ** 4 - Di ** 4) / 32;
+      return { A, Ix: I, Iy: I, Sx: I / (Do / 2), Sy: I / (Do / 2), rx: Math.sqrt(Do ** 2 + Di ** 2) / 4, ry: Math.sqrt(Do ** 2 + Di ** 2) / 4, J };
+    },
+    formula: 'A = \u03c0(D\u2092\u00b2\u2212D\u1d62\u00b2)/4 &nbsp; I<sub>x</sub> = I<sub>y</sub> = \u03c0(D\u2092\u2074\u2212D\u1d62\u2074)/64 &nbsp; J = \u03c0(D\u2092\u2074\u2212D\u1d62\u2074)/32',
+    vars: ['<strong>D\u2092</strong> = outer diameter', '<strong>D\u1d62</strong> = inner diameter', 'J = polar moment of inertia (torsion constant \u2014 exact for a circular shaft)'],
+    draw(v) { return drawHollowCircle(v.Do, v.Di); },
+  },
+
+  box: {
+    label: 'Hollow rectangle (box tube)',
+    note: 'Rectangular tube with uniform wall thickness.',
+    fields: [
+      { id: 'B', label: 'Outer width, B', def: 60 },
+      { id: 'H', label: 'Outer height, H', def: 40 },
+      { id: 't', label: 'Wall thickness, t', def: 3 },
+    ],
+    compute(v) {
+      const { B, H, t } = v;
+      if (!(B > 0 && H > 0 && t > 0) || B - 2 * t <= 0 || H - 2 * t <= 0) return null;
+      const bi = B - 2 * t, hi = H - 2 * t;
+      const A = B * H - bi * hi;
+      const Ix = (B * H ** 3 - bi * hi ** 3) / 12;
+      const Iy = (H * B ** 3 - hi * bi ** 3) / 12;
+      return { A, Ix, Iy, Sx: Ix / (H / 2), Sy: Iy / (B / 2), rx: Math.sqrt(Ix / A), ry: Math.sqrt(Iy / A) };
+    },
+    formula: 'A = BH \u2212 b<sub>i</sub>h<sub>i</sub> &nbsp; I<sub>x</sub> = (BH\u00b3 \u2212 b<sub>i</sub>h<sub>i</sub>\u00b3)/12 &nbsp; I<sub>y</sub> = (HB\u00b3 \u2212 h<sub>i</sub>b<sub>i</sub>\u00b3)/12',
+    vars: ['<strong>B, H</strong> = outer width, height', '<strong>t</strong> = wall thickness', 'b<sub>i</sub>=B\u22122t, h<sub>i</sub>=H\u22122t = inner width, height'],
+    draw(v) { return drawBox(v.B, v.H, v.t); },
+  },
+
+  ibeam: {
+    label: 'I-beam / wide flange',
+    note: 'Doubly-symmetric wide-flange (W-shape) section.',
+    fields: [
+      { id: 'd', label: 'Overall depth, d', def: 200 },
+      { id: 'bf', label: 'Flange width, b\u1da0', def: 100 },
+      { id: 'tf', label: 'Flange thickness, t\u1da0', def: 10 },
+      { id: 'tw', label: 'Web thickness, t\u1d21', def: 6 },
+    ],
+    compute(v) {
+      const { d, bf, tf, tw } = v;
+      const hw = d - 2 * tf;
+      if (!(d > 0 && bf > 0 && tf > 0 && tw > 0) || hw <= 0 || tw >= bf) return null;
+      const A = 2 * bf * tf + hw * tw;
+      const Ix = 2 * (bf * tf ** 3 / 12 + bf * tf * ((d - tf) / 2) ** 2) + tw * hw ** 3 / 12;
+      const Iy = 2 * (tf * bf ** 3 / 12) + hw * tw ** 3 / 12;
+      return { A, Ix, Iy, Sx: Ix / (d / 2), Sy: Iy / (bf / 2), rx: Math.sqrt(Ix / A), ry: Math.sqrt(Iy / A) };
+    },
+    formula: 'A = 2b\u1da0t\u1da0 + h\u1d21t\u1d21 &nbsp; I<sub>x</sub>, I<sub>y</sub> via parallel-axis composite of two flanges + web',
+    vars: ['<strong>d</strong> = overall depth', '<strong>b\u1da0, t\u1da0</strong> = flange width, thickness', '<strong>t\u1d21</strong> = web thickness', 'h\u1d21 = d\u22122t\u1da0 = web height'],
+    draw(v) { return drawIBeam(v.d, v.bf, v.tf, v.tw); },
+  },
+
+  triangle: {
+    label: 'Isoceles triangle',
+    note: 'Apex centered above the base.',
+    fields: [
+      { id: 'b', label: 'Base, b', def: 80 },
+      { id: 'h', label: 'Height, h', def: 60 },
+    ],
+    compute(v) {
+      const { b, h } = v;
+      if (!(b > 0 && h > 0)) return null;
+      const A = b * h / 2;
+      const Ix = b * h ** 3 / 36, Iy = h * b ** 3 / 48;
+      const cBottom = h / 3, cTop = 2 * h / 3;
+      return { A, Ix, Iy, SxBottom: Ix / cBottom, SxTop: Ix / cTop, Sy: Iy / (b / 2), rx: Math.sqrt(Ix / A), ry: Math.sqrt(Iy / A), asymmetric: true };
+    },
+    formula: 'A = bh/2 &nbsp; I<sub>x</sub> = bh\u00b3/36 &nbsp; I<sub>y</sub> = hb\u00b3/48',
+    vars: ['<strong>b</strong> = base', '<strong>h</strong> = height', 'centroid is h/3 above the base (true for any triangle)', 'I<sub>y</sub> formula assumes the apex is centered over the base'],
+    draw(v) { return drawTriangle(v.b, v.h); },
+  },
+};
+
+/* ══════════════════════════ Diagram drawing (schematic, dimension-labeled) ══════════════════════════ */
+const VB = 400, VBH = 260;
+function arrowDefs() {
+  return '<defs><marker id="da" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto"><path d="M0,0 L7,3.5 L0,7 Z" fill="var(--ink-mid)"/></marker>' +
+    '<marker id="da2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto-start-reverse"><path d="M0,0 L7,3.5 L0,7 Z" fill="var(--ink-mid)"/></marker></defs>';
+}
+function dimH(x1, x2, y, label) {
+  return '<line x1="' + x1 + '" y1="' + y + '" x2="' + x2 + '" y2="' + y + '" stroke="var(--ink-mid)" stroke-width="1" marker-start="url(#da2)" marker-end="url(#da)"/>' +
+    '<text x="' + ((x1+x2)/2) + '" y="' + (y-6) + '" text-anchor="middle" font-size="12" fill="var(--ink-mid)" font-family=\'DM Sans\'>' + label + '</text>';
+}
+function dimV(x, y1, y2, label) {
+  return '<line x1="' + x + '" y1="' + y1 + '" x2="' + x + '" y2="' + y2 + '" stroke="var(--ink-mid)" stroke-width="1" marker-start="url(#da2)" marker-end="url(#da)"/>' +
+    '<text x="' + (x+8) + '" y="' + ((y1+y2)/2) + '" dominant-baseline="middle" font-size="12" fill="var(--ink-mid)" font-family=\'DM Sans\'>' + label + '</text>';
+}
+function extLine(x1,y1,x2,y2) {
+  return '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="var(--border-strong)" stroke-width="0.75" stroke-dasharray="2,2"/>';
+}
+function centroidMark(cx, cy) {
+  return '<line x1="'+(cx-7)+'" y1="'+cy+'" x2="'+(cx+7)+'" y2="'+cy+'" stroke="var(--gold)" stroke-width="1.5"/>' +
+    '<line x1="'+cx+'" y1="'+(cy-7)+'" x2="'+cx+'" y2="'+(cy+7)+'" stroke="var(--gold)" stroke-width="1.5"/>';
+}
+
+function svgWrap(inner) {
+  return '<svg viewBox="0 0 ' + VB + ' ' + VBH + '" xmlns="http://www.w3.org/2000/svg">' + arrowDefs() + inner + '</svg>';
+}
+
+function drawRect(b, h) {
+  const maxW = 180, maxH = 140;
+  const scale = Math.min(maxW / Math.max(b, 1e-6), maxH / Math.max(h, 1e-6));
+  const w = b * scale, ht = h * scale, x0 = (VB-w)/2, y0 = (VBH-ht)/2 - 10;
+  let s = '<rect x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+ht+'" fill="var(--gold-pale)" stroke="var(--ink)" stroke-width="2"/>';
+  s += centroidMark(x0+w/2, y0+ht/2);
+  s += extLine(x0,y0-14,x0,y0+ht+34); s += extLine(x0+w,y0-14,x0+w,y0+ht+34);
+  s += dimH(x0, x0+w, y0+ht+30, 'b = ' + fmt(b));
+  s += extLine(x0+w+14,y0,x0+w+46,y0); s += extLine(x0+w+14,y0+ht,x0+w+46,y0+ht);
+  s += dimV(x0+w+40, y0, y0+ht, 'h = ' + fmt(h));
+  return svgWrap(s);
+}
+
+function drawCircle(d) {
+  const r = 75, cx = VB/2, cy = VBH/2 - 8;
+  let s = '<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="var(--gold-pale)" stroke="var(--ink)" stroke-width="2"/>';
+  s += centroidMark(cx, cy);
+  s += '<line x1="'+(cx-r)+'" y1="'+cy+'" x2="'+(cx+r)+'" y2="'+cy+'" stroke="var(--ink-mid)" stroke-width="1" marker-start="url(#da2)" marker-end="url(#da)"/>';
+  s += '<text x="'+cx+'" y="'+(cy+r+22)+'" text-anchor="middle" font-size="12" fill="var(--ink-mid)">d = ' + fmt(d) + '</text>';
+  return svgWrap(s);
+}
+
+function drawHollowCircle(Do, Di) {
+  const ro = 75, ri = Do>0 ? ro*(Di/Do) : 0, cx = VB/2, cy = VBH/2 - 8;
+  let s = '<circle cx="'+cx+'" cy="'+cy+'" r="'+ro+'" fill="var(--gold-pale)" stroke="var(--ink)" stroke-width="2"/>';
+  s += '<circle cx="'+cx+'" cy="'+cy+'" r="'+ri+'" fill="var(--parchment-dark)" stroke="var(--ink)" stroke-width="1.5"/>';
+  s += centroidMark(cx, cy);
+  s += '<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+ro)+'" y2="'+cy+'" stroke="var(--ink-mid)" stroke-width="1" marker-end="url(#da)"/>';
+  s += '<text x="'+(cx+ro/2)+'" y="'+(cy-8)+'" text-anchor="middle" font-size="11" fill="var(--ink-mid)">D\u2092/2</text>';
+  s += '<line x1="'+cx+'" y1="'+(cy+8)+'" x2="'+(cx+ri)+'" y2="'+(cy+8)+'" stroke="var(--ink-mid)" stroke-width="1" marker-end="url(#da)"/>';
+  s += '<text x="'+(cx+ri/2)+'" y="'+(cy+22)+'" text-anchor="middle" font-size="11" fill="var(--ink-mid)">D\u1d62/2</text>';
+  s += '<text x="'+cx+'" y="'+(cy+ro+26)+'" text-anchor="middle" font-size="12" fill="var(--ink-mid)">D\u2092 = ' + fmt(Do) + ',  D\u1d62 = ' + fmt(Di) + '</text>';
+  return svgWrap(s);
+}
+
+function drawBox(B, H, t) {
+  const maxW = 180, maxH = 140;
+  const scale = Math.min(maxW / Math.max(B, 1e-6), maxH / Math.max(H, 1e-6));
+  const w = B * scale, ht = H * scale, x0 = (VB-w)/2, y0 = (VBH-ht)/2 - 10;
+  const tPix = Math.max(4, Math.min(30, t * scale));
+  let s = '<rect x="'+x0+'" y="'+y0+'" width="'+w+'" height="'+ht+'" fill="var(--gold-pale)" stroke="var(--ink)" stroke-width="2"/>';
+  s += '<rect x="'+(x0+tPix)+'" y="'+(y0+tPix)+'" width="'+(w-2*tPix)+'" height="'+(ht-2*tPix)+'" fill="var(--parchment-dark)" stroke="var(--ink)" stroke-width="1.2"/>';
+  s += centroidMark(x0+w/2, y0+ht/2);
+  s += extLine(x0,y0-14,x0,y0+ht+34); s += extLine(x0+w,y0-14,x0+w,y0+ht+34);
+  s += dimH(x0, x0+w, y0+ht+30, 'B = ' + fmt(B));
+  s += extLine(x0+w+14,y0,x0+w+46,y0); s += extLine(x0+w+14,y0+ht,x0+w+46,y0+ht);
+  s += dimV(x0+w+40, y0, y0+ht, 'H = ' + fmt(H));
+  s += '<text x="'+(x0+w/2)+'" y="'+(y0+ht/2-14)+'" text-anchor="middle" font-size="11" fill="var(--ink-mid)">t = ' + fmt(t) + '</text>';
+  return svgWrap(s);
+}
+
+function drawIBeam(d, bf, tf, tw) {
+  const scale = Math.min(150 / Math.max(bf,1), 150 / Math.max(d,1));
+  const W = bf * scale, D = d * scale, TF = Math.max(4, tf * scale), TW = Math.max(3, tw * scale);
+  const x0 = (VB-W)/2, y0 = (VBH-D)/2 - 6;
+  let s = '<g fill="var(--gold-pale)" stroke="var(--ink)" stroke-width="2">';
+  s += '<rect x="'+x0+'" y="'+y0+'" width="'+W+'" height="'+TF+'"/>';
+  s += '<rect x="'+x0+'" y="'+(y0+D-TF)+'" width="'+W+'" height="'+TF+'"/>';
+  s += '<rect x="'+(x0+W/2-TW/2)+'" y="'+(y0+TF)+'" width="'+TW+'" height="'+(D-2*TF)+'"/>';
+  s += '</g>';
+  s += centroidMark(x0+W/2, y0+D/2);
+  s += extLine(x0-14,y0,x0-46,y0); s += extLine(x0-14,y0+D,x0-46,y0+D);
+  s += dimV(x0-40, y0, y0+D, 'd = ' + fmt(d));
+  s += extLine(x0,y0+D+14,x0,y0+D+40); s += extLine(x0+W,y0+D+14,x0+W,y0+D+40);
+  s += dimH(x0, x0+W, y0+D+36, 'b\u1da0 = ' + fmt(bf));
+  s += '<text x="'+(x0+W+16)+'" y="'+(y0+TF/2)+'" font-size="11" fill="var(--ink-mid)" dominant-baseline="middle">t\u1da0 = ' + fmt(tf) + '</text>';
+  s += '<text x="'+(x0+W/2+TW/2+8)+'" y="'+(y0+D/2)+'" font-size="11" fill="var(--ink-mid)" dominant-baseline="middle">t\u1d21 = ' + fmt(tw) + '</text>';
+  return svgWrap(s);
+}
+
+function drawTriangle(b, h) {
+  const scale = Math.min(150/Math.max(b,1), 130/Math.max(h,1));
+  const W = b*scale, H = h*scale;
+  const x0 = (VB-W)/2, yBase = VBH/2 + H/2 - 4;
+  const apex = { x: x0+W/2, y: yBase-H };
+  let s = '<polygon points="'+x0+','+yBase+' '+(x0+W)+','+yBase+' '+apex.x+','+apex.y+'" fill="var(--gold-pale)" stroke="var(--ink)" stroke-width="2"/>';
+  const cy = yBase - H/3;
+  s += centroidMark(x0+W/2, cy);
+  s += extLine(x0,yBase+14,x0,yBase+40); s += extLine(x0+W,yBase+14,x0+W,yBase+40);
+  s += dimH(x0, x0+W, yBase+36, 'b = ' + fmt(b));
+  s += extLine(apex.x+8,apex.y,apex.x+46,apex.y); s += extLine(x0+W+8,yBase,x0+W+46,yBase);
+  s += dimV(x0+W+40, apex.y, yBase, 'h = ' + fmt(h));
+  return svgWrap(s);
+}
+
+/* ══════════════════════════ Rendering ══════════════════════════ */
+function renderDims(overrideVals) {
+  const shape = SHAPES[document.getElementById('shape-select').value];
+  const unit = document.getElementById('unit-select').value;
+  document.getElementById('dims-grid').innerHTML = shape.fields.map(f => {
+    const val = overrideVals && overrideVals[f.id] !== undefined ? overrideVals[f.id] : f.def;
+    return field('dim-' + f.id, f.label + ' (' + unit + ')', val);
+  }).join('');
+  document.getElementById('shape-note').textContent = shape.note;
+}
+
+function onShapeChanged() { renderDims(); recalc(); }
+
+function onUnitChanged() {
+  const newUnit = document.getElementById('unit-select').value;
+  const shape = SHAPES[document.getElementById('shape-select').value];
+  const factorOld = UNIT_FACTORS[currentUnit], factorNew = UNIT_FACTORS[newUnit];
+  const converted = {};
+  shape.fields.forEach(f => {
+    const raw = numVal('dim-' + f.id);
+    converted[f.id] = isFinite(raw) ? parseFloat((raw * factorOld / factorNew).toPrecision(6)) : f.def;
+  });
+  currentUnit = newUnit;
+  renderDims(converted);
+  recalc();
+}
+
+function readDims() {
+  const shape = SHAPES[document.getElementById('shape-select').value];
+  const v = {};
+  shape.fields.forEach(f => { v[f.id] = numVal('dim-' + f.id); });
+  return { shape, v };
+}
+
+function showWarning(msg) {
+  const el = document.getElementById('warning-invalid');
+  if (!msg) { el.classList.remove('visible'); el.textContent = ''; return; }
+  el.textContent = '\u26a0 ' + msg;
+  el.classList.add('visible');
+}
+
+function recalc() {
+  const { shape, v } = readDims();
+  const anyInvalid = Object.values(v).some(x => !isFinite(x));
+  if (anyInvalid) { showWarning('Enter valid numeric values for all dimensions.'); clearOutputs(); return; }
+
+  const res = shape.compute(v);
+  if (!res) {
+    showWarning('These dimensions don\u2019t form a valid ' + shape.label.toLowerCase() + ' \u2014 check that thicknesses are smaller than the overall size and all values are positive.');
+    clearOutputs();
+    return;
+  }
+  showWarning(null);
+
+  const unit = document.getElementById('unit-select').value;
+  document.getElementById('shape-svg').innerHTML = shape.draw(v);
+  renderResults(res, unit);
+  renderFormula(shape);
+}
+
+function clearOutputs() {
+  document.getElementById('shape-svg').innerHTML = '';
+  document.getElementById('results-grid').innerHTML = '';
+}
+
+function card(label, value, unit, primary) {
+  return '<div class="result-card' + (primary ? ' primary' : '') + '"><p class="rlabel">' + label + '</p>' +
+    '<p class="rvalue">' + fmt(value) + '</p><p class="runit">' + unit + '</p></div>';
+}
+
+function renderResults(res, u) {
+  let html = '';
+  html += card('Area, A', res.A, u + '\u00b2', true);
+  html += card('I<sub>x</sub>', res.Ix, u + '\u2074', true);
+  html += card('I<sub>y</sub>', res.Iy, u + '\u2074', true);
+
+  if (res.asymmetric) {
+    html += card('S<sub>x</sub> (bottom)', res.SxBottom, u + '\u00b3');
+    html += card('S<sub>x</sub> (top)', res.SxTop, u + '\u00b3');
+    html += card('S<sub>y</sub>', res.Sy, u + '\u00b3');
+  } else {
+    html += card('S<sub>x</sub>', res.Sx, u + '\u00b3');
+    html += card('S<sub>y</sub>', res.Sy, u + '\u00b3');
+    if (res.J !== undefined) html += card('J (polar / torsion)', res.J, u + '\u2074');
+  }
+  html += card('r<sub>x</sub> (radius of gyration)', res.rx, u);
+  html += card('r<sub>y</sub> (radius of gyration)', res.ry, u);
+
+  document.getElementById('results-grid').innerHTML = html;
+}
+
+function renderFormula(shape) {
+  const torsionNote = shape.compute === SHAPES.circle.compute || shape.compute === SHAPES.hollow_circle.compute
+    ? ''
+    : '<p style="font-size:13px; color:var(--ink-mid); margin-top:10px;">Torsional stiffness (the constant used in &theta;=TL/GJ or &tau;=Tr/J) is only equal to I<sub>x</sub>+I<sub>y</sub> for solid or hollow <em>circular</em> sections. For this shape, true torsional stiffness requires separate Saint-Venant torsion analysis and is not provided here.</p>';
+
+  document.getElementById('formula-card').innerHTML =
+    '<p class="formula-title">Formulas &mdash; ' + shape.label + '</p>' +
+    '<div class="formula-block"><span>' + shape.formula + '</span></div>' +
+    '<div class="formula-vars">' + shape.vars.map(v => '<span class="fvar">' + v + '</span>').join('') + '</div>' +
+    torsionNote +
+    '<p class="source-note">S = I/c is the section modulus (c = distance from centroid to the extreme fiber), used in bending stress &sigma; = M/S. r = &radic;(I/A) is the radius of gyration, used in column buckling (slenderness ratio). All formulas verified against independent numerical (grid) double-integration of each shape\u2019s actual boundary. References: Timoshenko &amp; Gere, <em>Mechanics of Materials</em>; Roark\u2019s <em>Formulas for Stress and Strain</em>; Machinery\u2019s Handbook.</p>';
+}
+
+/* ══════════════════════════ Init ══════════════════════════ */
+renderDims();
+recalc();
+</script>
+</body>
+</html>

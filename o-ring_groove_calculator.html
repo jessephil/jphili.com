@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>O-Ring Size &amp; Groove Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --parchment: #f5eedf;
+      --parchment-dark: #ede3cc;
+      --parchment-deeper: #d9cdb0;
+      --ink: #2a2218;
+      --ink-mid: #5a4e38;
+      --ink-faint: #9a8e78;
+      --gold: #8a6d2f;
+      --gold-light: #c9a84c;
+      --gold-pale: #f0e4c0;
+      --border: rgba(138,109,47,0.25);
+      --border-strong: rgba(138,109,47,0.5);
+      --green: #2d5a27;
+      --green-pale: #e8f2e7;
+      --amber: #7a5a1a;
+      --amber-pale: #fdf3dc;
+      --red: #7a2a2a;
+      --red-pale: #f5e8e8;
+      --blue: #1c4f82;
+      --blue-pale: #e6f0fb;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--parchment);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.012) 2px, rgba(0,0,0,0.012) 4px),
+        repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(0,0,0,0.008) 3px, rgba(0,0,0,0.008) 6px);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    nav {
+      position: relative;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 3rem;
+      height: 64px;
+      background: var(--parchment);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-ornament { display: flex; align-items: center; gap: 12px; }
+    .nav-rule { width: 32px; height: 1px; background: var(--gold); opacity: 0.6; }
+    .nav-name { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--ink); text-decoration: none; letter-spacing: 0.04em; }
+    .nav-back { font-size: 12px; color: var(--ink-mid); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+    .nav-back:hover { color: var(--gold); }
+    .nav-back svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+
+    .page { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 3rem 3rem 5rem; }
+
+    .page-header { margin-bottom: 2rem; }
+    .page-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+    .page-title { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--ink); margin-bottom: 8px; }
+    .page-subtitle { font-size: 14px; color: var(--ink-mid); font-style: italic; max-width: 640px; line-height: 1.7; }
+
+    .section-label { font-size: 11px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 10px; }
+
+    .inputs-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem 1.75rem; margin-bottom: 1.5rem; }
+
+    .app-tabs { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-bottom: 1.5rem; }
+    .app-tab { flex: 1; padding: 12px 10px; font-family: inherit; font-size: 13px; font-weight: 500; color: var(--ink-mid); background: var(--parchment-dark); border: none; cursor: pointer; transition: background 0.15s, color 0.15s; text-align: center; border-right: 1px solid var(--border); }
+    .app-tab:last-child { border-right: none; }
+    .app-tab.active { background: var(--ink); color: var(--parchment); }
+    .app-tab:not(.active):hover { background: var(--parchment-deeper); }
+    .app-note { font-size: 12px; color: var(--ink-mid); font-style: italic; margin-top: -0.75rem; margin-bottom: 1.5rem; }
+
+    .preset-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .preset-row label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); white-space: nowrap; }
+    .preset-row select { flex: 1; min-width: 200px; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment); outline: none; cursor: pointer; }
+
+    .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 6px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+    .field-row { display: flex; gap: 6px; }
+    .field input {
+      flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+      font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment);
+      outline: none; transition: border-color 0.2s; min-width: 0;
+    }
+    .field input:focus { border-color: var(--border-strong); }
+    .field input:disabled { color: var(--ink-faint); background: var(--parchment-deeper); }
+    .field select {
+      border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+      font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment);
+      outline: none; cursor: pointer; transition: border-color 0.2s;
+    }
+    .field select:focus { border-color: var(--border-strong); }
+    .field-note { font-size: 11px; color: var(--ink-faint); font-style: italic; }
+
+    .custom-toggle { font-size: 12px; color: var(--gold); background: none; border: none; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-family: inherit; padding: 0; margin-top: 8px; }
+    .custom-toggle:hover { color: var(--ink); }
+
+    .warning-banner { background: var(--amber-pale); border: 1px solid rgba(122,90,26,0.3); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--amber); margin-bottom: 12px; }
+
+    /* results */
+    .results-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .result-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; }
+    .result-card.primary { background: var(--gold-pale); border-color: var(--border-strong); }
+    .result-card .rlabel { font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 4px; }
+    .result-card.primary .rlabel { color: var(--gold); }
+    .result-card .rvalue { font-size: 21px; font-weight: 500; color: var(--ink); line-height: 1.1; }
+    .result-card .runit { font-size: 12px; color: var(--ink-faint); margin-top: 3px; }
+    .result-card .rrange { font-size: 11px; color: var(--ink-mid); margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--border); }
+
+    .diagram-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+    .diagram-card svg { width: 100%; max-width: 460px; height: auto; display: block; margin: 0 auto; }
+
+    /* table */
+    .table-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .table-controls input { flex: 1; min-width: 200px; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-family: inherit; font-size: 14px; color: var(--ink); background: var(--parchment-dark); outline: none; }
+    .table-controls input:focus { border-color: var(--border-strong); }
+    .table-meta { font-size: 12px; color: var(--ink-faint); font-style: italic; white-space: nowrap; }
+
+    .table-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1.5rem; }
+    table.as-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.as-table thead th {
+      position: sticky; top: 0; background: var(--parchment-deeper); color: var(--ink-mid);
+      font-size: 10.5px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+      text-align: right; padding: 9px 14px; border-bottom: 1px solid var(--border-strong); z-index: 1;
+    }
+    table.as-table thead th:first-child { text-align: left; }
+    table.as-table tbody td { padding: 7px 14px; text-align: right; border-bottom: 0.5px solid var(--border); color: var(--ink); }
+    table.as-table tbody td:first-child { text-align: left; font-weight: 500; }
+    table.as-table tbody td .mm { color: var(--ink-faint); font-size: 11px; }
+    table.as-table tbody tr { cursor: pointer; background: var(--parchment-dark); transition: background 0.12s; }
+    table.as-table tbody tr:hover { background: var(--gold-pale); }
+    table.as-table tbody tr.selected { background: var(--gold-pale); box-shadow: inset 3px 0 0 var(--gold); }
+
+    /* formula */
+    .formula-card { background: var(--parchment-dark); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.75rem; margin-top: 1.5rem; }
+    .formula-title { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 10px; }
+    .formula-block { font-family: 'Georgia', serif; font-size: 14px; color: var(--ink); display: flex; flex-direction: column; gap: 6px; padding: 10px 0; }
+    .formula-vars { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+    .fvar { font-size: 12px; color: var(--ink-mid); }
+    .fvar strong { color: var(--ink); font-weight: 500; }
+    .source-note { font-size: 11px; color: var(--ink-faint); font-style: italic; margin-top: 14px; padding-top: 12px; border-top: 0.5px solid var(--border); line-height: 1.6; }
+    .caveat { font-size: 12px; color: var(--amber); background: var(--amber-pale); border-radius: 8px; padding: 8px 12px; margin-top: 10px; }
+
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); background: var(--parchment-deeper); padding: 2rem 3rem; display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
+    .footer-name { color: var(--ink-mid); }
+    .footer-year { color: var(--ink-faint); font-style: italic; }
+
+    @media (max-width: 680px) {
+      nav { padding: 0 1.25rem; }
+      .page { padding: 2rem 1.25rem 4rem; }
+      .g3 { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+      .app-tabs { flex-direction: column; }
+      .app-tab { border-right: none; border-bottom: 1px solid var(--border); }
+      .app-tab:last-child { border-bottom: none; }
+      footer { padding: 2rem 1.25rem; flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background: linear-gradient(90deg, var(--gold), transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 19"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Mechanical Design</p>
+    <h1 class="page-title">O-Ring Size &amp; Groove Calculator</h1>
+    <p class="page-subtitle">Look up any AS568 standard O-ring, then get recommended squeeze and matching groove depth/width for a static, reciprocating, or rotary gland.</p>
+  </div>
+
+  <p class="section-label">Application</p>
+  <div class="app-tabs">
+    <button class="app-tab active" id="app-static" onclick="setApp('static')">Static seal</button>
+    <button class="app-tab" id="app-recip" onclick="setApp('recip')">Dynamic — reciprocating</button>
+    <button class="app-tab" id="app-rotary" onclick="setApp('rotary')">Dynamic — rotary</button>
+  </div>
+  <p class="app-note" id="app-note"></p>
+
+  <p class="section-label">O-Ring Size</p>
+  <div class="inputs-card">
+    <div class="g2">
+      <div class="field">
+        <label>Cross-section (CS)</label>
+        <select id="cs-select" onchange="onCsChange()"></select>
+      </div>
+      <div class="field">
+        <label>Dash no. / ID</label>
+        <select id="id-select" onchange="onIdChange()"></select>
+      </div>
+    </div>
+    <div class="g3">
+      <div class="field">
+        <label>Inner diameter (ID)</label>
+        <div class="field-row"><input type="text" id="inp-id" disabled/></div>
+      </div>
+      <div class="field">
+        <label>Cross-section (CS)</label>
+        <div class="field-row"><input type="text" id="inp-cs" disabled/></div>
+      </div>
+      <div class="field">
+        <label>Outer diameter (OD)</label>
+        <div class="field-row"><input type="text" id="inp-od" disabled/></div>
+      </div>
+    </div>
+    <button class="custom-toggle" onclick="toggleCustom()" id="custom-btn">Enter a custom size instead</button>
+    <div id="custom-fields" style="display:none; margin-top: 14px;">
+      <div class="g3">
+        <div class="field">
+          <label>Inner diameter (ID), in</label>
+          <div class="field-row"><input type="number" id="custom-id" value="0.734" min="0.001" step="0.001" oninput="onCustomInput()"/></div>
+        </div>
+        <div class="field">
+          <label>Cross-section (CS), in</label>
+          <div class="field-row"><input type="number" id="custom-cs" value="0.139" min="0.001" step="0.001" oninput="onCustomInput()"/></div>
+        </div>
+      </div>
+      <p class="field-note">Values in inches. Overrides the AS568 selection above until you pick a dash number again.</p>
+    </div>
+    <div class="warning-banner" id="cs-warning" style="display:none; margin-top:14px;"></div>
+  </div>
+
+  <p class="section-label">Recommended Squeeze &amp; Groove Dimensions</p>
+  <div class="results-grid">
+    <div class="result-card primary">
+      <p class="rlabel">Squeeze</p>
+      <p class="rvalue" id="r-squeeze">—</p>
+      <p class="runit">% of CS</p>
+      <p class="rrange" id="r-squeeze-range"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Groove depth</p>
+      <p class="rvalue" id="r-depth">—</p>
+      <p class="runit" id="r-depth-unit">in</p>
+      <p class="rrange" id="r-depth-mm"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Groove width</p>
+      <p class="rvalue" id="r-width">—</p>
+      <p class="runit" id="r-width-unit">in</p>
+      <p class="rrange" id="r-width-mm"></p>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Gland fill</p>
+      <p class="rvalue" id="r-fill">—</p>
+      <p class="runit">% of groove volume</p>
+      <p class="rrange" id="r-fill-note"></p>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <div id="groove-svg"></div>
+  </div>
+
+  <p class="section-label">AS568 Reference Table</p>
+  <div class="table-controls">
+    <input type="text" id="table-filter" placeholder="Filter by dash number or size (e.g. 214, or 0.75)…" oninput="renderTable()" autocomplete="off"/>
+    <span class="table-meta" id="table-meta"></span>
+  </div>
+  <div class="table-wrap">
+    <table class="as-table">
+      <thead>
+        <tr><th>Dash No.</th><th>ID</th><th>CS</th><th>OD</th></tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <p class="section-label">Parker ORD 5703 Design Charts</p>
+  <div class="inputs-card">
+    <p class="field-note" style="margin-bottom:14px;">Raw ranges straight from Parker's O-Ring Dimension &amp; Seal Material Reference Guide (ORD 5703), for the five standard AS568 cross-sections. The calculator above uses the midpoint of each range and interpolates between cross-sections; this table is here so you can check it against the source directly.</p>
+
+    <p style="font-size:12px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-mid); margin-bottom:8px;">Design Chart II — Industrial Static Seals</p>
+    <div class="table-wrap" style="max-height:none; margin-bottom:1.5rem;">
+      <table class="as-table">
+        <thead><tr><th>CS series</th><th>Gland depth</th><th>Squeeze</th><th>Groove width (no parbak)</th></tr></thead>
+        <tbody>
+          <tr><td>1/16" (.070)</td><td>.050–.052</td><td>22–32%</td><td>.093–.098</td></tr>
+          <tr><td>3/32" (.103)</td><td>.081–.083</td><td>17–24%</td><td>.140–.145</td></tr>
+          <tr><td>1/8" (.139)</td><td>.111–.113</td><td>16–23%</td><td>.187–.192</td></tr>
+          <tr><td>3/16" (.210)</td><td>.170–.173</td><td>15–21%</td><td>.281–.286</td></tr>
+          <tr><td>1/4" (.275)</td><td>.226–.229</td><td>15–20%</td><td>.375–.380</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="font-size:12px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-mid); margin-bottom:8px;">Design Chart III — Industrial Reciprocating Seals (1500 psi max)</p>
+    <div class="table-wrap" style="max-height:none; margin-bottom:1.5rem;">
+      <table class="as-table">
+        <thead><tr><th>CS series</th><th>Gland depth</th><th>Squeeze</th><th>Groove width (no parbak)</th></tr></thead>
+        <tbody>
+          <tr><td>1/16" (.070)</td><td>.055–.057</td><td>15–25%</td><td>.093–.098</td></tr>
+          <tr><td>3/32" (.103)</td><td>.088–.090</td><td>10–17%</td><td>.140–.145</td></tr>
+          <tr><td>1/8" (.139)</td><td>.121–.123</td><td>9–16%</td><td>.187–.192</td></tr>
+          <tr><td>3/16" (.210)</td><td>.185–.188</td><td>8–14%</td><td>.281–.286</td></tr>
+          <tr><td>1/4" (.275)</td><td>.237–.240</td><td>11–16%</td><td>.375–.380</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="field-note" style="margin-bottom:14px;">No rotary chart appears in ORD 5703, so the rotary tab above still uses general industry guidance rather than a tabulated Parker source.</p>
+
+    <p style="font-size:12px; font-weight:500; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink-mid); margin-bottom:8px;">Design Chart I — Face Seal Glands</p>
+    <div class="table-wrap" style="max-height:none;">
+      <table class="as-table">
+        <thead><tr><th>CS series</th><th>Gland depth</th><th>Squeeze</th><th>Width (liquids)</th><th>Width (vacuum/gas)</th></tr></thead>
+        <tbody>
+          <tr><td>1/16" (.070)</td><td>.050–.054</td><td>19–32%</td><td>.101–.107</td><td>.084–.089</td></tr>
+          <tr><td>3/32" (.103)</td><td>.074–.080</td><td>20–30%</td><td>.136–.142</td><td>.120–.125</td></tr>
+          <tr><td>1/8" (.139)</td><td>.101–.107</td><td>20–30%</td><td>.177–.187</td><td>.158–.164</td></tr>
+          <tr><td>3/16" (.210)</td><td>.152–.162</td><td>21–30%</td><td>.270–.290</td><td>.239–.244</td></tr>
+          <tr><td>1/4" (.275)</td><td>.201–.211</td><td>21–29%</td><td>.342–.362</td><td>.309–.314</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="field-note" style="margin-top:10px;">Face seal glands are dimensioned differently from the radial grooves above — by the groove's outer diameter (for external pressure) or inner diameter (for internal pressure), each sized directly off the O-ring's mean OD or ID rather than a bore/rod diameter with a diametral clearance. This chart is included for reference only; it isn't wired into the calculator above since it needs that different dimensioning approach, not just a different squeeze target.</p>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Method</p>
+    <div class="formula-block">
+      <span>Squeeze (%) = (CS − groove depth) / CS &times; 100</span>
+      <span>Gland fill (%) = O-ring cross-section area / groove cross-section area &times; 100, area<sub>ring</sub> = &pi;(CS/2)&sup2;</span>
+    </div>
+    <p style="font-size:13px; color:var(--ink-mid); margin-bottom:6px;">
+      <strong>Static seals</strong> use Parker ORD 5703 Design Chart II (Industrial Static Seals — the same data appears in the Parker O-Ring Handbook, ORD 5700, as Design Chart 4-2), which tabulates squeeze percentage, gland depth, and groove width directly for each of the five standard AS568 cross-sections (0.070", 0.103", 0.139", 0.210", 0.275"). This calculator uses the midpoint of Parker's stated range at each of those five cross-sections and linearly interpolates between them for in-between sizes.
+    </p>
+    <p style="font-size:13px; color:var(--ink-mid); margin-bottom:6px;">
+      <strong>Reciprocating seals</strong> now use Parker ORD 5703 Design Chart III (Industrial Reciprocating Seals, 1500 psi max) the same way — tabulated squeeze at the five standard cross-sections, interpolated between them. Groove width reuses Chart II's column, since ORD 5703 tabulates the same groove width for both static and reciprocating glands at a given cross-section.
+    </p>
+    <p style="font-size:13px; color:var(--ink-mid); margin-bottom:6px;">
+      <strong>Rotary seals</strong> are the one application here without a manufacturer chart to draw on — ORD 5703 doesn't include one. This calculator falls back to commonly cited industry guidance (5–10% squeeze, ~1.5&times; CS groove width) for rotary only. Treat that one as a starting point, not a substitute for your seal supplier's dynamic gland spec.
+    </p>
+    <div class="formula-vars">
+      <span class="fvar"><strong>CS</strong> = O-ring cross-section (bulk) diameter</span>
+      <span class="fvar"><strong>ID</strong> = O-ring inner diameter</span>
+      <span class="fvar">Groove width/area treated as rectangular (corner radii ignored)</span>
+      <span class="fvar">Target gland fill: ~75–90% (avoid &gt;90% — risks hydraulic lock/over-compression)</span>
+    </div>
+    <p class="source-note">
+      Sizes: SAE/ISO AS568 standard O-ring dimensions (inch series, dash 001–475). Squeeze/groove data for static and reciprocating seals: Parker O-Ring Dimension &amp; Seal Material Reference Guide, ORD 5703 (Design Charts II and III); the static numbers also appear in the Parker O-Ring Handbook, ORD 5700, Design Chart 4-2. Rotary squeeze/groove guidance: general industry practice, not a tabulated manufacturer chart. Cross-sections below 0.070" (dash 001–003) fall outside ORD 5703's gland charts and are clamped to the 0.070" values with a note — verify independently for those minis. This tool doesn't account for pressure-driven extrusion gaps, back-up rings, temperature de-rating, or fluid compatibility swell — check those separately for your application.
+    </p>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+/* ══════════════════════════ AS568 data: [dash, ID_in, CS_in, OD_in] ══════════════════════════ */
+const AS568 = [["001",0.029,0.04,0.109],["002",0.042,0.05,0.142],["003",0.056,0.06,0.176],["004",0.07,0.07,0.21],["005",0.101,0.07,0.241],["006",0.114,0.07,0.254],["007",0.145,0.07,0.285],["008",0.176,0.07,0.316],["009",0.208,0.07,0.348],["010",0.239,0.07,0.379],["011",0.301,0.07,0.441],["012",0.364,0.07,0.504],["013",0.426,0.07,0.566],["014",0.489,0.07,0.629],["015",0.551,0.07,0.691],["016",0.614,0.07,0.754],["017",0.676,0.07,0.816],["018",0.739,0.07,0.879],["019",0.801,0.07,0.941],["020",0.864,0.07,1.004],["021",0.926,0.07,1.066],["022",0.989,0.07,1.129],["023",1.051,0.07,1.191],["024",1.114,0.07,1.254],["025",1.176,0.07,1.316],["026",1.239,0.07,1.379],["027",1.301,0.07,1.441],["028",1.364,0.07,1.504],["029",1.489,0.07,1.629],["030",1.614,0.07,1.754],["031",1.739,0.07,1.879],["032",1.864,0.07,2.004],["033",1.989,0.07,2.129],["034",2.114,0.07,2.254],["035",2.239,0.07,2.379],["036",2.364,0.07,2.504],["037",2.489,0.07,2.629],["038",2.614,0.07,2.754],["039",2.739,0.07,2.879],["040",2.864,0.07,3.004],["041",2.989,0.07,3.129],["042",3.239,0.07,3.379],["043",3.489,0.07,3.629],["044",3.739,0.07,3.879],["045",3.989,0.07,4.129],["046",4.239,0.07,4.379],["047",4.489,0.07,4.629],["048",4.739,0.07,4.879],["049",4.989,0.07,5.129],["050",5.239,0.07,5.379],["102",0.049,0.103,0.255],["103",0.081,0.103,0.287],["104",0.112,0.103,0.318],["105",0.143,0.103,0.349],["106",0.174,0.103,0.38],["107",0.206,0.103,0.412],["108",0.237,0.103,0.443],["109",0.299,0.103,0.505],["110",0.362,0.103,0.568],["111",0.424,0.103,0.63],["112",0.487,0.103,0.693],["113",0.549,0.103,0.755],["114",0.612,0.103,0.818],["115",0.674,0.103,0.88],["116",0.737,0.103,0.943],["117",0.799,0.103,1.005],["118",0.862,0.103,1.068],["119",0.924,0.103,1.13],["120",0.987,0.103,1.193],["121",1.049,0.103,1.255],["122",1.112,0.103,1.318],["123",1.174,0.103,1.38],["124",1.237,0.103,1.443],["125",1.299,0.103,1.505],["126",1.362,0.103,1.568],["127",1.424,0.103,1.63],["128",1.487,0.103,1.693],["129",1.549,0.103,1.755],["130",1.612,0.103,1.818],["131",1.674,0.103,1.88],["132",1.737,0.103,1.943],["133",1.799,0.103,2.005],["134",1.862,0.103,2.068],["135",1.925,0.103,2.131],["136",1.987,0.103,2.193],["137",2.05,0.103,2.256],["138",2.112,0.103,2.318],["139",2.175,0.103,2.381],["140",2.237,0.103,2.443],["141",2.3,0.103,2.506],["142",2.362,0.103,2.568],["143",2.425,0.103,2.631],["144",2.487,0.103,2.693],["145",2.55,0.103,2.756],["146",2.612,0.103,2.818],["147",2.675,0.103,2.881],["148",2.737,0.103,2.943],["149",2.8,0.103,3.006],["150",2.862,0.103,3.068],["151",2.987,0.103,3.193],["152",3.237,0.103,3.443],["153",3.487,0.103,3.693],["154",3.737,0.103,3.943],["155",3.987,0.103,4.193],["156",4.237,0.103,4.443],["157",4.487,0.103,4.693],["158",4.737,0.103,4.943],["159",4.987,0.103,5.193],["160",5.237,0.103,5.443],["161",5.487,0.103,5.693],["162",5.737,0.103,5.943],["163",5.987,0.103,6.193],["164",6.237,0.103,6.443],["165",6.487,0.103,6.693],["166",6.737,0.103,6.943],["167",6.987,0.103,7.193],["168",7.237,0.103,7.443],["169",7.487,0.103,7.693],["170",7.737,0.103,7.943],["171",7.987,0.103,8.193],["172",8.237,0.103,8.443],["173",8.487,0.103,8.693],["174",8.737,0.103,8.943],["175",8.987,0.103,9.193],["176",9.237,0.103,9.443],["177",9.487,0.103,9.693],["178",9.737,0.103,9.943],["201",0.171,0.139,0.449],["202",0.234,0.139,0.512],["203",0.296,0.139,0.574],["204",0.359,0.139,0.637],["205",0.421,0.139,0.699],["206",0.484,0.139,0.762],["207",0.546,0.139,0.824],["208",0.609,0.139,0.887],["209",0.671,0.139,0.949],["210",0.734,0.139,1.012],["211",0.796,0.139,1.074],["212",0.859,0.139,1.137],["213",0.921,0.139,1.199],["214",0.984,0.139,1.262],["215",1.046,0.139,1.324],["216",1.109,0.139,1.387],["217",1.171,0.139,1.449],["218",1.234,0.139,1.512],["219",1.296,0.139,1.574],["220",1.359,0.139,1.637],["221",1.421,0.139,1.699],["222",1.484,0.139,1.762],["223",1.609,0.139,1.887],["224",1.734,0.139,2.012],["225",1.859,0.139,2.137],["226",1.984,0.139,2.262],["227",2.109,0.139,2.387],["228",2.234,0.139,2.512],["229",2.359,0.139,2.637],["230",2.484,0.139,2.762],["231",2.609,0.139,2.887],["232",2.734,0.139,3.012],["233",2.859,0.139,3.137],["234",2.984,0.139,3.262],["235",3.109,0.139,3.387],["236",3.234,0.139,3.512],["237",3.359,0.139,3.637],["238",3.484,0.139,3.762],["239",3.609,0.139,3.887],["240",3.734,0.139,4.012],["241",3.859,0.139,4.137],["242",3.984,0.139,4.262],["243",4.109,0.139,4.387],["244",4.234,0.139,4.512],["245",4.359,0.139,4.637],["246",4.484,0.139,4.762],["247",4.609,0.139,4.887],["248",4.734,0.139,5.012],["249",4.859,0.139,5.137],["250",4.984,0.139,5.262],["251",5.109,0.139,5.387],["252",5.234,0.139,5.512],["253",5.359,0.139,5.637],["254",5.484,0.139,5.762],["255",5.609,0.139,5.887],["256",5.734,0.139,6.012],["257",5.859,0.139,6.137],["258",5.984,0.139,6.262],["259",6.234,0.139,6.512],["260",6.484,0.139,6.762],["261",6.734,0.139,7.012],["262",6.984,0.139,7.262],["263",7.234,0.139,7.512],["264",7.484,0.139,7.762],["265",7.734,0.139,8.012],["266",7.984,0.139,8.262],["267",8.234,0.139,8.512],["268",8.484,0.139,8.762],["269",8.734,0.139,9.012],["270",8.984,0.139,9.262],["271",9.234,0.139,9.512],["272",9.484,0.139,9.762],["273",9.734,0.139,10.012],["274",9.984,0.139,10.262],["275",10.484,0.139,10.762],["276",10.984,0.139,11.262],["277",11.484,0.139,11.762],["278",11.984,0.139,12.262],["279",12.984,0.139,13.262],["280",13.984,0.139,14.262],["281",14.984,0.139,15.262],["282",15.955,0.139,16.233],["283",16.955,0.139,17.233],["284",17.955,0.139,18.233],["309",0.412,0.21,0.832],["310",0.475,0.21,0.895],["311",0.537,0.21,0.957],["312",0.6,0.21,1.02],["313",0.662,0.21,1.082],["314",0.725,0.21,1.145],["315",0.787,0.21,1.207],["316",0.85,0.21,1.27],["317",0.912,0.21,1.332],["318",0.975,0.21,1.395],["319",1.037,0.21,1.457],["320",1.1,0.21,1.52],["321",1.162,0.21,1.582],["322",1.225,0.21,1.645],["323",1.287,0.21,1.707],["324",1.35,0.21,1.77],["325",1.475,0.21,1.895],["326",1.6,0.21,2.02],["327",1.725,0.21,2.145],["328",1.85,0.21,2.27],["329",1.975,0.21,2.395],["330",2.1,0.21,2.52],["331",2.225,0.21,2.645],["332",2.35,0.21,2.77],["333",2.475,0.21,2.895],["334",2.6,0.21,3.02],["335",2.725,0.21,3.145],["336",2.85,0.21,3.27],["337",2.975,0.21,3.395],["338",3.1,0.21,3.52],["339",3.225,0.21,3.645],["340",3.35,0.21,3.77],["341",3.475,0.21,3.895],["342",3.6,0.21,4.02],["343",3.725,0.21,4.145],["344",3.85,0.21,4.27],["345",3.975,0.21,4.395],["346",4.1,0.21,4.52],["347",4.225,0.21,4.645],["348",4.35,0.21,4.77],["349",4.475,0.21,4.895],["350",4.6,0.21,5.02],["351",4.725,0.21,5.145],["352",4.85,0.21,5.27],["353",4.975,0.21,5.395],["354",5.1,0.21,5.52],["355",5.225,0.21,5.645],["356",5.35,0.21,5.77],["357",5.475,0.21,5.895],["358",5.6,0.21,6.02],["359",5.725,0.21,6.145],["360",5.85,0.21,6.27],["361",5.975,0.21,6.395],["362",6.225,0.21,6.645],["363",6.475,0.21,6.895],["364",6.725,0.21,7.145],["365",6.975,0.21,7.395],["366",7.225,0.21,7.645],["367",7.475,0.21,7.895],["368",7.725,0.21,8.145],["369",7.975,0.21,8.395],["370",8.225,0.21,8.645],["371",8.475,0.21,8.895],["372",8.725,0.21,9.145],["373",8.975,0.21,9.395],["374",9.225,0.21,9.645],["375",9.475,0.21,9.895],["376",9.725,0.21,10.145],["377",9.975,0.21,10.395],["378",10.475,0.21,10.895],["379",10.975,0.21,11.395],["380",11.475,0.21,11.895],["381",11.975,0.21,12.395],["382",12.975,0.21,13.395],["383",13.975,0.21,14.395],["384",14.975,0.21,15.395],["385",15.955,0.21,16.375],["386",16.955,0.21,17.375],["387",17.955,0.21,18.375],["388",18.955,0.21,19.375],["389",19.955,0.21,20.375],["390",20.955,0.21,21.375],["391",21.955,0.21,22.375],["392",22.94,0.21,23.36],["393",23.94,0.21,24.36],["394",24.94,0.21,25.36],["395",25.94,0.21,26.36],["425",4.475,0.275,5.025],["426",4.6,0.275,5.15],["427",4.725,0.275,5.275],["428",4.85,0.275,5.4],["429",4.975,0.275,5.525],["430",5.1,0.275,5.65],["431",5.225,0.275,5.775],["432",5.35,0.275,5.9],["433",5.475,0.275,6.025],["434",5.6,0.275,6.15],["435",5.725,0.275,6.275],["436",5.85,0.275,6.4],["437",5.975,0.275,6.525],["438",6.225,0.275,6.775],["439",6.475,0.275,7.025],["440",6.725,0.275,7.275],["441",6.975,0.275,7.525],["442",7.225,0.275,7.775],["443",7.475,0.275,8.025],["444",7.725,0.275,8.275],["445",7.975,0.275,8.525],["446",8.475,0.275,9.025],["447",8.975,0.275,9.525],["448",9.475,0.275,10.025],["449",9.975,0.275,10.525],["450",10.475,0.275,11.025],["451",10.975,0.275,11.525],["452",11.475,0.275,12.025],["453",11.975,0.275,12.525],["454",12.475,0.275,13.025],["455",12.975,0.275,13.525],["456",13.475,0.275,14.025],["457",13.975,0.275,14.525],["458",14.475,0.275,15.025],["459",14.975,0.275,15.525],["460",15.475,0.275,16.025],["461",15.955,0.275,16.505],["462",16.455,0.275,17.005],["463",16.955,0.275,17.505],["464",17.455,0.275,18.005],["465",17.955,0.275,18.505],["466",18.455,0.275,19.005],["467",18.955,0.275,19.505],["468",19.455,0.275,20.005],["469",19.955,0.275,20.505],["470",20.955,0.275,21.505],["471",21.955,0.275,22.505],["472",22.94,0.275,23.49],["473",23.94,0.275,24.49],["474",24.94,0.275,25.49],["475",25.94,0.275,26.49]];
+
+const IN_TO_MM = 25.4;
+function mm(v) { return v * IN_TO_MM; }
+function fmt(v, dec) {
+  if (!isFinite(v) || v === null) return '\u2014';
+  return v.toFixed(dec ?? 4).replace(/0+$/,'').replace(/\.$/,'');
+}
+function fmtFixed(v, dec) { return isFinite(v) ? v.toFixed(dec) : '\u2014'; }
+
+/* ══════════════════════════ Gland data — Parker ORD 5703, Design Charts II & III ══════════════════════════ */
+// Interpolation anchor points at the five standard AS568 cross-sections.
+// Both static (Chart II) and reciprocating (Chart III) share the same groove-width
+// column in ORD 5703, so one width table serves both.
+const staticCS    = [0.070, 0.103, 0.139, 0.210, 0.275];
+const gWidth      = [0.0955,0.1425,0.1895,0.2835,0.3775]; // in, groove width (no parbak), midpoint
+
+const staticSqMid = [27,   20.5, 19.5, 18,   17.5]; // Design Chart II — Industrial Static Seals
+const staticSqMin = [22,   17,   16,   15,   15  ];
+const staticSqMax = [32,   24,   23,   21,   20  ];
+
+const recipSqMid  = [20,   13.5, 12.5, 11,   13.5]; // Design Chart III — Industrial Reciprocating Seals (1500 psi max)
+const recipSqMin  = [15,   10,   9,    8,    11  ];
+const recipSqMax  = [25,   17,   16,   14,   16  ];
+
+function interp(xs, ys, x) {
+  if (x <= xs[0]) return ys[0];
+  if (x >= xs[xs.length-1]) return ys[ys.length-1];
+  for (let i=0;i<xs.length-1;i++){
+    if (x >= xs[i] && x <= xs[i+1]) {
+      const t = (x-xs[i])/(xs[i+1]-xs[i]);
+      return ys[i] + t*(ys[i+1]-ys[i]);
+    }
+  }
+  return ys[ys.length-1];
+}
+
+const APP = {
+  static: { label: 'Static seal', tabulated: true, sqMidArr: staticSqMid, sqMinArr: staticSqMin, sqMaxArr: staticSqMax,
+    note: 'Parker ORD 5703 \u2014 Design Chart II (Industrial Static Seals): tabulated squeeze and groove width by cross-section.' },
+  recip:  { label: 'Dynamic \u2014 reciprocating', tabulated: true, sqMidArr: recipSqMid, sqMinArr: recipSqMin, sqMaxArr: recipSqMax,
+    note: 'Parker ORD 5703 \u2014 Design Chart III (Industrial Reciprocating Seals, 1500 psi max): tabulated squeeze; groove width shares Chart II\u2019s column.' },
+  rotary: { label: 'Dynamic \u2014 rotary', tabulated: false, sqMid: 7.5, sqMin: 5, sqMax: 10, widthMult: 1.50,
+    note: 'No rotary chart appears in ORD 5703 \u2014 this uses general industry guidance instead (the lowest squeeze of the three, to minimize frictional heating).' },
+};
+
+let currentApp = 'static';
+let selectedDash = null; // null when using custom
+let unitMode = 'in'; // display mostly in inches, mm shown as secondary
+
+/* ══════════════════════════ Populate CS + ID dropdowns ══════════════════════════ */
+function seriesLabel(cs) {
+  if (cs === 0.040) return 'Mini \u2014 CS 0.040"';
+  if (cs === 0.050) return 'Mini \u2014 CS 0.050"';
+  if (cs === 0.060) return 'Mini \u2014 CS 0.060"';
+  if (cs === 0.070) return '1/16" series \u2014 CS 0.070"';
+  if (cs === 0.103) return '3/32" series \u2014 CS 0.103"';
+  if (cs === 0.139) return '1/8" series \u2014 CS 0.139"';
+  if (cs === 0.210) return '3/16" series \u2014 CS 0.210"';
+  if (cs === 0.275) return '1/4" series \u2014 CS 0.275"';
+  return 'CS ' + cs;
+}
+
+// Distinct cross-sections present in the data, in ascending order.
+const CS_LIST = [...new Set(AS568.map(r => r[2]))].sort((a,b) => a-b);
+
+function populateCsSelect() {
+  const sel = document.getElementById('cs-select');
+  sel.innerHTML = CS_LIST.map(cs => '<option value="' + cs + '">' + seriesLabel(cs) + '</option>').join('');
+}
+
+// Repopulate the ID/dash dropdown for a given cross-section.
+function populateIdSelect(cs, preferDash) {
+  const sel = document.getElementById('id-select');
+  const rows = AS568.filter(r => r[2] === cs);
+  sel.innerHTML = rows.map(r => '<option value="' + r[0] + '">-' + r[0] + ' \u2014 ID ' + fmt(r[1],3) + '"</option>').join('');
+  if (preferDash && rows.some(r => r[0] === preferDash)) sel.value = preferDash;
+}
+
+function onCsChange() {
+  const cs = parseFloat(document.getElementById('cs-select').value);
+  populateIdSelect(cs);
+  const val = document.getElementById('id-select').value;
+  selectedDash = val || null;
+  document.getElementById('custom-fields').style.display = 'none';
+  document.getElementById('custom-btn').textContent = 'Enter a custom size instead';
+  highlightTableRow(selectedDash);
+  recalc();
+}
+
+function onIdChange() {
+  const val = document.getElementById('id-select').value;
+  selectedDash = val || null;
+  document.getElementById('custom-fields').style.display = 'none';
+  document.getElementById('custom-btn').textContent = 'Enter a custom size instead';
+  highlightTableRow(selectedDash);
+  recalc();
+}
+
+// Sets both dropdowns to match a given dash number (used by the table and init).
+function selectDash(dash) {
+  const row = AS568.find(r => r[0] === dash);
+  if (!row) return;
+  document.getElementById('cs-select').value = row[2];
+  populateIdSelect(row[2], dash);
+  selectedDash = dash;
+}
+
+function toggleCustom() {
+  const box = document.getElementById('custom-fields');
+  const showing = box.style.display !== 'none';
+  if (showing) {
+    box.style.display = 'none';
+    document.getElementById('custom-btn').textContent = 'Enter a custom size instead';
+  } else {
+    box.style.display = 'block';
+    document.getElementById('custom-btn').textContent = 'Use AS568 selection instead';
+    selectedDash = null;
+    highlightTableRow(null);
+    onCustomInput();
+  }
+}
+function onCustomInput() { recalc(); }
+
+function currentSize() {
+  if (selectedDash) {
+    const row = AS568.find(r => r[0] === selectedDash);
+    if (row) return { id: row[1], cs: row[2], od: row[3] };
+  }
+  const idEl = document.getElementById('custom-id');
+  const csEl = document.getElementById('custom-cs');
+  const id = parseFloat(idEl.value);
+  const cs = parseFloat(csEl.value);
+  if (isFinite(id) && isFinite(cs) && cs > 0) return { id, cs, od: id + 2*cs };
+  return null;
+}
+
+/* ══════════════════════════ Application tabs ══════════════════════════ */
+function setApp(app) {
+  currentApp = app;
+  ['static','recip','rotary'].forEach(a => document.getElementById('app-'+a).classList.toggle('active', a===app));
+  document.getElementById('app-note').textContent = APP[app].note;
+  recalc();
+}
+
+/* ══════════════════════════ Core calculation ══════════════════════════ */
+function recalc() {
+  const size = currentSize();
+  const warn = document.getElementById('cs-warning');
+
+  document.getElementById('inp-id').value = size ? fmt(size.id,3) + ' in  (' + fmtFixed(mm(size.id),2) + ' mm)' : '';
+  document.getElementById('inp-cs').value = size ? fmt(size.cs,3) + ' in  (' + fmtFixed(mm(size.cs),2) + ' mm)' : '';
+  document.getElementById('inp-od').value = size ? fmt(size.od,3) + ' in  (' + fmtFixed(mm(size.od),2) + ' mm)' : '';
+
+  if (!size) {
+    ['r-squeeze','r-depth','r-width','r-fill'].forEach(id => document.getElementById(id).textContent = '\u2014');
+    document.getElementById('r-squeeze-range').textContent = '';
+    document.getElementById('r-depth-mm').textContent = '';
+    document.getElementById('r-width-mm').textContent = '';
+    document.getElementById('r-fill-note').textContent = '';
+    document.getElementById('groove-svg').innerHTML = '';
+    warn.style.display = 'none';
+    return;
+  }
+
+  const cs = size.cs;
+  const a = APP[currentApp];
+  let sqMid, sqMin, sqMax, width;
+
+  if (a.tabulated) {
+    sqMid = interp(staticCS, a.sqMidArr, cs);
+    sqMin = interp(staticCS, a.sqMinArr, cs);
+    sqMax = interp(staticCS, a.sqMaxArr, cs);
+    width = interp(staticCS, gWidth, cs);
+    if (cs < staticCS[0] - 1e-9) {
+      warn.style.display = 'block';
+      warn.textContent = '\u26a0 CS = ' + fmt(cs,3) + '" is below ORD 5703\u2019s gland chart range (starts at 0.070"). Values are clamped to the 0.070" recommendation \u2014 verify independently for this mini cross-section.';
+    } else {
+      warn.style.display = 'none';
+    }
+  } else {
+    sqMid = a.sqMid; sqMin = a.sqMin; sqMax = a.sqMax;
+    width = cs * a.widthMult;
+    warn.style.display = 'none';
+  }
+
+  const depth = cs * (1 - sqMid/100);
+  const ringArea = Math.PI * Math.pow(cs/2, 2);
+  const grooveArea = depth * width;
+  const fillPct = grooveArea > 0 ? (ringArea/grooveArea)*100 : 0;
+
+  document.getElementById('r-squeeze').textContent = fmtFixed(sqMid,1);
+  document.getElementById('r-squeeze-range').textContent = 'typical range ' + fmtFixed(sqMin,0) + '\u2013' + fmtFixed(sqMax,0) + '%';
+
+  document.getElementById('r-depth').textContent = fmt(depth,4);
+  document.getElementById('r-depth-unit').textContent = 'in';
+  document.getElementById('r-depth-mm').textContent = fmtFixed(mm(depth),3) + ' mm';
+
+  document.getElementById('r-width').textContent = fmt(width,4);
+  document.getElementById('r-width-unit').textContent = 'in';
+  document.getElementById('r-width-mm').textContent = fmtFixed(mm(width),3) + ' mm';
+
+  document.getElementById('r-fill').textContent = fmtFixed(fillPct,1);
+  let fillNote = '';
+  if (fillPct > 90) fillNote = '\u26a0 high \u2014 risk of hydraulic lock';
+  else if (fillPct < 60) fillNote = '\u26a0 low \u2014 ring may be unstable in groove';
+  else fillNote = 'within normal 75\u201390% target band'.replace(/^within.*/, fillPct>=75 ? 'within normal target band' : 'below typical 75% target');
+  document.getElementById('r-fill-note').textContent = fillNote;
+
+  drawGrooveDiagram(cs, depth, width);
+}
+
+/* ══════════════════════════ Groove diagram ══════════════════════════ */
+function drawGrooveDiagram(cs, depth, width) {
+  const VBW = 460, VBH = 220;
+  const scale = 130 / Math.max(width, cs*1.6); // fit widest feature
+  const grooveWpx = width*scale, grooveDpx = depth*scale, ringRpx = (cs/2)*scale;
+  const cx = VBW/2, baseY = 150;
+
+  const grooveLx = cx - grooveWpx/2, grooveRx = cx + grooveWpx/2;
+  const grooveTop = baseY - grooveDpx;
+
+  let svg = '<svg viewBox="0 0 ' + VBW + ' ' + VBH + '" xmlns="http://www.w3.org/2000/svg" font-family="DM Sans, sans-serif">';
+
+  // static housing surface (the two flats either side of the groove)
+  svg += '<line x1="10" y1="' + baseY + '" x2="' + (grooveLx) + '" y2="' + baseY + '" stroke="var(--ink)" stroke-width="3"/>';
+  svg += '<line x1="' + grooveRx + '" y1="' + baseY + '" x2="' + (VBW-10) + '" y2="' + baseY + '" stroke="var(--ink)" stroke-width="3"/>';
+  // groove walls + floor
+  svg += '<path d="M ' + grooveLx + ' ' + baseY + ' L ' + grooveLx + ' ' + grooveTop + ' L ' + grooveRx + ' ' + grooveTop + ' L ' + grooveRx + ' ' + baseY + '" fill="none" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>';
+
+  // O-ring cross-section, compressed to groove depth (ellipse), sitting in groove
+  const ringCyFinal = grooveTop + grooveDpx/2;
+  const compressedRy = grooveDpx/2;
+  svg += '<ellipse cx="' + cx + '" cy="' + ringCyFinal + '" rx="' + ringRpx + '" ry="' + compressedRy + '" fill="var(--gold-light)" opacity="0.55" stroke="var(--gold)" stroke-width="2"/>';
+
+  // Mating face: the second part's flat surface, coplanar with the housing face,
+  // capping the groove opening. Drawn LAST (after the groove + ring) so it always
+  // renders in front, on top of the groove opening rather than tucked behind it.
+  svg += '<line x1="' + grooveLx + '" y1="' + baseY + '" x2="' + grooveRx + '" y2="' + baseY + '" stroke="var(--blue)" stroke-width="2.5" stroke-dasharray="6,4"/>';
+  svg += '<text x="' + (grooveRx + 10) + '" y="' + (baseY - 4) + '" font-size="10.5" fill="var(--blue)">mating face</text>';
+
+  // dimension: groove depth
+  const dimX = grooveLx - 22;
+  svg += '<line x1="' + dimX + '" y1="' + baseY + '" x2="' + dimX + '" y2="' + grooveTop + '" stroke="var(--blue)" stroke-width="1.2"/>';
+  svg += '<line x1="' + (dimX-4) + '" y1="' + baseY + '" x2="' + (dimX+4) + '" y2="' + baseY + '" stroke="var(--blue)" stroke-width="1.2"/>';
+  svg += '<line x1="' + (dimX-4) + '" y1="' + grooveTop + '" x2="' + (dimX+4) + '" y2="' + grooveTop + '" stroke="var(--blue)" stroke-width="1.2"/>';
+  svg += '<text x="' + (dimX-6) + '" y="' + ((baseY+grooveTop)/2+4) + '" text-anchor="end" font-size="11" fill="var(--blue)">depth</text>';
+
+  // dimension: groove width
+  const dimY = baseY + 22;
+  svg += '<line x1="' + grooveLx + '" y1="' + dimY + '" x2="' + grooveRx + '" y2="' + dimY + '" stroke="var(--blue)" stroke-width="1.2"/>';
+  svg += '<line x1="' + grooveLx + '" y1="' + (dimY-4) + '" x2="' + grooveLx + '" y2="' + (dimY+4) + '" stroke="var(--blue)" stroke-width="1.2"/>';
+  svg += '<line x1="' + grooveRx + '" y1="' + (dimY-4) + '" x2="' + grooveRx + '" y2="' + (dimY+4) + '" stroke="var(--blue)" stroke-width="1.2"/>';
+  svg += '<text x="' + cx + '" y="' + (dimY+16) + '" text-anchor="middle" font-size="11" fill="var(--blue)">groove width</text>';
+
+  svg += '<text x="' + cx + '" y="24" text-anchor="middle" font-size="11.5" fill="var(--ink-mid)">Cross-section view (schematic, to scale for this size)</text>';
+
+  svg += '</svg>';
+  document.getElementById('groove-svg').innerHTML = svg;
+}
+
+/* ══════════════════════════ Reference table ══════════════════════════ */
+function highlightTableRow(dash) {
+  document.querySelectorAll('#table-body tr').forEach(tr => {
+    tr.classList.toggle('selected', dash && tr.dataset.dash === dash);
+  });
+}
+
+function selectFromTable(dash) {
+  selectDash(dash);
+  document.getElementById('custom-fields').style.display = 'none';
+  document.getElementById('custom-btn').textContent = 'Enter a custom size instead';
+  highlightTableRow(dash);
+  recalc();
+  document.querySelector('.inputs-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function renderTable() {
+  const q = document.getElementById('table-filter').value.trim().toLowerCase();
+  const tbody = document.getElementById('table-body');
+  let rows = AS568;
+  if (q) {
+    rows = AS568.filter(r => {
+      const [dash, id, cs, od] = r;
+      return dash.includes(q) || String(id).includes(q) || String(cs).includes(q) || String(od).includes(q);
+    });
+  }
+  document.getElementById('table-meta').textContent = rows.length + ' of ' + AS568.length + ' sizes';
+  tbody.innerHTML = rows.map(r => {
+    const [dash, id, cs, od] = r;
+    return '<tr data-dash="' + dash + '" onclick="selectFromTable(\'' + dash + '\')"' + (dash===selectedDash?' class="selected"':'') + '>' +
+      '<td>-' + dash + '</td>' +
+      '<td>' + fmt(id,3) + '"<br><span class="mm">' + fmtFixed(mm(id),2) + ' mm</span></td>' +
+      '<td>' + fmt(cs,3) + '"<br><span class="mm">' + fmtFixed(mm(cs),2) + ' mm</span></td>' +
+      '<td>' + fmt(od,3) + '"<br><span class="mm">' + fmtFixed(mm(od),2) + ' mm</span></td>' +
+      '</tr>';
+  }).join('');
+}
+
+/* ══════════════════════════ Init ══════════════════════════ */
+populateCsSelect();
+renderTable();
+selectDash('210');
+highlightTableRow('210');
+setApp('static');
+</script>
+</body>
+</html>

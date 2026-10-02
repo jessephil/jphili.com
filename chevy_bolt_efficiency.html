@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bolt EUV efficiency by speed and temperature</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=DM+Serif+Display&display=swap">
+<style>
+:root{
+  --bg:#f2e9d4; --panel:#f8f1e0; --ink:#2a2216; --muted:#6d5f45; --gold:#a97c1f; --rule:#d9c9a1;
+  --scale-lo:#efe3c2; --scale-hi:#1f5a45; --focus:#1f5a45;
+  --c-aero:#3b6ea5; --c-roll:#5f9a5a; --c-drive:#b8892b; --c-hvac:#c8692b; --c-acc:#8a7f66;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1c1710; --panel:#262013; --ink:#efe4c8; --muted:#b2a37f; --gold:#d8a93f; --rule:#40351f;
+    --scale-lo:#3a2f18; --scale-hi:#86cfa6; --focus:#86cfa6;
+    --c-aero:#6e9fd3; --c-roll:#8cc383; --c-drive:#d8a93f; --c-hvac:#e68a4f; --c-acc:#a89c80;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1c1710; --panel:#262013; --ink:#efe4c8; --muted:#b2a37f; --gold:#d8a93f; --rule:#40351f;
+  --scale-lo:#3a2f18; --scale-hi:#86cfa6; --focus:#86cfa6;
+  --c-aero:#6e9fd3; --c-roll:#8cc383; --c-drive:#d8a93f; --c-hvac:#e68a4f; --c-acc:#a89c80;
+}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.5;font-size:16px}
+main{max-width:1040px;margin:0 auto;padding:28px 20px 56px}
+h1{font-family:'DM Serif Display',Georgia,'Times New Roman',serif;font-weight:400;font-size:clamp(28px,5vw,42px);line-height:1.1;margin:0 0 10px;letter-spacing:-.01em}
+h2{font-family:'DM Serif Display',Georgia,serif;font-weight:400;font-size:24px;margin:0 0 4px}
+.lede{max-width:62ch;color:var(--muted);margin:0 0 28px}
+.panel{background:var(--panel);border:1px solid var(--rule);border-radius:6px;padding:20px;margin-bottom:22px}
+.top{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:22px;margin-bottom:22px}
+.top .panel{margin-bottom:0}
+@media (max-width:780px){.top{grid-template-columns:1fr}}
+label{display:block;font-size:14px;font-weight:500}
+.row{margin-bottom:16px}
+.row .line{display:flex;justify-content:space-between;align-items:baseline}
+.row .val{font-family:'DM Serif Display',Georgia,serif;font-size:22px;color:var(--gold)}
+input[type=range]{width:100%;accent-color:var(--gold);margin:6px 0 0}
+.nums{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:6px}
+.nums label span{display:block;color:var(--muted);font-weight:400;font-size:13px}
+input[type=number]{width:100%;font:inherit;padding:7px 8px;background:var(--bg);color:var(--ink);border:1px solid var(--rule);border-radius:4px}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.fact .n{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(26px,4vw,34px);line-height:1.05}
+.fact .u{font-size:13px;color:var(--muted)}
+.bar{display:flex;height:22px;border-radius:3px;overflow:hidden;border:1px solid var(--rule)}
+.bar div{min-width:0}
+.legend{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 14px;margin-top:10px;font-size:13px}
+.legend span.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.legend b{font-weight:500;float:right}
+.seg{display:inline-flex;border:1px solid var(--rule);border-radius:4px;overflow:hidden;margin:10px 0 14px}
+.seg button{font:inherit;font-size:14px;padding:7px 14px;background:transparent;color:var(--ink);border:0;border-right:1px solid var(--rule);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed=true]{background:var(--gold);color:var(--bg);font-weight:700}
+.scroll{overflow-x:auto}
+table.grid{border-collapse:separate;border-spacing:3px;width:100%;min-width:560px}
+.grid th{font-weight:500;font-size:13px;color:var(--muted);padding:4px 6px;text-align:center}
+.grid th.rh{text-align:right;padding-right:10px;white-space:nowrap}
+.grid td{padding:0}
+.grid button.cell{display:block;width:100%;font:inherit;font-size:14px;font-variant-numeric:tabular-nums;padding:9px 2px;border:0;border-radius:3px;cursor:pointer}
+.grid button.cell.sel{outline:3px solid var(--gold);outline-offset:-1px;font-weight:700}
+.axis-note{font-size:13px;color:var(--muted);margin:8px 0 0}
+svg.chart{width:100%;height:auto;display:block;touch-action:pan-y;cursor:crosshair}
+.notes p,.notes li{max-width:70ch;color:var(--ink)}
+.notes ul{padding-left:20px;margin:8px 0}
+.notes .muted{color:var(--muted)}
+</style>
+</head>
+<body>
+<main>
+  <h1>2023 Bolt EUV: efficiency by speed and outside temperature</h1>
+  <p class="lede">Pick a highway speed and a temperature to see what to expect in miles per kWh and in range. Tap any cell in the grid, or click the curves, to move the selection.</p>
+
+  <div class="top">
+    <section class="panel" aria-labelledby="h-cond">
+      <h2 id="h-cond">Trip conditions</h2>
+      <div class="row">
+        <div class="line"><label for="speed">Steady speed</label><span class="val" id="speedVal"></span></div>
+        <input type="range" id="speed" min="40" max="85" step="1">
+      </div>
+      <div class="row">
+        <div class="line"><label for="temp">Outside temperature</label><span class="val" id="tempVal"></span></div>
+        <input type="range" id="temp" min="-10" max="105" step="1">
+      </div>
+      <div class="nums">
+        <label>Battery (kWh)<input type="number" id="cap" min="40" max="80" step="0.5"></label>
+        <label>Adjust to my car (%)<input type="number" id="adj" min="-30" max="30" step="1"></label>
+        <label>Start charge (%)<input type="number" id="start" min="20" max="100" step="1"></label>
+        <label>Arrive with (%)<input type="number" id="reserve" min="0" max="50" step="1"></label>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-read">
+      <h2 id="h-read">At these conditions</h2>
+      <div class="facts" aria-live="polite">
+        <div class="fact"><div class="n" id="fMp"></div><div class="u">mi per kWh</div></div>
+        <div class="fact"><div class="n" id="fKwh"></div><div class="u">kWh per 100 mi</div></div>
+        <div class="fact"><div class="n" id="fRange"></div><div class="u">miles of range</div></div>
+      </div>
+      <div class="bar" id="bar" role="img" aria-label="Where the power goes"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+  </div>
+
+  <section class="panel" aria-labelledby="h-grid">
+    <h2 id="h-grid">Speed against temperature</h2>
+    <div class="seg" role="group" aria-label="Metric shown">
+      <button data-m="mpkwh" aria-pressed="true">mi/kWh</button>
+      <button data-m="range" aria-pressed="false">Range (mi)</button>
+      <button data-m="kwh100" aria-pressed="false">kWh/100 mi</button>
+    </div>
+    <div class="scroll"><table class="grid" id="grid"></table></div>
+    <p class="axis-note" id="gridNote"></p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-chart">
+    <h2 id="h-chart">How speed bends each temperature curve</h2>
+    <svg class="chart" id="chart" viewBox="0 0 680 360" role="img" aria-label="Efficiency versus speed for several temperatures"></svg>
+    <p class="axis-note">The gold curve follows your selected temperature. Dots mark your selected speed.</p>
+  </section>
+
+  <section class="panel notes" aria-labelledby="h-notes">
+    <h2 id="h-notes">How this is calculated</h2>
+    <p>The numbers come from a physics model of steady-speed driving on flat ground, not from logged Bolt data. It adds up air drag, tire rolling resistance, drivetrain and battery losses, accessories, and cabin heating or cooling.</p>
+    <ul>
+      <li>Cold air is denser, so drag rises. Tires also roll harder when cold.</li>
+      <li>Below about 50°F the battery and motor lose some efficiency, and usable battery capacity shrinks a little.</li>
+      <li>Heating draw grows as it gets colder and with speed, and is capped at a typical resistive heater limit. Cooling starts above about 75°F.</li>
+    </ul>
+    <p><b>To make it match your car:</b> drive a steady highway stretch around 70°F and 70 mph, then change “Adjust to my car” until that cell matches what your car showed. Everything else scales with it.</p>
+    <p class="muted">Not modeled: headwind, hills, rain or snow on the road, winter tires, and preconditioning while plugged in. Treat the cold-weather numbers as a planning estimate and keep a buffer.</p>
+  </section>
+</main>
+
+<script>
+(function(){
+  const SPEEDS=[45,50,55,60,65,70,75,80];
+  const TEMPS=[0,10,20,30,40,50,60,70,80,90,100];
+  const CURVE_T=[0,20,40,60,80,100];
+  const CURVE_C=['#3b6ea5','#4f9aa8','#5f9a5a','#b8892b','#c8692b','#a63d2f'];
+  const P={mass:1750,cda:0.80,crr0:0.009,eta:0.88,acc:0.4};
+  const S={speed:70,temp:40,metric:'mpkwh',adj:0,start:100,reserve:10,cap:65};
+  try{
+    const s=JSON.parse(localStorage.getItem('bolt-euv-eff')||'null');
+    if(s&&typeof s==='object'){
+      for(const k of Object.keys(S)){ if(k in s && typeof s[k]===typeof S[k]) S[k]=s[k]; }
+    }
+  }catch(e){}
+  function save(){ try{ localStorage.setItem('bolt-euv-eff',JSON.stringify(S)); }catch(e){} }
+
+  function model(mph,tF){
+    const T=(tF-32)/1.8, v=mph*0.44704;
+    const rho=1.2*293.15/(T+273.15);
+    const aero=0.5*rho*P.cda*v*v*v/1000;
+    const crrMul=T<20?1+0.007*(20-T):Math.max(0.9,1-0.002*(T-20));
+    const roll=P.crr0*crrMul*P.mass*9.81*v/1000;
+    const wheel=aero+roll;
+    const etaMul=T<10?Math.max(0.75,1-0.004*(10-T)):1;
+    const eta=P.eta*etaMul;
+    const drive=wheel/eta-wheel;
+    const k=0.08+0.0008*mph;
+    const heat=T<18?Math.min(6,k*(18-T)):0;
+    const battHeat=T<5?0.3:0;
+    const cool=T>24?Math.min(3,0.12*(T-24)+0.2):0;
+    const hvac=heat+battHeat+cool;
+    const f=1+S.adj/100;
+    const parts={aero:aero/f,roll:roll/f,drive:drive/f,hvac:hvac/f,acc:P.acc/f};
+    const total=parts.aero+parts.roll+parts.drive+parts.hvac+parts.acc;
+    const mp=mph/total;
+    const capF=T<15?Math.max(0.88,1-0.003*(15-T)):1;
+    const usable=S.cap*capF*Math.max(0,(S.start-S.reserve))/100;
+    return {parts,total,mp,per100:100/mp,range:usable*mp};
+  }
+
+  const METRICS={
+    mpkwh:{label:'mi/kWh',get:r=>r.mp,fmt:v=>v.toFixed(2),higherBetter:true},
+    range:{label:'mi',get:r=>r.range,fmt:v=>Math.round(v)+'',higherBetter:true},
+    kwh100:{label:'kWh/100 mi',get:r=>r.per100,fmt:v=>v.toFixed(1),higherBetter:false}
+  };
+
+  const $=s=>document.querySelector(s);
+  function hex(c){c=c.trim();if(c[0]==='#'){if(c.length===4)c='#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];return [1,3,5].map(i=>parseInt(c.substr(i,2),16));}return [128,128,128];}
+  function cssVar(n){return getComputedStyle(document.documentElement).getPropertyValue(n);}
+  function mix(a,b,t){return a.map((x,i)=>Math.round(x+(b[i]-x)*t));}
+
+  function renderFacts(){
+    const r=model(S.speed,S.temp);
+    $('#speedVal').textContent=S.speed+' mph';
+    $('#tempVal').textContent=S.temp+'°F';
+    $('#fMp').textContent=r.mp.toFixed(2);
+    $('#fKwh').textContent=r.per100.toFixed(1);
+    $('#fRange').textContent=Math.round(r.range);
+    const items=[
+      ['Air drag','aero','--c-aero'],['Tire rolling','roll','--c-roll'],
+      ['Motor and battery loss','drive','--c-drive'],['Heat or A/C','hvac','--c-hvac'],['Accessories','acc','--c-acc']
+    ];
+    $('#bar').innerHTML=items.map(([n,k,c])=>`<div style="width:${(r.parts[k]/r.total*100).toFixed(2)}%;background:var(${c})" title="${n}"></div>`).join('');
+    $('#legend').innerHTML=items.map(([n,k,c])=>`<div><span class="sw" style="background:var(${c})"></span>${n}<b>${r.parts[k].toFixed(1)} kW</b></div>`).join('')
+      +`<div style="grid-column:1/-1;border-top:1px solid var(--rule);padding-top:4px;margin-top:2px">Total draw<b>${r.total.toFixed(1)} kW</b></div>`;
+  }
+
+  function renderGrid(){
+    const M=METRICS[S.metric];
+    const vals=[];
+    TEMPS.forEach(t=>SPEEDS.forEach(s=>vals.push(M.get(model(s,t)))));
+    const g=v=>M.higherBetter?v:-v;
+    const gs=vals.map(g), gmin=Math.min(...gs), gmax=Math.max(...gs);
+    const lo=hex(cssVar('--scale-lo')), hi=hex(cssVar('--scale-hi'));
+    const ink=cssVar('--ink').trim(), bg=cssVar('--bg').trim();
+    let h='<thead><tr><th class="rh" scope="col">°F / mph</th>'+SPEEDS.map(s=>`<th scope="col">${s}</th>`).join('')+'</tr></thead><tbody>';
+    TEMPS.forEach(t=>{
+      h+=`<tr><th class="rh" scope="row">${t}°F</th>`;
+      SPEEDS.forEach(s=>{
+        const v=M.get(model(s,t));
+        const tt=gmax===gmin?0.5:(g(v)-gmin)/(gmax-gmin);
+        const c=mix(lo,hi,tt);
+        const lum=0.299*c[0]+0.587*c[1]+0.114*c[2];
+        const col=lum>150?'#1d170c':'#fbf6e8';
+        const sel=(Math.abs(s-S.speed)<2.5&&Math.abs(t-S.temp)<5)?' sel':'';
+        h+=`<td><button class="cell${sel}" data-s="${s}" data-t="${t}" style="background:rgb(${c});color:${col}" aria-label="${s} mph at ${t} degrees: ${M.fmt(v)} ${M.label}">${M.fmt(v)}</button></td>`;
+      });
+      h+='</tr>';
+    });
+    h+='</tbody>';
+    $('#grid').innerHTML=h;
+    $('#gridNote').textContent=(M.higherBetter?'Darker is better. ':'Darker is better (lower use). ')+'Showing '+M.label+'. Range uses '+S.start+'% down to '+S.reserve+'% on a '+S.cap+' kWh pack.';
+  }
+
+  function renderChart(){
+    const M=METRICS[S.metric];
+    const W=680,H=360,L=52,R=56,T0=16,B=44;
+    const xs=[];for(let s=40;s<=85;s++)xs.push(s);
+    const temps=CURVE_T.slice();
+    const lines=temps.map((t,i)=>({t,c:CURVE_C[i],pts:xs.map(s=>M.get(model(s,t)))}));
+    const sel={t:S.temp,pts:xs.map(s=>M.get(model(s,S.temp)))};
+    const all=[].concat(...lines.map(l=>l.pts),sel.pts);
+    let ymin=Math.min(...all),ymax=Math.max(...all);
+    const span=ymax-ymin||1;
+    const rough=span/5;const mag=Math.pow(10,Math.floor(Math.log10(rough)));
+    const step=[1,2,2.5,5,10].map(m=>m*mag).find(s=>s>=rough)||rough;
+    ymin=Math.floor(ymin/step)*step;ymax=Math.ceil(ymax/step)*step;
+    const X=s=>L+(s-40)/45*(W-L-R), Y=v=>T0+(1-(v-ymin)/(ymax-ymin))*(H-T0-B);
+    let o='';
+    for(let y=ymin;y<=ymax+1e-9;y+=step){
+      o+=`<line x1="${L}" x2="${W-R}" y1="${Y(y)}" y2="${Y(y)}" style="stroke:var(--rule)"/><text x="${L-8}" y="${Y(y)+4}" text-anchor="end" font-size="12" style="fill:var(--muted)">${step<1?y.toFixed(1):Math.round(y)}</text>`;
+    }
+    for(let s=40;s<=85;s+=5){
+      o+=`<text x="${X(s)}" y="${H-B+18}" text-anchor="middle" font-size="12" style="fill:var(--muted)">${s}</text>`;
+    }
+    o+=`<text x="${(L+W-R)/2}" y="${H-6}" text-anchor="middle" font-size="12" style="fill:var(--muted)">Speed (mph)</text>`;
+    o+=`<text x="12" y="${(T0+H-B)/2}" text-anchor="middle" font-size="12" transform="rotate(-90 12 ${(T0+H-B)/2})" style="fill:var(--muted)">${M.label}</text>`;
+    const path=pts=>pts.map((v,i)=>(i?'L':'M')+X(xs[i]).toFixed(1)+' '+Y(v).toFixed(1)).join(' ');
+    lines.forEach(l=>{
+      o+=`<path d="${path(l.pts)}" fill="none" stroke="${l.c}" stroke-width="2"/>`;
+      const last=l.pts[l.pts.length-1];
+      o+=`<text x="${W-R+6}" y="${Y(last)+4}" font-size="12" fill="${l.c}">${l.t}°F</text>`;
+    });
+    o+=`<path d="${path(sel.pts)}" fill="none" style="stroke:var(--gold)" stroke-width="3.5" stroke-dasharray="7 4"/>`;
+    const sx=X(S.speed);
+    o+=`<line x1="${sx}" x2="${sx}" y1="${T0}" y2="${H-B}" style="stroke:var(--gold)" stroke-width="1" opacity=".7"/>`;
+    const si=S.speed-40;
+    lines.forEach(l=>{o+=`<circle cx="${sx}" cy="${Y(l.pts[si])}" r="3.5" fill="${l.c}"/>`;});
+    o+=`<circle cx="${sx}" cy="${Y(sel.pts[si])}" r="6" style="fill:var(--gold);stroke:var(--panel)" stroke-width="2"/>`;
+    const lx=sx>W/2?sx-10:sx+10, anchor=sx>W/2?'end':'start';
+    o+=`<text x="${lx}" y="${T0+12}" text-anchor="${anchor}" font-size="13" font-weight="700" style="fill:var(--ink)">${S.speed} mph, ${S.temp}°F: ${M.fmt(sel.pts[si])} ${M.label}</text>`;
+    $('#chart').innerHTML=o;
+    $('#chart')._x={L,R,W};
+  }
+
+  function sync(){
+    $('#speed').value=S.speed;$('#temp').value=S.temp;
+    $('#cap').value=S.cap;$('#adj').value=S.adj;$('#start').value=S.start;$('#reserve').value=S.reserve;
+    document.querySelectorAll('.seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===S.metric));
+  }
+  function all(){renderFacts();renderGrid();renderChart();save();}
+
+  $('#speed').addEventListener('input',e=>{S.speed=+e.target.value;all();});
+  $('#temp').addEventListener('input',e=>{S.temp=+e.target.value;all();});
+  function num(id,key,lo,hi){
+    $(id).addEventListener('input',e=>{
+      const v=parseFloat(e.target.value);
+      if(isNaN(v))return;
+      S[key]=Math.min(hi,Math.max(lo,v));
+      all();
+    });
+  }
+  num('#cap','cap',40,80);num('#adj','adj',-30,30);num('#start','start',20,100);num('#reserve','reserve',0,50);
+  document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{S.metric=b.dataset.m;sync();all();}));
+  $('#grid').addEventListener('click',e=>{
+    const b=e.target.closest('button.cell');if(!b)return;
+    S.speed=+b.dataset.s;S.temp=+b.dataset.t;sync();all();
+  });
+  $('#chart').addEventListener('click',e=>{
+    const svg=$('#chart'),r=svg.getBoundingClientRect(),d=svg._x;
+    const vx=(e.clientX-r.left)/r.width*d.W;
+    const s=Math.round(40+(vx-d.L)/(d.W-d.L-d.R)*45);
+    S.speed=Math.min(85,Math.max(40,s));sync();all();
+  });
+  const mq=window.matchMedia('(prefers-color-scheme: dark)');
+  if(mq.addEventListener)mq.addEventListener('change',()=>{renderGrid();});
+  new MutationObserver(()=>renderGrid()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+  sync();all();
+})();
+</script>
+</body>
+</html>

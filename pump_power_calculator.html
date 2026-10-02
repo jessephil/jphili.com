@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pump Input Power Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --parchment:#f5eedf;--parchment-dark:#ede3cc;--parchment-deeper:#d9cdb0;
+      --ink:#2a2218;--ink-mid:#5a4e38;--ink-faint:#9a8e78;
+      --gold:#8a6d2f;--gold-light:#c9a84c;--gold-pale:#f0e4c0;
+      --border:rgba(138,109,47,0.25);--border-strong:rgba(138,109,47,0.5);
+      --green:#2d5a27;--green-pale:#e8f2e7;
+      --amber:#7a5a1a;--amber-pale:#fdf3dc;
+      --red:#7a2a2a;--red-pale:#f5e8e8;
+      --blue:#1c4f82;--blue-pale:#e6f0fb;
+    }
+    body{font-family:'DM Sans',sans-serif;background:var(--parchment);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.6;}
+    body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.012) 2px,rgba(0,0,0,.012) 4px),repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(0,0,0,.008) 3px,rgba(0,0,0,.008) 6px);pointer-events:none;z-index:0;}
+    nav{position:relative;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 3rem;height:64px;background:var(--parchment);border-bottom:1px solid var(--border);}
+    .nav-ornament{display:flex;align-items:center;gap:12px;}
+    .nav-rule{width:32px;height:1px;background:var(--gold);opacity:0.6;}
+    .nav-name{font-family:'DM Serif Display',serif;font-size:15px;color:var(--ink);text-decoration:none;letter-spacing:0.04em;}
+    .nav-back{font-size:12px;color:var(--ink-mid);text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s;}
+    .nav-back:hover{color:var(--gold);}
+    .nav-back svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;}
+    .page{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:3rem 3rem 5rem;}
+    .page-header{margin-bottom:2rem;}
+    .page-eyebrow{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+    .page-title{font-family:'DM Serif Display',serif;font-size:32px;color:var(--ink);margin-bottom:8px;}
+    .page-subtitle{font-size:14px;color:var(--ink-mid);font-style:italic;max-width:600px;line-height:1.7;}
+    .section-label{font-size:11px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+
+    .inputs-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.5rem 1.75rem;margin-bottom:1.5rem;}
+    .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+    .field{display:flex;flex-direction:column;gap:6px;}
+    .field label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);}
+    .field-row{display:flex;gap:6px;}
+    .field input{flex:1;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;transition:border-color 0.2s;min-width:0;}
+    .field input:focus{border-color:var(--border-strong);}
+    .field select{border:1px solid var(--border);border-radius:8px;padding:9px 8px;font-family:inherit;font-size:13px;color:var(--ink-mid);background:var(--parchment);outline:none;cursor:pointer;}
+    .field-note{font-size:11px;color:var(--ink-faint);font-style:italic;}
+
+    .preset-row{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:16px;border-top:0.5px solid var(--border);flex-wrap:wrap;}
+    .preset-row label{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);white-space:nowrap;}
+    .preset-row select{flex:1;min-width:200px;border:1px solid var(--border);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--ink);background:var(--parchment);outline:none;}
+    .range-note{width:100%;font-size:12px;color:var(--ink-mid);}
+    .range-note strong{color:var(--ink);font-weight:500;}
+
+    .warning-banner{background:var(--amber-pale);border:1px solid rgba(122,90,26,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:var(--amber);margin-bottom:1.5rem;display:none;}
+    .warning-banner.visible{display:block;}
+
+    .results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem;}
+    .result-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;}
+    .result-card.primary{background:var(--gold-pale);border-color:var(--border-strong);grid-row:span 1;}
+    .result-card .rlabel{font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:4px;}
+    .result-card.primary .rlabel{color:var(--gold);}
+    .result-card .rvalue{font-size:24px;font-weight:500;color:var(--ink);line-height:1.1;}
+    .result-card .runit{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+    .flow-sub{display:flex;flex-direction:column;gap:2px;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--border);}
+    .flow-sub-row{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-mid);}
+    .flow-sub-row span:last-child{color:var(--ink-faint);}
+
+    .chart-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.75rem;margin-bottom:1.5rem;}
+    .chart-title{font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:10px;}
+    .chart-card svg{width:100%;height:auto;display:block;}
+
+    .formula-card{background:var(--parchment-dark);border:1px solid var(--border);border-radius:12px;padding:1.25rem 1.75rem;}
+    .formula-title{font-size:12px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-mid);margin-bottom:10px;}
+    .formula-block{font-family:'Georgia',serif;font-size:15px;color:var(--ink);padding:10px 0;display:flex;flex-direction:column;gap:6px;}
+    .formula-vars{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);}
+    .fvar{font-size:12px;color:var(--ink-mid);}
+    .fvar strong{color:var(--ink);font-weight:500;}
+    .source-note{font-size:11px;color:var(--ink-faint);font-style:italic;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--border);line-height:1.6;}
+
+    footer{position:relative;z-index:1;border-top:1px solid var(--border);background:var(--parchment-deeper);padding:2rem 3rem;display:flex;align-items:center;justify-content:space-between;font-size:12px;}
+    .footer-name{color:var(--ink-mid);}
+    .footer-year{color:var(--ink-faint);font-style:italic;}
+
+    @media(max-width:680px){
+      nav{padding:0 1.25rem;}
+      .page{padding:2rem 1.25rem 4rem;}
+      .g3{grid-template-columns:1fr;}
+      .results-grid{grid-template-columns:1fr;}
+      footer{padding:2rem 1.25rem;flex-direction:column;gap:6px;}
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-ornament">
+    <div class="nav-rule"></div>
+    <a class="nav-name" href="index.html">Jesse Philippi</a>
+    <div class="nav-rule" style="background:linear-gradient(90deg,var(--gold),transparent);"></div>
+  </div>
+  <a class="nav-back" href="index.html">
+    <svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Back
+  </a>
+</nav>
+
+<div class="page">
+  <div class="page-header">
+    <p class="page-eyebrow">Hydraulics</p>
+    <h1 class="page-title">Pump Input Power</h1>
+    <p class="page-subtitle">Required shaft power to drive a pump, from the pressure it must develop, the flow it must deliver, and its overall efficiency.</p>
+  </div>
+
+  <div id="warning" class="warning-banner"></div>
+
+  <p class="section-label">Inputs</p>
+  <div class="inputs-card">
+    <div class="g3">
+      <div class="field">
+        <label>Pressure rise (&Delta;P)</label>
+        <div class="field-row">
+          <input type="number" id="inp-dP" value="3000" min="0" step="any" oninput="calc()"/>
+          <select id="unit-dP" onchange="calc()">
+            <option value="psi">psi</option>
+            <option value="bar">bar</option>
+            <option value="kpa">kPa</option>
+            <option value="mpa">MPa</option>
+          </select>
+        </div>
+        <span class="field-note">Discharge minus suction pressure</span>
+      </div>
+      <div class="field">
+        <label>Flow rate (Q)</label>
+        <div class="field-row">
+          <input type="number" id="inp-Q" value="10" min="0" step="any" oninput="calc()"/>
+          <select id="unit-Q" onchange="calc()">
+            <option value="gpm">gal/min</option>
+            <option value="lpm">L/min</option>
+            <option value="m3h">m&sup3;/h</option>
+            <option value="m3s">m&sup3;/s</option>
+            <option value="in3s">in&sup3;/s</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Overall efficiency (&eta;)</label>
+        <div class="field-row">
+          <input type="number" id="inp-eta" value="88" min="0" max="100" step="any" oninput="etaTyped()"/>
+          <select disabled style="opacity:.7;cursor:default;"><option>%</option></select>
+        </div>
+        <span class="field-note">Volumetric &times; mechanical</span>
+      </div>
+    </div>
+
+    <div class="preset-row">
+      <label>Typical efficiency</label>
+      <select id="pump-preset" onchange="applyPreset()">
+        <option value="">— select a pump type —</option>
+        <optgroup label="Hydraulic (positive displacement)">
+          <option value="gear">Gear pump (external / internal)</option>
+          <option value="vane">Vane pump</option>
+          <option value="radial">Radial piston pump</option>
+          <option value="axial" selected>Axial piston pump (swashplate)</option>
+          <option value="bent">Bent-axis piston pump</option>
+          <option value="screw">Screw pump</option>
+        </optgroup>
+        <optgroup label="Centrifugal">
+          <option value="cent_small">Centrifugal, small (under ~10 kW)</option>
+          <option value="cent_large">Centrifugal, medium / large</option>
+        </optgroup>
+      </select>
+      <p class="range-note" id="range-note"></p>
+    </div>
+  </div>
+
+  <p class="section-label">Results</p>
+  <div class="results-grid">
+    <div class="result-card primary">
+      <p class="rlabel">Required input power</p>
+      <p class="rvalue" id="r-kw">—</p>
+      <p class="runit">kW at the pump shaft</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span>Horsepower</span><span id="r-hp">—</span></div>
+        <div class="flow-sub-row"><span>Watts</span><span id="r-w">—</span></div>
+        <div class="flow-sub-row"><span>BTU/hr</span><span id="r-btu">—</span></div>
+      </div>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Hydraulic output power</p>
+      <p class="rvalue" id="r-hyd-kw">—</p>
+      <p class="runit">kW delivered to the fluid</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span>Horsepower</span><span id="r-hyd-hp">—</span></div>
+        <div class="flow-sub-row"><span>Watts</span><span id="r-hyd-w">—</span></div>
+      </div>
+    </div>
+    <div class="result-card">
+      <p class="rlabel">Power lost as heat</p>
+      <p class="rvalue" id="r-loss-kw">—</p>
+      <p class="runit">kW (input &minus; hydraulic)</p>
+      <div class="flow-sub">
+        <div class="flow-sub-row"><span>Horsepower</span><span id="r-loss-hp">—</span></div>
+        <div class="flow-sub-row"><span>BTU/hr</span><span id="r-loss-btu">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <p class="chart-title">Input power vs. efficiency &mdash; at the pressure and flow entered</p>
+    <div id="chart"></div>
+  </div>
+
+  <div class="formula-card">
+    <p class="formula-title">Governing equations</p>
+    <div class="formula-block">
+      <span>P<sub>hyd</sub> = &Delta;P &middot; Q</span>
+      <span>P<sub>in</sub> = P<sub>hyd</sub> / &eta; = &Delta;P &middot; Q / &eta;</span>
+      <span>hp = (gpm &middot; psi) / (1714 &middot; &eta;)</span>
+    </div>
+    <div class="formula-vars">
+      <span class="fvar"><strong>P<sub>in</sub></strong> = shaft power required</span>
+      <span class="fvar"><strong>P<sub>hyd</sub></strong> = hydraulic power delivered</span>
+      <span class="fvar"><strong>&Delta;P</strong> = discharge &minus; suction pressure</span>
+      <span class="fvar"><strong>Q</strong> = volumetric flow rate</span>
+      <span class="fvar"><strong>&eta;</strong> = overall efficiency (0&ndash;1)</span>
+    </div>
+    <p class="source-note">
+      Result is mechanical power at the pump shaft. To size the electric motor, divide by motor efficiency as well (typically 90&ndash;96% for industrial motors), and check that the motor can cover peak pressure and flow. Overall efficiency is the product of volumetric and mechanical (hydraulic) efficiency and varies with pressure, speed, viscosity, and wear &mdash; use the manufacturer&rsquo;s performance curve at your actual operating point when you have one. The efficiency ranges in the dropdown are general industry guidance for new pumps at or near rated conditions, not tabulated standards; centrifugal efficiency in particular depends strongly on size and distance from the best-efficiency point. The lost power is dissipated mainly as heat in the fluid, which matters for reservoir and cooler sizing.
+    </p>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Jesse Philippi</span>
+  <span class="footer-year">&copy; 2026</span>
+</footer>
+
+<script>
+const toPa  = { psi: 6894.757, bar: 1e5, kpa: 1e3, mpa: 1e6 };
+const toM3s = { gpm: 6.30902e-5, lpm: 1/60000, m3h: 1/3600, m3s: 1, in3s: 1.63871e-5 };
+const W_PER_HP = 745.6999;
+const BTUHR_PER_W = 3.412142;
+
+// Overall efficiency guidance, % — [low, typical, high]
+const PUMP = {
+  gear:       { name: 'Gear pump',                 r: [70, 80, 88] },
+  vane:       { name: 'Vane pump',                 r: [70, 78, 85] },
+  radial:     { name: 'Radial piston pump',        r: [80, 87, 92] },
+  axial:      { name: 'Axial piston pump',         r: [85, 88, 93] },
+  bent:       { name: 'Bent-axis piston pump',     r: [88, 91, 95] },
+  screw:      { name: 'Screw pump',                r: [60, 75, 85] },
+  cent_small: { name: 'Small centrifugal pump',    r: [40, 55, 70] },
+  cent_large: { name: 'Medium / large centrifugal',r: [70, 80, 90] },
+};
+
+let currentPreset = 'axial';
+
+function fmt(v, dec) {
+  if (!isFinite(v)) return '—';
+  if (v === 0) return '0';
+  const a = Math.abs(v);
+  if (a >= 10000) return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+  if (a >= 100)   return v.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  if (a >= 1)     return v.toLocaleString(undefined, { maximumFractionDigits: dec ?? 2 });
+  return v.toPrecision(3);
+}
+
+function applyPreset() {
+  const key = document.getElementById('pump-preset').value;
+  currentPreset = key || null;
+  if (key) document.getElementById('inp-eta').value = PUMP[key].r[1];
+  calc();
+}
+
+function etaTyped() {
+  // Manually typed efficiency: keep the preset for range reference, but calc() flags if outside it.
+  calc();
+}
+
+function setText(id, t) { document.getElementById(id).textContent = t; }
+
+function calc() {
+  const dP  = (parseFloat(document.getElementById('inp-dP').value) || 0) * toPa[document.getElementById('unit-dP').value];
+  const Q   = (parseFloat(document.getElementById('inp-Q').value)  || 0) * toM3s[document.getElementById('unit-Q').value];
+  const eta = (parseFloat(document.getElementById('inp-eta').value) || 0);
+
+  const warn = document.getElementById('warning');
+  const rangeNote = document.getElementById('range-note');
+  const p = currentPreset ? PUMP[currentPreset] : null;
+
+  if (p) {
+    rangeNote.innerHTML = '<strong>' + p.name + ':</strong> typically ' + p.r[0] + '&ndash;' + p.r[2] + '% overall (about ' + p.r[1] + '% is a reasonable default).';
+  } else {
+    rangeNote.textContent = '';
+  }
+
+  let msg = null;
+  if (!(eta > 0) || eta > 100) msg = 'Efficiency must be greater than 0% and no more than 100%.';
+  else if (dP < 0 || Q < 0) msg = 'Pressure and flow must not be negative.';
+  else if (p && (eta < p.r[0] || eta > p.r[2])) msg = 'Efficiency of ' + fmt(eta) + '% is outside the typical ' + p.r[0] + '\u2013' + p.r[2] + '% range for this pump type. Fine if you have data for your pump; otherwise double-check it.';
+
+  const invalid = !(eta > 0) || eta > 100 || dP < 0 || Q < 0;
+  warn.textContent = msg ? '\u26a0 ' + msg : '';
+  warn.classList.toggle('visible', !!msg);
+
+  if (invalid) { clear(); return; }
+
+  const Phyd = dP * Q;            // W
+  const Pin  = Phyd / (eta / 100); // W
+  const Ploss = Pin - Phyd;
+
+  setText('r-kw', fmt(Pin / 1000, 3));
+  setText('r-hp', fmt(Pin / W_PER_HP, 3));
+  setText('r-w',  fmt(Pin, 1));
+  setText('r-btu', fmt(Pin * BTUHR_PER_W, 0));
+
+  setText('r-hyd-kw', fmt(Phyd / 1000, 3));
+  setText('r-hyd-hp', fmt(Phyd / W_PER_HP, 3));
+  setText('r-hyd-w',  fmt(Phyd, 1));
+
+  setText('r-loss-kw', fmt(Ploss / 1000, 3));
+  setText('r-loss-hp', fmt(Ploss / W_PER_HP, 3));
+  setText('r-loss-btu', fmt(Ploss * BTUHR_PER_W, 0));
+
+  drawChart(Phyd, eta, p);
+}
+
+function clear() {
+  ['r-kw','r-hp','r-w','r-btu','r-hyd-kw','r-hyd-hp','r-hyd-w','r-loss-kw','r-loss-hp','r-loss-btu'].forEach(id => setText(id, '—'));
+  document.getElementById('chart').innerHTML = '';
+}
+
+function drawChart(Phyd, eta, p) {
+  const W = 800, H = 260, L = 62, R = 20, T = 18, B = 42;
+  const eMin = 30, eMax = 100;
+  const xs = e => L + (e - eMin) / (eMax - eMin) * (W - L - R);
+  const pAt = e => Phyd / (e / 100) / 1000; // kW
+  const yMax = pAt(eMin) * 1.05 || 1;
+  const ys = v => T + (1 - v / yMax) * (H - T - B);
+
+  let svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" font-family="DM Sans, sans-serif">';
+
+  // typical range band
+  if (p) {
+    svg += '<rect x="' + xs(p.r[0]) + '" y="' + T + '" width="' + (xs(p.r[2]) - xs(p.r[0])) + '" height="' + (H - T - B) + '" fill="var(--gold-light)" opacity="0.22"/>';
+    svg += '<text x="' + ((xs(p.r[0]) + xs(p.r[2])) / 2) + '" y="' + (T + 12) + '" text-anchor="middle" font-size="10.5" fill="var(--gold)">typical range</text>';
+  }
+
+  // grid + axes
+  for (let e = 30; e <= 100; e += 10) {
+    svg += '<line x1="' + xs(e) + '" y1="' + T + '" x2="' + xs(e) + '" y2="' + (H - B) + '" stroke="var(--border)" stroke-width="0.6"/>';
+    svg += '<text x="' + xs(e) + '" y="' + (H - B + 16) + '" text-anchor="middle" font-size="11" fill="var(--ink-mid)">' + e + '%</text>';
+  }
+  for (let i = 0; i <= 4; i++) {
+    const v = yMax * i / 4;
+    svg += '<line x1="' + L + '" y1="' + ys(v) + '" x2="' + (W - R) + '" y2="' + ys(v) + '" stroke="var(--border)" stroke-width="0.6"/>';
+    svg += '<text x="' + (L - 6) + '" y="' + (ys(v) + 4) + '" text-anchor="end" font-size="11" fill="var(--ink-mid)">' + fmt(v, 1) + '</text>';
+  }
+  svg += '<text x="' + (L + (W - L - R) / 2) + '" y="' + (H - 6) + '" text-anchor="middle" font-size="11" fill="var(--ink-mid)">Overall efficiency</text>';
+  svg += '<text transform="translate(14 ' + (T + (H - T - B) / 2) + ') rotate(-90)" text-anchor="middle" font-size="11" fill="var(--ink-mid)">Input power (kW)</text>';
+
+  // curve
+  let d = '';
+  for (let e = eMin; e <= eMax; e += 1) d += (e === eMin ? 'M' : 'L') + ' ' + xs(e) + ' ' + ys(pAt(e)) + ' ';
+  svg += '<path d="' + d + '" fill="none" stroke="var(--gold)" stroke-width="2.2"/>';
+
+  // operating point
+  if (eta >= eMin && eta <= eMax) {
+    const px = xs(eta), py = ys(pAt(eta));
+    svg += '<line x1="' + px + '" y1="' + py + '" x2="' + px + '" y2="' + (H - B) + '" stroke="var(--red)" stroke-width="1" stroke-dasharray="3,3"/>';
+    svg += '<circle cx="' + px + '" cy="' + py + '" r="5" fill="var(--red)"/>';
+    const anchor = px > W - 150 ? 'end' : 'start';
+    const tx = anchor === 'end' ? px - 10 : px + 10;
+    svg += '<text x="' + tx + '" y="' + (py - 10) + '" text-anchor="' + anchor + '" font-size="11.5" font-weight="500" fill="var(--red)">' + fmt(eta) + '% \u2192 ' + fmt(pAt(eta), 3) + ' kW</text>';
+  }
+
+  svg += '</svg>';
+  document.getElementById('chart').innerHTML = svg;
+}
+
+applyPreset();
+</script>
+</body>
+</html>

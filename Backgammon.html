@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Backgammon</title>
+<style>
+:root{--bg:#f5eedf;--fg:#2a2218;--board:#7a4b2a;--felt:#e9dcc3;--t1:#8c2f1f;--t2:#2f4a3a;--w:#f7f3ea;--b:#1f1a17;--acc:#c9a84c;--card:#ede3cc;--bd:rgba(138,109,47,.35);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b1713;--fg:#efe6d6;--board:#4a2d19;--felt:#3a3024;--t1:#a8402c;--t2:#3d6350;--w:#f1ece0;--b:#0e0b09;--card:#2a231c;--bd:#4a3f31}}
+:root[data-theme="dark"]{--bg:#1b1713;--fg:#efe6d6;--board:#4a2d19;--felt:#3a3024;--t1:#a8402c;--t2:#3d6350;--w:#f1ece0;--b:#0e0b09;--card:#2a231c;--bd:#4a3f31}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:Georgia,'Times New Roman',serif}
+body{max-width:820px;margin:0 auto;padding:12px}
+h1{font-size:22px;margin:4px 0 10px;letter-spacing:.5px}
+button,input{font:inherit;color:var(--fg)}
+button{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 16px;cursor:pointer}
+button.p{background:var(--acc);color:#2b2118;border-color:var(--acc);font-weight:bold}
+input{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;width:110px;text-transform:uppercase;text-align:center;letter-spacing:3px}
+.menu{display:grid;gap:12px;max-width:380px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
+.die{width:34px;height:34px;border-radius:7px;background:var(--w);color:#1f1a17;border:2px solid #1f1a17;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;font-size:18px}
+svg{width:100%;height:auto;display:block;touch-action:manipulation}
+.st{font-size:17px;flex:1;min-width:180px}
+small{opacity:.75}
+</style></head><body>
+<p><a href="index.html" style="color:inherit">← Back</a></p><h1>🎲 Backgammon</h1>
+<div id="app"></div>
+<script>
+// ---------- rules ----------
+function newG(){const p=Array(24).fill(0);p[0]=2;p[11]=5;p[16]=3;p[18]=5;p[23]=-2;p[12]=-5;p[7]=-3;p[5]=-5;
+ return{s:{pts:p,bar:[0,0],off:[0,0]},turn:0,dice:[],rolled:false,win:null}}
+const cl=s=>({pts:s.pts.slice(),bar:s.bar.slice(),off:s.off.slice()});
+function mv(s,p,d){const sg=p?-1:1,r=[],open=t=>s.pts[t]*sg>=-1;
+ if(s.bar[p]){const t=p?24-d:d-1;if(open(t))r.push({f:'bar',t,d});return r}
+ let home=true,far=0;
+ for(let i=0;i<24;i++)if(s.pts[i]*sg>0){const x=p?i+1:24-i;if(x>6)home=false;far=Math.max(far,x)}
+ for(let i=0;i<24;i++)if(s.pts[i]*sg>0){const t=i+sg*d;
+  if(t>=0&&t<24){if(open(t))r.push({f:i,t,d})}
+  else if(home){const x=p?i+1:24-i;if(d===x||(d>x&&far===x))r.push({f:i,t:'off',d})}}
+ return r}
+function apply(s,p,m){const n=cl(s),sg=p?-1:1;
+ if(m.f==='bar')n.bar[p]--;else n.pts[m.f]-=sg;
+ if(m.t==='off')n.off[p]++;else{if(n.pts[m.t]*sg===-1){n.pts[m.t]=0;n.bar[1-p]++}n.pts[m.t]+=sg}
+ return n}
+const key=s=>s.pts.join()+s.bar+s.off;
+const memo=new Map();
+function maxSeq(s,p,dice){if(!dice.length)return 0;const k=key(s)+p+dice.join();if(memo.has(k))return memo.get(k);
+ let b=0;for(const d of new Set(dice)){const rest=dice.slice();rest.splice(rest.indexOf(d),1);
+  for(const m of mv(s,p,d)){b=Math.max(b,1+maxSeq(apply(s,p,m),p,rest));}}
+ memo.set(k,b);return b}
+function legal(s,p,dice){memo.clear();const L=maxSeq(s,p,dice),out=[];if(!L)return out;
+ for(const d of new Set(dice)){const rest=dice.slice();rest.splice(rest.indexOf(d),1);
+  for(const m of mv(s,p,d))if(1+maxSeq(apply(s,p,m),p,rest)===L)out.push(m)}
+ return out}
+const pip=(s,p)=>{let v=s.bar[p]*25;for(let i=0;i<24;i++){const c=s.pts[i]*(p?-1:1);if(c>0)v+=c*(p?i+1:24-i)}return v};
+// ---------- computer ----------
+function ev(s,p){const o=1-p,sg=p?-1:1;let v=pip(s,o)-pip(s,p)+(s.off[p]-s.off[o])*6+s.bar[o]*10-s.bar[p]*12;
+ for(let i=0;i<24;i++){const c=s.pts[i]*sg;if(c===1)v-=5;else if(c>=2){v+=3;if((p?i+1:24-i)<=6)v+=2}}return v}
+function best(s,p,dice){const out=new Map();
+ (function rec(s,dice,m){let any=false;
+  for(const d of new Set(dice)){const rest=dice.slice();rest.splice(rest.indexOf(d),1);
+   for(const x of mv(s,p,d)){any=true;rec(apply(s,p,x),rest,m.concat(x))}}
+  if(!any){const k=key(s);if(!out.has(k)||out.get(k).m.length<m.length)out.set(k,{s,m})}})(s,dice,[]);
+ const all=[...out.values()],L=Math.max(0,...all.map(o=>o.m.length));let b=null,bv=-1e9;
+ for(const o of all)if(o.m.length===L){const v=ev(o.s,p)+Math.random();if(v>bv){bv=v;b=o}}
+ return b?b.m:[]}
+// ---------- state ----------
+let G=null,mode=null,side=0,code='',ref=null,sel=null,busy=false,msg='',unsub=null;
+const $=id=>document.getElementById(id);
+const mine=()=>mode==='ai'?G.turn===0:G.turn===side;
+const L=()=>legal(G.s,G.turn,G.dice);
+function commit(){render();if(mode==='online'&&ref)ref.set({g:JSON.stringify(G)}).catch(()=>{msg='Couldn’t save the move. Check your Firebase database rules.';render()})}
+function endTurn(){G.turn=1-G.turn;G.dice=[];G.rolled=false;sel=null;commit();if(mode==='ai'&&G.turn===1)cpu()}
+function after(){if(G.s.off[G.turn]===15){G.win=G.turn;commit();return}
+ if(!G.dice.length){commit();setTimeout(endTurn,300)}
+ else if(!L().length){commit();setTimeout(endTurn,1500)}else commit()}
+function roll(){const a=1+Math.random()*6|0,b=1+Math.random()*6|0;G.dice=a===b?[a,a,a,a]:[a,b];G.rolled=true}
+function doRoll(){if(!G||G.win||G.rolled||!mine()||busy)return;roll();msg='';
+ if(!L().length){commit();setTimeout(endTurn,1500)}else commit()}
+function click(t){if(!G||G.win||!mine()||busy||!G.rolled)return;const l=L();
+ if(sel!==null){const ms=l.filter(m=>m.f===sel&&m.t===t).sort((a,b)=>a.d-b.d);
+  if(ms.length){const m=ms[0];G.s=apply(G.s,G.turn,m);G.dice.splice(G.dice.indexOf(m.d),1);sel=null;after();return}}
+ sel=(t!=='off'&&l.some(m=>m.f===t))?t:null;render()}
+function cpu(){if(G.win)return;busy=true;
+ setTimeout(()=>{roll();render();const ms=best(G.s,1,G.dice);let i=0;
+  const step=()=>{if(i>=ms.length){busy=false;if(G.s.off[1]===15){G.win=1;render()}else setTimeout(endTurn,ms.length?600:1400);return}
+   const m=ms[i++];G.s=apply(G.s,1,m);G.dice.splice(G.dice.indexOf(m.d),1);render();setTimeout(step,650)};
+  setTimeout(step,ms.length?800:0)},700)}
+// ---------- online ----------
+// Paste your Firebase web config here to enable online play (see setup notes). Leave null for computer-only.
+const FIREBASE_CONFIG=null;
+/* e.g. {apiKey:'...',authDomain:'...',databaseURL:'https://YOUR-APP-default-rtdb.firebaseio.com',projectId:'...',appId:'...'} */
+function loadJs(u){return new Promise((ok,no)=>{const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)})}
+async function getDb(){if(!FIREBASE_CONFIG){msg='Online play isn’t set up on this site yet.';return null}
+ try{if(!window.firebase){const b='https://www.gstatic.com/firebasejs/10.12.2/';await loadJs(b+'firebase-app-compat.js');await loadJs(b+'firebase-database-compat.js');firebase.initializeApp(FIREBASE_CONFIG)}
+ const d=firebase.database();
+ return{collection:()=>({doc:code=>{const r=d.ref('games/'+code);return{
+  set:v=>r.set(v),
+  get:()=>r.once('value').then(sn=>({exists:sn.exists(),data:()=>sn.val()})),
+  onSnapshot:(next,err)=>{const f=sn=>next({exists:sn.exists(),data:()=>sn.val()});r.on('value',f,err);return()=>r.off('value',f)}}}})}}
+ catch(e){return null}}
+function watch(){if(unsub)unsub();unsub=ref.onSnapshot(sn=>{if(sn.exists){G=JSON.parse(sn.data().g);sel=null;msg='';render()}},()=>{msg='Connection problem.';render()})}
+async function host(){const db=await getDb();if(!db){msg='Couldn’t connect to the online service.';return render()}
+ code=Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.random()*24|0]).join('');
+ ref=db.collection('games').doc(code);mode='online';side=0;G=newG();
+ try{await ref.set({g:JSON.stringify(G)})}catch(e){mode=null;msg='Couldn’t create the game. Check your Firebase database rules.';return render()}
+ watch();render()}
+async function join(){const c=($('code').value||'').trim().toUpperCase();if(c.length<4)return;
+ const db=await getDb();if(!db){msg='Couldn’t connect to the online service.';return render()}
+ const r=db.collection('games').doc(c);let sn;try{sn=await r.get()}catch(e){msg='Couldn’t reach the game.';return render()}
+ if(!sn.exists){msg='No game with that code.';return render()}
+ ref=r;code=c;mode='online';side=1;G=JSON.parse(sn.data().g);watch();render()}
+function again(){G=newG();sel=null;busy=false;if(mode==='online')commit();else render()}
+function menu(){if(unsub)unsub();unsub=null;mode=null;G=null;ref=null;busy=false;render()}
+function playAI(){mode='ai';side=0;G=newG();sel=null;msg='';render()}
+// ---------- render ----------
+const X=c=>20+c*46+(c>=6?46:0);
+function board(){const s=G.s,l=(G.rolled&&mine()&&!G.win&&!busy)?L():[];
+ const dests=new Set(sel!==null?l.filter(m=>m.f===sel).map(m=>m.t):[]),srcs=new Set(l.map(m=>m.f));
+ let o='<svg viewBox="0 0 700 460"><rect x="4" y="4" width="692" height="452" rx="14" fill="var(--board)"/><rect x="14" y="14" width="282" height="432" fill="var(--felt)"/><rect x="342" y="14" width="276" height="432" fill="var(--felt)"/><rect x="296" y="14" width="46" height="432" fill="var(--board)"/><rect x="299" y="18" width="40" height="190" rx="6" fill="var(--felt)" opacity=".25"/><rect x="299" y="252" width="40" height="190" rx="6" fill="var(--felt)" opacity=".25"/><text x="319" y="234" text-anchor="middle" font-size="13" letter-spacing="2" fill="var(--felt)">BAR</text>';
+ if(s.bar[G.turn]&&l.length)o+='<rect x="297" y="16" width="44" height="428" rx="8" fill="none" stroke="var(--acc)" stroke-width="4"/>';
+ const chk=(x,y,p,n,ring)=>`<circle cx="${x}" cy="${y}" r="19" fill="var(--${p?'b':'w'})" stroke="${ring?'var(--acc)':p?'#6b5f55':'#8a7d6a'}" stroke-width="${ring?4:2}"/>`+(n?`<text x="${x}" y="${y+6}" text-anchor="middle" font-size="17" font-weight="bold" fill="${p?'#fff':'#000'}">${n}</text>`:'');
+ for(let c=0;c<12;c++)for(const top of[1,0]){const i=top?12+c:11-c,x=X(c),y0=top?20:440,y1=top?190:270,cn=s.pts[i],p=cn<0?1:0,n=Math.abs(cn);
+  o+=`<polygon points="${x+2},${y0} ${x+44},${y0} ${x+23},${y1}" fill="var(--${(c+top)%2?'t1':'t2'})"/>`;
+  for(let k=0;k<Math.min(n,5);k++){const y=top?40+k*38:420-k*38;o+=chk(x+23,y,p,k===4&&n>5?n:0,sel===i&&k===Math.min(n,5)-1)}
+  if(dests.has(i))o+=`<circle cx="${x+23}" cy="${top?170:290}" r="11" fill="var(--acc)" opacity=".9"/>`;
+  else if(srcs.has(i)&&sel===null)o+=`<circle cx="${x+23}" cy="${top?170:290}" r="5" fill="var(--acc)" opacity=".7"/>`;
+  o+=`<rect x="${x}" y="${top?14:250}" width="46" height="196" fill="transparent" onclick="click(${i})"/>`}
+ for(let p=0;p<2;p++)for(let k=0;k<s.bar[p];k++)o+=chk(319,p?215-k*38:245+k*38,p,0,sel==='bar'&&p===G.turn);
+ o+=`<rect x="296" y="14" width="46" height="432" fill="transparent" onclick="click('bar')"/>`;
+ for(let p=0;p<2;p++){const y=p?250:14;o+=`<rect x="618" y="${y}" width="66" height="196" rx="8" fill="var(--felt)" stroke="${dests.has('off')&&p===G.turn?'var(--acc)':'var(--bd)'}" stroke-width="${dests.has('off')&&p===G.turn?5:1}" onclick="click('off')"/>`;
+  for(let k=0;k<s.off[p];k++)o+=`<rect x="628" y="${p?430-k*11:22+k*11}" width="46" height="8" rx="2" fill="var(--${p?'b':'w'})" stroke="#8a7d6a"/>`}
+ return o+'</svg>'}
+function render(){const A=$('app');
+ if(G&&G.rolled&&mine()&&!G.win&&!busy&&sel===null&&G.s.bar[G.turn]&&L().length)sel='bar';
+ if(!G){A.innerHTML=`<div class="menu"><div class="card"><b>Play the computer</b><div class="bar"><button class="p" onclick="playAI()">Start game</button></div></div>
+ <div class="card"><b>Play together online</b><br><small>One of you starts a game and shares the 4-letter code.</small><div class="bar"><button class="p" onclick="host()">Start online game</button></div>
+ <div class="bar"><input id="code" maxlength="4" placeholder="CODE"><button onclick="join()">Join</button></div></div>${msg?`<div>${msg}</div>`:''}</div>`;return}
+ const nm=p=>(p?'Black':'White')+(mode==='ai'?(p?' (computer)':' (you)'):(p===side?' (you)':''));
+ let st;if(G.win!==null)st=`🏆 ${nm(G.win)} wins!`;
+ else if(mode==='ai'&&G.turn===1)st='Computer is playing…';
+ else if(!mine())st='Waiting for '+nm(G.turn)+'…';
+ else if(!G.rolled)st='Your turn: roll the dice';
+ else if(!L().length)st='No legal moves. Passing…';
+ else if(G.s.bar[G.turn])st='You’re on the bar: tap an open spot to re-enter';
+ else st=sel===null?'Pick a checker, then a spot':'Pick where to move';
+ if(mode==='online'&&!G.rolled&&G.turn===0&&G.s.pts[0]===2&&!msg&&G.dice.length===0&&side===0&&G.s.off[0]+G.s.off[1]===0&&G.s.bar[0]+G.s.bar[1]===0)st+=` · share code ${code}`;
+ A.innerHTML=`<div class="bar"><div class="st">${st}<br><small>${mode==='online'?'Game '+code+' · ':''}White: ${pip(G.s,0)} pips · Black: ${pip(G.s,1)} pips</small></div>
+ <div>${G.dice.map(d=>`<span class="die">${d}</span>`).join(' ')}</div>
+ ${G.win===null&&mine()&&!G.rolled&&!busy?'<button class="p" onclick="doRoll()">Roll</button>':''}</div>
+ ${msg?`<div>${msg}</div>`:''}${board()}
+ <div class="bar"><button onclick="again()">New game</button><button onclick="menu()">Menu</button></div>`}
+render();
+</script></body></html>

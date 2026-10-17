@@ -87,15 +87,15 @@ function cpu(){if(G.win)return;busy=true;
   setTimeout(step,ms.length?800:0)},700)}
 // ---------- online ----------
 // Paste your Firebase web config here to enable online play (see setup notes). Leave null for computer-only.
-const FIREBASE_CONFIG=null;
+const FIREBASE_CONFIG={
   apiKey: "AIzaSyBJG7QQ3CYo6NL2-eSL0lXUR7jhWLI3LVI",
   authDomain: "backgammon-game-a737d.firebaseapp.com",
+  databaseURL: "https://backgammon-game-a737d-default-rtdb.firebaseio.com",
   projectId: "backgammon-game-a737d",
   storageBucket: "backgammon-game-a737d.firebasestorage.app",
   messagingSenderId: "693747668270",
-  appId: "1:693747668270:web:5114f8dbcdf8723bfc56bf",
-  measurementId: "G-M2VJ96DZG7"
-  databaseURL: "https://console.firebase.google.com/project/backgammon-game-a737d/overview"
+  appId: "1:693747668270:web:5114f8dbcdf8723bfc56bf"
+};
 /* e.g. {apiKey:'...',authDomain:'...',databaseURL:'https://YOUR-APP-default-rtdb.firebaseio.com',projectId:'...',appId:'...'} */
 function loadJs(u){return new Promise((ok,no)=>{const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)})}
 async function getDb(){if(!FIREBASE_CONFIG){msg='Online play isn’t set up on this site yet.';return null}
